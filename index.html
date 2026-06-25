@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Baseline Cognitive &amp; Spatial Battery</title>
+  <!-- jsPsych 7 from CDN -->
+  <script src="https://unpkg.com/jspsych@7.3.4/jspsych.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" />
+  <!-- jsPsych plugins -->
+  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3/index.js"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3/index.js"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.3/index.js"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.2.1/index.js"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-instructions@1.1.4/index.js"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-call-function@1.1.3/index.js"></script>
+  <!-- Battery CSS -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Small-screen warning overlay (CSS-driven via media query, JS also checks) -->
+  <div id="small-screen-warning">
+    <h2>&#9888; Screen Too Small</h2>
+    <p>This battery is designed for <strong>laptop or desktop</strong> screens.<br>
+    Please run it on a device with a screen width of at least 900px and height of at least 600px.</p>
+    <p style="font-size:0.85rem;color:#aaa;">Current: <span id="screen-dims"></span></p>
+  </div>
+  <!-- jsPsych renders into #jspsych-target -->
+  <div id="jspsych-target"></div>
+  <!-- Utility functions (data management, CSV/JSON export, summary) -->
+  <script src="js/utils.js"></script>
+  <!-- Task modules — must load before main.js -->
+  <script src="js/tasks/visual_sequencing_set_shifting.js"></script>
+  <script src="js/tasks/object_location_memory.js"></script>
+  <script src="js/tasks/spatial_pointing.js"></script>
+  <!-- Main battery orchestration -->
+  <script src="js/main.js"></script>
+</body>
+</html>
