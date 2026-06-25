@@ -68,6 +68,8 @@ function buildVSTrial(opts) {
     async: true,
     func(done) {
       try {
+        console.log('[VS Trial] Starting:', { condition, trial_type, sequenceLen: sequence.length });
+        
         /* Canvas sizing - fill window minus header */
         const W = Math.min(window.innerWidth  - 20, 920);
         const H = Math.min(window.innerHeight - 120, 660);
@@ -125,11 +127,16 @@ function buildVSTrial(opts) {
           el.style.top    = (pos.y - VS_RADIUS) + 'px';
 
           el.addEventListener('click', function onClick(e) {
-            if (trialFinished) return; // Prevent clicks after trial is done
+            if (trialFinished) {
+              console.log('[VS Trial] Click ignored - trial already finished');
+              return;
+            }
             const now       = performance.now();
             const isCorrect = idx === nextIdx;
             const rt        = Math.round(now - lastClickTime);
             const cumTime   = Math.round(now - trialStart);
+
+            console.log('[VS Trial] Click recorded:', { label, expected: sequence[nextIdx], isCorrect, nextIdx, totalClicks: trialRows.length + 1 });
 
             /* Record every click - correct or error */
             trialRows.push({
@@ -160,6 +167,7 @@ function buildVSTrial(opts) {
 
               if (nextIdx >= sequence.length) {
                 /* ── Trial complete ── */
+                console.log('[VS Trial] SEQUENCE COMPLETE - marking trial as finished');
                 trialFinished = true;
                 const completionTime = Math.round(performance.now() - trialStart);
                 /* Stamp completion info onto all rows */
@@ -168,6 +176,7 @@ function buildVSTrial(opts) {
                   r.total_errors       = totalErrors;
                 });
 
+                console.log('[VS Trial] Adding', trialRows.length, 'rows to BatteryData');
                 window.BatteryData.addTrials(trialRows);
 
                 /* Update task-level summary */
@@ -186,7 +195,11 @@ function buildVSTrial(opts) {
                 }
                 window.BatteryData.setTaskSummary('visual_sequencing_set_shifting', existing);
 
-                setTimeout(() => { done(); }, 350);
+                console.log('[VS Trial] Scheduling done() callback in 350ms');
+                setTimeout(() => { 
+                  console.log('[VS Trial] CALLING done() - trial should transition now');
+                  done(); 
+                }, 350);
               }
 
             } else {
@@ -206,13 +219,15 @@ function buildVSTrial(opts) {
 
           canvas.appendChild(el);
         });
+        console.log('[VS Trial] DOM rendered, waiting for clicks...');
       } catch (err) {
-        console.error('Error in VS trial:', err);
+        console.error('[VS Trial] ERROR:', err);
         const display = document.getElementById('jspsych-target');
         if (display) {
           display.innerHTML = '<div style="color:#ff6b6b;padding:2rem;font-family:monospace;max-width:600px">'
             + '<h3>Visual Sequencing Trial Error</h3>'
             + '<p>' + String(err.message || err) + '</p>'
+            + '<p><small>Check console (F12) for details.</small></p>'
             + '</div>';
         }
         setTimeout(() => { done(); }, 1000);
