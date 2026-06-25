@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Baseline Cognitive &amp; Spatial Battery</title>
 
-  <!-- jsPsych 7 core from CDN -->
-  <script src="https://unpkg.com/jspsych@7.3.4/jspsych.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" />
+  <!-- jsPsych 7 core from CDN (jsdelivr - more reliable than unpkg for dist files) -->
+  <script src="https://cdn.jsdelivr.net/npm/jspsych@7.3.4/dist/jspsych.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspsych@7.3.4/css/jspsych.css" />
 
-  <!-- jsPsych plugins -->
-  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3/index.js"></script>
-  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3/index.js"></script>
-  <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.3/index.js"></script>
-  <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.2.1/index.js"></script>
-  <script src="https://unpkg.com/@jspsych/plugin-instructions@1.1.4/index.js"></script>
-  <script src="https://unpkg.com/@jspsych/plugin-call-function@1.1.3/index.js"></script>
+  <!-- jsPsych plugins from jsdelivr -->
+  <script src="https://cdn.jsdelivr.net/npm/@jspsych/plugin-html-keyboard-response@1.1.3/dist/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@jspsych/plugin-html-button-response@1.1.3/dist/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@jspsych/plugin-survey-text@1.1.3/dist/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@jspsych/plugin-fullscreen@1.2.1/dist/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@jspsych/plugin-instructions@1.1.4/dist/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@jspsych/plugin-call-function@1.1.3/dist/index.js"></script>
 
   <!-- Battery CSS -->
   <link rel="stylesheet" href="css/style.css" />
@@ -43,28 +43,27 @@
       inset: 0;
       background: #1a1a2e;
       color: #e0e0e0;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 1.1rem;
       text-align: center;
       padding: 2rem;
-      z-index: 99999;
-      font-family: "Segoe UI", Arial, sans-serif;
+      z-index: 9999;
     }
-    #small-screen-warning h2 { color: #e94560; margin-bottom: 0.6em; }
-    #small-screen-warning p  { color: #cdd9e5; max-width: 480px; line-height: 1.6; }
   </style>
 </head>
 <body>
-
-  <!-- Small-screen warning (JS-controlled display, not CSS media query) -->
+  <!-- Small-screen warning (JS controls visibility) -->
   <div id="small-screen-warning">
-    <h2>&#9888; Screen Too Small</h2>
-    <p>This battery is designed for <strong>laptop or desktop</strong> screens.<br>
-    Please run it on a device with a screen width of at least 900 px and height of at least 600 px.</p>
-    <p style="font-size:0.85rem;color:#8899aa;margin-top:1em">
-      Current size: <span id="screen-dims">checking...</span>
-    </p>
+    <div>
+      <p><strong>Screen too small</strong></p>
+      <p>This battery requires a laptop or desktop monitor.</p>
+      <p>Please switch to a larger device or maximise your browser window.</p>
+      <p style="font-size:0.85rem;color:#8899aa;margin-top:0.6em">
+        Current size: <span id="screen-dims">checking...</span>
+      </p>
+    </div>
   </div>
 
   <!-- Loading fallback (hidden once JS starts) -->
