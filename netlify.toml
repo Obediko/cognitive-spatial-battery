@@ -1,35 +1,6 @@
 # netlify.toml
-# Static site configuration for Netlify deployment.
-# No build step required - pure HTML/CSS/JS.
-# Publish directory is the repo root (where index.html lives).
-# No server functions, no secrets, no analytics.
+# Static site - no build step required
 
 [build]
   publish = "."
-  # No build command needed for static sites
-
-# Security headers
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "no-referrer"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    Content-Security-Policy = "default-src 'self' https://unpkg.com; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; font-src 'self' data:; img-src 'self' data:; connect-src 'none'"
-
-# Cache static assets
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=86400"
-
-[[headers]]
-  for = "/css/*"
-  [headers.values]
-    Cache-Control = "public, max-age=3600"
-
-[[headers]]
-  for = "/js/*"
-  [headers.values]
-    Cache-Control = "public, max-age=3600"
+  # No build command needed for a pure static site
