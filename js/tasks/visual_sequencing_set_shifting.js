@@ -67,171 +67,149 @@ function buildVSTrial(opts) {
     type: jsPsychCallFunction,
     async: true,
     func(done) {
-      try {
-        console.log('[VS Trial] Starting:', { condition, trial_type, sequenceLen: sequence.length });
-        
-        /* Canvas sizing - fill window minus header */
-        const W = Math.min(window.innerWidth  - 20, 920);
-        const H = Math.min(window.innerHeight - 120, 660);
+      /* Canvas sizing - fill window minus header */
+      const W = Math.min(window.innerWidth  - 20, 920);
+      const H = Math.min(window.innerHeight - 120, 660);
 
-        const positions = vsGenPositions(sequence.length, W, H);
+      const positions = vsGenPositions(sequence.length, W, H);
 
-        /* ── Build DOM ── */
-        const display = document.getElementById('jspsych-target');
-        display.innerHTML = '';
+      /* ── Build DOM ── */
+      const display = document.getElementById('jspsych-target');
+      display.innerHTML = '';
 
-        const wrapper = document.createElement('div');
-        wrapper.style.cssText =
-          'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
-          'width:100%;height:100%;font-family:Segoe UI,Arial,sans-serif;';
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText =
+        'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+        'width:100%;height:100%;font-family:Segoe UI,Arial,sans-serif;';
 
-        const condLabel = condition === 'sequencing'
-          ? (trial_type === 'practice' ? 'Practice - Sequencing' : 'Sequencing')
-          : (trial_type === 'practice' ? 'Practice - Set-Shifting' : 'Set-Shifting');
+      const condLabel = condition === 'sequencing'
+        ? (trial_type === 'practice' ? 'Practice - Sequencing' : 'Sequencing')
+        : (trial_type === 'practice' ? 'Practice - Set-Shifting' : 'Set-Shifting');
 
-        const statusBar = document.createElement('div');
-        statusBar.className = 'vs-status-bar';
-        statusBar.innerHTML = '<strong>' + condLabel + '</strong> &nbsp;|&nbsp; Click targets in correct order.';
+      const statusBar = document.createElement('div');
+      statusBar.className = 'vs-status-bar';
+      statusBar.innerHTML = '<strong>' + condLabel + '</strong> &nbsp;|&nbsp; Click targets in correct order.';
 
-        const canvas = document.createElement('div');
-        canvas.className = 'vs-container';
-        canvas.style.width = W + 'px';
-        canvas.style.height = H + 'px';
+      const canvas = document.createElement('div');
+      canvas.className = 'vs-container';
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
 
-        const errorMsg = document.createElement('div');
-        errorMsg.className = 'vs-error-msg';
+      const errorMsg = document.createElement('div');
+      errorMsg.className = 'vs-error-msg';
 
-        wrapper.appendChild(statusBar);
-        wrapper.appendChild(canvas);
-        wrapper.appendChild(errorMsg);
-        display.appendChild(wrapper);
+      wrapper.appendChild(statusBar);
+      wrapper.appendChild(canvas);
+      wrapper.appendChild(errorMsg);
+      display.appendChild(wrapper);
 
-        /* ── State ── */
-        let nextIdx     = 0;
-        let totalErrors = 0;
-        const trialRows = [];
-        const trialStart = performance.now();
-        let lastClickTime = trialStart;
-        let trialFinished = false;
+      /* ── State ── */
+      let nextIdx     = 0;
+      let totalErrors = 0;
+      const trialRows = [];
+      const trialStart = performance.now();
+      let lastClickTime = trialStart;
+      let trialFinished = false;
+      let doneCallsAllowed = true;
 
-        /* ── Create target circles ── */
-        sequence.forEach((label, idx) => {
-          const pos = positions[idx] || { x: VS_EDGE_MARGIN + idx * 30, y: VS_EDGE_MARGIN };
+      /* ── Create target circles ── */
+      sequence.forEach((label, idx) => {
+        const pos = positions[idx] || { x: VS_EDGE_MARGIN + idx * 30, y: VS_EDGE_MARGIN };
 
-          const el = document.createElement('div');
-          el.className = 'vs-target';
-          el.textContent = label;
-          el.style.width  = (VS_RADIUS * 2) + 'px';
-          el.style.height = (VS_RADIUS * 2) + 'px';
-          el.style.left   = (pos.x - VS_RADIUS) + 'px';
-          el.style.top    = (pos.y - VS_RADIUS) + 'px';
+        const el = document.createElement('div');
+        el.className = 'vs-target';
+        el.textContent = label;
+        el.style.width  = (VS_RADIUS * 2) + 'px';
+        el.style.height = (VS_RADIUS * 2) + 'px';
+        el.style.left   = (pos.x - VS_RADIUS) + 'px';
+        el.style.top    = (pos.y - VS_RADIUS) + 'px';
 
-          el.addEventListener('click', function onClick(e) {
-            if (trialFinished) {
-              console.log('[VS Trial] Click ignored - trial already finished');
-              return;
-            }
-            const now       = performance.now();
-            const isCorrect = idx === nextIdx;
-            const rt        = Math.round(now - lastClickTime);
-            const cumTime   = Math.round(now - trialStart);
+        el.addEventListener('click', function onClick(e) {
+          if (trialFinished) return; // Prevent clicks after trial is done
+          const now       = performance.now();
+          const isCorrect = idx === nextIdx;
+          const rt        = Math.round(now - lastClickTime);
+          const cumTime   = Math.round(now - trialStart);
 
-            console.log('[VS Trial] Click recorded:', { label, expected: sequence[nextIdx], isCorrect, nextIdx, totalClicks: trialRows.length + 1 });
-
-            /* Record every click - correct or error */
-            trialRows.push({
-              task_name:                'visual_sequencing_set_shifting',
-              condition,
-              trial_type,
-              target_sequence:          JSON.stringify(sequence),
-              target_positions_json:    JSON.stringify(positions),
-              click_number:             trialRows.length + 1,
-              clicked_label:            label,
-              expected_label:           sequence[nextIdx] || '',
-              click_x:                  Math.round(e.clientX),
-              click_y:                  Math.round(e.clientY),
-              correct_click:            isCorrect,
-              click_rt_ms:              rt,
-              cumulative_trial_time_ms: cumTime,
-              total_errors_so_far:      totalErrors + (isCorrect ? 0 : 1),
-              completion_time_ms:       null,
-              total_errors:             null
-            });
-
-            if (isCorrect) {
-              lastClickTime = now;
-              el.classList.add('correct');
-              el.removeEventListener('click', onClick);
-              el.style.pointerEvents = 'none';
-              nextIdx++;
-
-              if (nextIdx >= sequence.length) {
-                /* ── Trial complete ── */
-                console.log('[VS Trial] SEQUENCE COMPLETE - marking trial as finished');
-                trialFinished = true;
-                const completionTime = Math.round(performance.now() - trialStart);
-                /* Stamp completion info onto all rows */
-                trialRows.forEach(r => {
-                  r.completion_time_ms = completionTime;
-                  r.total_errors       = totalErrors;
-                });
-
-                console.log('[VS Trial] Adding', trialRows.length, 'rows to BatteryData');
-                window.BatteryData.addTrials(trialRows);
-
-                /* Update task-level summary */
-                const existing = window.BatteryData.taskSummaries['visual_sequencing_set_shifting'] || {};
-                if (condition === 'sequencing') {
-                  existing.completion_time_sequencing_ms = completionTime;
-                  existing.errors_sequencing             = totalErrors;
-                } else {
-                  existing.completion_time_set_shifting_ms = completionTime;
-                  existing.errors_set_shifting             = totalErrors;
-                  /* Compute cost and ratio once both conditions are done */
-                  if (existing.completion_time_sequencing_ms != null) {
-                    existing.set_shifting_cost_ms = completionTime - existing.completion_time_sequencing_ms;
-                    existing.set_shifting_ratio   = +(completionTime / existing.completion_time_sequencing_ms).toFixed(4);
-                  }
-                }
-                window.BatteryData.setTaskSummary('visual_sequencing_set_shifting', existing);
-
-                console.log('[VS Trial] Scheduling done() callback in 350ms');
-                setTimeout(() => { 
-                  console.log('[VS Trial] CALLING done() - trial should transition now');
-                  done(); 
-                }, 350);
-              }
-
-            } else {
-              /* ── Error handling ── */
-              totalErrors++;
-              if (showFeedback) {
-                el.classList.add('error');
-                errorMsg.textContent = 'Wrong target - continue from "' + sequence[nextIdx] + '"';
-                setTimeout(() => { el.classList.remove('error'); errorMsg.textContent = ''; }, VS_ERROR_MS);
-              } else {
-                /* Brief neutral blink during main trials */
-                el.classList.add('error');
-                setTimeout(() => el.classList.remove('error'), 300);
-              }
-            }
+          /* Record every click - correct or error */
+          trialRows.push({
+            task_name:                'visual_sequencing_set_shifting',
+            condition,
+            trial_type,
+            target_sequence:          JSON.stringify(sequence),
+            target_positions_json:    JSON.stringify(positions),
+            click_number:             trialRows.length + 1,
+            clicked_label:            label,
+            expected_label:           sequence[nextIdx] || '',
+            click_x:                  Math.round(e.clientX),
+            click_y:                  Math.round(e.clientY),
+            correct_click:            isCorrect,
+            click_rt_ms:              rt,
+            cumulative_trial_time_ms: cumTime,
+            total_errors_so_far:      totalErrors + (isCorrect ? 0 : 1),
+            completion_time_ms:       null,
+            total_errors:             null
           });
 
-          canvas.appendChild(el);
+          if (isCorrect) {
+            lastClickTime = now;
+            el.classList.add('correct');
+            el.removeEventListener('click', onClick);
+            el.style.pointerEvents = 'none';
+            nextIdx++;
+
+            if (nextIdx >= sequence.length) {
+              /* ── Trial complete ── */
+              trialFinished = true;
+              const completionTime = Math.round(performance.now() - trialStart);
+              /* Stamp completion info onto all rows */
+              trialRows.forEach(r => {
+                r.completion_time_ms = completionTime;
+                r.total_errors       = totalErrors;
+              });
+
+              window.BatteryData.addTrials(trialRows);
+
+              /* Update task-level summary */
+              const existing = window.BatteryData.taskSummaries['visual_sequencing_set_shifting'] || {};
+              if (condition === 'sequencing') {
+                existing.completion_time_sequencing_ms = completionTime;
+                existing.errors_sequencing             = totalErrors;
+              } else {
+                existing.completion_time_set_shifting_ms = completionTime;
+                existing.errors_set_shifting             = totalErrors;
+                /* Compute cost and ratio once both conditions are done */
+                if (existing.completion_time_sequencing_ms != null) {
+                  existing.set_shifting_cost_ms = completionTime - existing.completion_time_sequencing_ms;
+                  existing.set_shifting_ratio   = +(completionTime / existing.completion_time_sequencing_ms).toFixed(4);
+                }
+              }
+              window.BatteryData.setTaskSummary('visual_sequencing_set_shifting', existing);
+
+              /* Call done() immediately - do NOT clear display first */
+              if (doneCallsAllowed) {
+                doneCallsAllowed = false;
+                done();
+              }
+            }
+
+          } else {
+            /* ── Error handling ── */
+            totalErrors++;
+            if (showFeedback) {
+              el.classList.add('error');
+              errorMsg.textContent = 'Wrong target - continue from "' + sequence[nextIdx] + '"';
+              setTimeout(() => { el.classList.remove('error'); errorMsg.textContent = ''; }, VS_ERROR_MS);
+            } else {
+              /* Brief neutral blink during main trials */
+              el.classList.add('error');
+              setTimeout(() => el.classList.remove('error'), 300);
+            }
+          }
         });
-        console.log('[VS Trial] DOM rendered, waiting for clicks...');
-      } catch (err) {
-        console.error('[VS Trial] ERROR:', err);
-        const display = document.getElementById('jspsych-target');
-        if (display) {
-          display.innerHTML = '<div style="color:#ff6b6b;padding:2rem;font-family:monospace;max-width:600px">'
-            + '<h3>Visual Sequencing Trial Error</h3>'
-            + '<p>' + String(err.message || err) + '</p>'
-            + '<p><small>Check console (F12) for details.</small></p>'
-            + '</div>';
-        }
-        setTimeout(() => { done(); }, 1000);
-      }
+
+        canvas.appendChild(el);
+      });
     }
   };
 }
