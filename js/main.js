@@ -8,14 +8,38 @@
 'use strict';
 
 /* ---- Global error handler: show errors on screen ---- */
+function escapeErrorText(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 window.addEventListener('error', function(ev) {
   var t = document.getElementById('jspsych-target');
   if (t) {
     t.innerHTML = '<div style="max-width:800px;padding:2rem;color:#ffcccc;font-family:monospace">'
       + '<h2 style="color:#ff6b6b">JavaScript Error</h2>'
-      + '<p><strong>Message:</strong> ' + (ev.message || 'unknown') + '</p>'
-      + '<p><strong>File:</strong> ' + (ev.filename || 'unknown') + '</p>'
+      + '<p><strong>Message:</strong> ' + escapeErrorText(ev.message || 'unknown') + '</p>'
+      + '<p><strong>File:</strong> ' + escapeErrorText(ev.filename || 'unknown') + '</p>'
       + '<p><strong>Line:</strong> ' + (ev.lineno || '?') + ':' + (ev.colno || '?') + '</p>'
+      + '<p style="color:#aaa;font-size:0.85rem">Open the browser console (F12) for full details.</p>'
+      + '</div>';
+  }
+});
+
+window.addEventListener('unhandledrejection', function(ev) {
+  var reason = ev.reason || {};
+  var msg = reason.message || String(reason || 'unknown');
+  var stack = reason.stack || '';
+  var t = document.getElementById('jspsych-target');
+  if (t) {
+    t.innerHTML = '<div style="max-width:800px;padding:2rem;color:#ffcccc;font-family:monospace">'
+      + '<h2 style="color:#ff6b6b">JavaScript Error</h2>'
+      + '<p><strong>Message:</strong> ' + escapeErrorText(msg) + '</p>'
+      + (stack ? '<pre style="white-space:pre-wrap;color:#aaa;font-size:0.78rem">' + escapeErrorText(stack) + '</pre>' : '')
       + '<p style="color:#aaa;font-size:0.85rem">Open the browser console (F12) for full details.</p>'
       + '</div>';
   }

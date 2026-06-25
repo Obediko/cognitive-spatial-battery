@@ -98,9 +98,9 @@ Timings affected:
 The Object-Location Memory task uses coloured placeholder shapes by default.
 
 To replace with real images:
-1. Place approved image files (PNG, ≥ 200×200 px) in `assets/images/objects/`.
+1. Place approved image files (PNG or JPEG, ≥ 200×200 px) in `assets/images/objects/`.
 2. In `js/tasks/object_location_memory.js`, find the `OLM_OBJECTS` array.
-3. For each object you want to replace, add: `imagePath: 'assets/images/objects/yourfile.png'`
+3. For each object you want to replace, add: `imagePath: 'assets/images/objects/yourfile.png'` or `imagePath: 'assets/images/objects/yourfile.jpg'`
 
 Example:
 ```javascript

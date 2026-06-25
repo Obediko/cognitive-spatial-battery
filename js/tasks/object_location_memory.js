@@ -14,43 +14,41 @@
      Retrieval phase : object cue shown, participant clicks remembered location
 
    Stimuli:
-     Neutral placeholder coloured shapes with emoji + text labels.
-     To replace with real images: add files to assets/images/objects/
-     and update OLM_OBJECTS entries (add imagePath: 'assets/images/objects/xxx.png').
+     Neutral object images when imagePath is present, otherwise coloured
+     placeholder shapes with emoji + text labels.
 
    Exports (global): buildObjectLocationTimeline()
    ============================================================ */
 'use strict';
 
 /* ── Object stimulus definitions ─────────────────────────────
-   Each entry: { id, label, emoji, color }
-   To use real images add: imagePath: 'assets/images/objects/xxx.png'
+   Each entry: { id, label, emoji, color, imagePath? }
    ─────────────────────────────────────────────────────────── */
 const OLM_OBJECTS = [
-  { id: 'clock',    label: 'Clock',    emoji: '\u23F0', color: '#5c6bc0' },
-  { id: 'lamp',     label: 'Lamp',     emoji: '\uD83D\uDCA1', color: '#ffa726' },
-  { id: 'book',     label: 'Book',     emoji: '\uD83D\uDCDA', color: '#66bb6a' },
-  { id: 'key',      label: 'Key',      emoji: '\uD83D\uDD11', color: '#ef5350' },
-  { id: 'cup',      label: 'Cup',      emoji: '\u2615',     color: '#26a69a' },
-  { id: 'chair',    label: 'Chair',    emoji: '\uD83E\uDE91', color: '#ab47bc' },
-  { id: 'phone',    label: 'Phone',    emoji: '\uD83D\uDCDE', color: '#ec407a' },
-  { id: 'pen',      label: 'Pen',      emoji: '\u270F',     color: '#78909c' },
-  { id: 'bag',      label: 'Bag',      emoji: '\uD83D\uDC5C', color: '#8d6e63' },
-  { id: 'bottle',   label: 'Bottle',   emoji: '\uD83D\uDD6D', color: '#29b6f6' },
-  { id: 'glasses',  label: 'Glasses',  emoji: '\uD83D\uDC53', color: '#d4e157' },
-  { id: 'scissors', label: 'Scissors', emoji: '\u2702',     color: '#ff7043' },
-  { id: 'watch',    label: 'Watch',    emoji: '\u231A',     color: '#42a5f5' },
-  { id: 'hat',      label: 'Hat',      emoji: '\uD83E\uDDE2', color: '#26c6da' },
-  { id: 'shoe',     label: 'Shoe',     emoji: '\uD83D\uDC5F', color: '#7e57c2' },
-  { id: 'candle',   label: 'Candle',   emoji: '\uD83D\uDD6F', color: '#ffca28' },
-  { id: 'camera',   label: 'Camera',   emoji: '\uD83D\uDCF7', color: '#9ccc65' },
-  { id: 'coin',     label: 'Coin',     emoji: '\uD83E\uDE99', color: '#ffd54f' },
-  { id: 'spoon',    label: 'Spoon',    emoji: '\uD83E\uDD44', color: '#80cbc4' },
-  { id: 'leaf',     label: 'Leaf',     emoji: '\uD83C\uDF43', color: '#aed581' },
-  { id: 'shell',    label: 'Shell',    emoji: '\uD83D\uDC1A', color: '#ffe082' },
-  { id: 'stone',    label: 'Stone',    emoji: '\uD83E\uDEA8', color: '#a1887f' },
-  { id: 'brush',    label: 'Brush',    emoji: '\uD83E\uDDF9', color: '#4db6ac' },
-  { id: 'flower',   label: 'Flower',   emoji: '\uD83C\uDF38', color: '#f48fb1' }
+  { id: 'clock',      label: 'Clock',      emoji: '\u23F0', color: '#5c6bc0', imagePath: 'assets/images/objects/clock.jpg' },
+  { id: 'lamp',       label: 'Lamp',       emoji: '\uD83D\uDCA1', color: '#ffa726', imagePath: 'assets/images/objects/lamp.jpg' },
+  { id: 'book',       label: 'Book',       emoji: '\uD83D\uDCDA', color: '#66bb6a', imagePath: 'assets/images/objects/book.jpg' },
+  { id: 'key',        label: 'Key',        emoji: '\uD83D\uDD11', color: '#ef5350', imagePath: 'assets/images/objects/key.jpg' },
+  { id: 'cup',        label: 'Cup',        emoji: '\u2615', color: '#26a69a', imagePath: 'assets/images/objects/cup.jpg' },
+  { id: 'chair',      label: 'Chair',      emoji: '\uD83E\uDE91', color: '#ab47bc', imagePath: 'assets/images/objects/chair.jpg' },
+  { id: 'apple',      label: 'Apple',      emoji: '\uD83C\uDF4E', color: '#ec407a', imagePath: 'assets/images/objects/apple.jpg' },
+  { id: 'pencil',     label: 'Pencil',     emoji: '\u270F', color: '#78909c', imagePath: 'assets/images/objects/pencil.jpg' },
+  { id: 'bag',        label: 'Bag',        emoji: '\uD83D\uDC5C', color: '#8d6e63', imagePath: 'assets/images/objects/bag.jpg' },
+  { id: 'bottle',     label: 'Bottle',     emoji: '\uD83C\uDF76', color: '#29b6f6', imagePath: 'assets/images/objects/bottle.jpg' },
+  { id: 'basket',     label: 'Basket',     emoji: '\uD83E\uDDFA', color: '#d4e157', imagePath: 'assets/images/objects/basket.jpg' },
+  { id: 'scissors',   label: 'Scissors',   emoji: '\u2702', color: '#ff7043', imagePath: 'assets/images/objects/scissors.jpg' },
+  { id: 'ruler',      label: 'Ruler',      emoji: '\uD83D\uDCCF', color: '#42a5f5', imagePath: 'assets/images/objects/ruler.jpg' },
+  { id: 'umbrella',   label: 'Umbrella',   emoji: '\u2602', color: '#26c6da', imagePath: 'assets/images/objects/umbrella.jpg' },
+  { id: 'shoe',       label: 'Shoe',       emoji: '\uD83D\uDC5F', color: '#7e57c2', imagePath: 'assets/images/objects/shoe.jpg' },
+  { id: 'candle',     label: 'Candle',     emoji: '\uD83D\uDD6F', color: '#ffca28', imagePath: 'assets/images/objects/candle.jpg' },
+  { id: 'plate',      label: 'Plate',      emoji: '\uD83C\uDF7D', color: '#9ccc65', imagePath: 'assets/images/objects/plate.jpg' },
+  { id: 'box',        label: 'Box',        emoji: '\uD83D\uDCE6', color: '#ffd54f', imagePath: 'assets/images/objects/box.jpg' },
+  { id: 'spoon',      label: 'Spoon',      emoji: '\uD83E\uDD44', color: '#80cbc4', imagePath: 'assets/images/objects/spoon.jpg' },
+  { id: 'comb',       label: 'Comb',       emoji: '\uD83E\uDEAE', color: '#aed581', imagePath: 'assets/images/objects/comb.jpg' },
+  { id: 'toothbrush', label: 'Toothbrush', emoji: '\uD83E\uDE65', color: '#ffe082', imagePath: 'assets/images/objects/toothbrush.jpg' },
+  { id: 'stone',      label: 'Stone',      emoji: '\uD83E\uDEA8', color: '#a1887f' },
+  { id: 'brush',      label: 'Brush',      emoji: '\uD83E\uDDF9', color: '#4db6ac' },
+  { id: 'flower',     label: 'Flower',     emoji: '\uD83C\uDF38', color: '#f48fb1' }
 ];
 
 /* Block assignments (indices into OLM_OBJECTS, 8 per block) */
@@ -87,20 +85,28 @@ function olmRenderObject(obj, x, y, arenaEl, clickable = false) {
   el.style.top  = y + 'px';
   el.dataset.objId = obj.id;
 
+  function renderPlaceholder() {
+    const shape = document.createElement('div');
+    shape.className = 'olm-shape';
+    shape.style.background = obj.color;
+    shape.textContent = obj.emoji;
+    el.appendChild(shape);
+  }
+
   if (obj.imagePath) {
     // Real image mode
     const img = document.createElement('img');
     img.src = obj.imagePath;
     img.alt = obj.label;
     img.style.cssText = 'width:56px;height:56px;object-fit:contain;border-radius:8px;display:block;margin:0 auto';
+    img.addEventListener('error', () => {
+      img.remove();
+      renderPlaceholder();
+    }, { once: true });
     el.appendChild(img);
   } else {
     // Placeholder shape mode
-    const shape = document.createElement('div');
-    shape.className = 'olm-shape';
-    shape.style.background = obj.color;
-    shape.textContent = obj.emoji;
-    el.appendChild(shape);
+    renderPlaceholder();
   }
 
   const lbl = document.createElement('div');
@@ -229,6 +235,14 @@ function buildOLMRetrieval(blockNum, blockObjects, positions, retrievalOrder, tr
           const img = document.createElement('img');
           img.src = obj.imagePath; img.alt = obj.label;
           img.style.cssText = 'width:52px;height:52px;object-fit:contain;border-radius:8px;border:2px solid #3a6186;';
+          img.addEventListener('error', () => {
+            img.remove();
+            const shape = document.createElement('div');
+            shape.className = 'olm-shape';
+            shape.style.cssText += 'background:' + obj.color + ';width:52px;height:52px;';
+            shape.textContent = obj.emoji;
+            cueObj.insertBefore(shape, cueObj.firstChild);
+          }, { once: true });
           cueObj.appendChild(img);
         } else {
           const shape = document.createElement('div');
