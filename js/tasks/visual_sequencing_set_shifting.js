@@ -182,7 +182,7 @@ function buildVSTrial(opts) {
               }
               window.BatteryData.setTaskSummary('visual_sequencing_set_shifting', existing);
 
-              setTimeout(() => { display.innerHTML = ''; done(); }, 350);
+              setTimeout(() => { done(); }, 350);
             }
 
           } else {
