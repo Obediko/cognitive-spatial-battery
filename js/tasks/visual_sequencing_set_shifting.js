@@ -53,7 +53,7 @@ function vsGenPositions(count, W, H) {
   return positions;
 }
 
-/* ── Core trial (async jsPsychCallFunction) ──────────────── */
+/* ── Core trial using html-button-response pattern ──────────── */
 /**
  * @param {object} opts
  *   condition    : 'sequencing' | 'set_shifting'
@@ -63,10 +63,13 @@ function vsGenPositions(count, W, H) {
  */
 function buildVSTrial(opts) {
   const { condition, trial_type, sequence, showFeedback } = opts;
+  
   return {
-    type: jsPsychCallFunction,
-    async: true,
-    func(done) {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: '',
+    choices: [],
+    response_ends_trial: false,
+    on_load: function() {
       /* Canvas sizing - fill window minus header */
       const W = Math.min(window.innerWidth  - 20, 920);
       const H = Math.min(window.innerHeight - 120, 660);
@@ -110,7 +113,6 @@ function buildVSTrial(opts) {
       const trialStart = performance.now();
       let lastClickTime = trialStart;
       let trialFinished = false;
-      let doneCallsAllowed = true;
 
       /* ── Create target circles ── */
       sequence.forEach((label, idx) => {
@@ -186,11 +188,8 @@ function buildVSTrial(opts) {
               }
               window.BatteryData.setTaskSummary('visual_sequencing_set_shifting', existing);
 
-              /* Call done() immediately - do NOT clear display first */
-              if (doneCallsAllowed) {
-                doneCallsAllowed = false;
-                done();
-              }
+              /* Finish the trial via jsPsych */
+              jsPsych.finishTrial({ completed: true, total_time_ms: completionTime, total_errors: totalErrors });
             }
 
           } else {
@@ -210,7 +209,8 @@ function buildVSTrial(opts) {
 
         canvas.appendChild(el);
       });
-    }
+    },
+    data: { task_name: 'visual_sequencing_set_shifting', condition, trial_type }
   };
 }
 
