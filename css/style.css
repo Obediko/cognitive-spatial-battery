@@ -2,175 +2,312 @@
    Baseline Cognitive & Spatial Battery - Global Styles
    ============================================================ */
 
-/* Reset & base */
+/* Reset */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   background: #1a1a2e;
   color: #e0e0e0;
   font-family: 'Segoe UI', Arial, sans-serif;
   font-size: 16px;
-  overflow: hidden;
+  /* NOTE: do NOT set overflow:hidden here - it can hide jsPsych scroll on some screens */
 }
 
-/* jsPsych display override */
+/* ---- jsPsych display overrides ---- */
 #jspsych-target {
-  width: 100vw; height: 100vh;
-  display: flex; align-items: center; justify-content: center;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
-.jspsych-display-element {
-  width: 100% !important; height: 100% !important;
-  max-width: none !important;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  overflow-y: auto;
-}
-.jspsych-content-wrapper { width: 100% !important; max-width: 920px; }
-.jspsych-content { color: #e0e0e0 !important; }
 
-/* Typography */
+.jspsych-display-element {
+  width: 100% !important;
+  min-height: 100vh !important;
+  max-width: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #1a1a2e !important;
+}
+
+.jspsych-content-wrapper {
+  width: 100% !important;
+  max-width: 920px !important;
+  padding: 1rem !important;
+}
+
+.jspsych-content {
+  color: #e0e0e0 !important;
+}
+
+/* ---- Typography ---- */
 h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.6em; color: #a8d8ea; }
 h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5em; color: #b8c6db; }
 h3 { font-size: 1.2rem; color: #cdd9e5; margin-bottom: 0.4em; }
 p  { line-height: 1.6; margin-bottom: 0.8em; }
 a  { color: #a8d8ea; }
+code { background: #0d1b2a; padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.9em; }
 
-/* Buttons */
-.jspsych-btn, .battery-btn {
-  display: inline-block; padding: 0.65em 1.6em; margin: 0.4em;
-  background: #16213e; color: #a8d8ea;
-  border: 2px solid #a8d8ea; border-radius: 6px;
-  font-size: 1rem; cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+/* ---- jsPsych button overrides ---- */
+.jspsych-btn {
+  display: inline-block !important;
+  padding: 0.65em 1.6em !important;
+  margin: 0.4em !important;
+  background: #16213e !important;
+  color: #a8d8ea !important;
+  border: 2px solid #a8d8ea !important;
+  border-radius: 6px !important;
+  font-size: 1rem !important;
+  cursor: pointer !important;
+  transition: background 0.2s, color 0.2s !important;
 }
-.jspsych-btn:hover, .battery-btn:hover { background: #a8d8ea; color: #16213e; }
+.jspsych-btn:hover {
+  background: #a8d8ea !important;
+  color: #16213e !important;
+}
+
+/* ---- Battery custom buttons ---- */
+.battery-btn {
+  display: inline-block;
+  padding: 0.65em 1.6em;
+  margin: 0.4em;
+  background: #16213e;
+  color: #a8d8ea;
+  border: 2px solid #a8d8ea;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.battery-btn:hover { background: #a8d8ea; color: #16213e; }
 .battery-btn.primary { background: #0f3460; border-color: #e94560; color: #fff; }
 .battery-btn.primary:hover { background: #e94560; }
 .battery-btn.download { background: #1b5e20; border-color: #66bb6a; color: #fff; min-width: 200px; }
 .battery-btn.download:hover { background: #2e7d32; }
 
-/* Warning box */
-.warning-box {
-  background: #4a1942; border: 2px solid #e94560; border-radius: 8px;
-  padding: 1em 1.5em; margin: 1em auto; max-width: 600px;
-  font-size: 0.95rem; color: #ffcdd2;
-}
-
-/* Info box */
+/* ---- Info / warning boxes ---- */
 .info-box {
-  background: #0d2137; border: 1px solid #3a6186; border-radius: 8px;
-  padding: 1em 1.5em; margin: 1em auto; max-width: 680px;
+  background: #0d2137;
+  border: 1px solid #3a6186;
+  border-radius: 8px;
+  padding: 1em 1.5em;
+  margin: 1em auto;
+  max-width: 680px;
+}
+.warning-box {
+  background: #4a1942;
+  border: 2px solid #e94560;
+  border-radius: 8px;
+  padding: 1em 1.5em;
+  margin: 1em auto;
+  max-width: 600px;
+  font-size: 0.95rem;
+  color: #ffcdd2;
 }
 
-/* Progress bar */
+/* ---- Progress bar ---- */
 #battery-progress-bar-container {
-  position: fixed; top: 0; left: 0; width: 100%; height: 6px;
-  background: #0d1b2a; z-index: 9999;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 6px;
+  background: #0d1b2a;
+  z-index: 9999;
 }
-#battery-progress-bar { height: 6px; background: #a8d8ea; transition: width 0.4s ease; }
+#battery-progress-bar {
+  height: 6px;
+  background: #a8d8ea;
+  transition: width 0.4s ease;
+}
+
+/* ---- Survey text input (Participant ID) ---- */
+.jspsych-survey-text input[type="text"] {
+  background: #16213e !important;
+  color: #e0e0e0 !important;
+  border: 2px solid #3a6186 !important;
+  border-radius: 4px !important;
+  padding: 0.5em !important;
+  font-size: 1rem !important;
+  width: 260px !important;
+}
+.jspsych-survey-text label {
+  color: #b8c6db !important;
+  font-size: 1rem !important;
+}
 
 /* ============================================================
    TASK 1: Visual Sequencing / Set-Shifting
    ============================================================ */
 .vs-container {
-  position: relative; background: #0d1b2a;
-  border: 2px solid #3a6186; border-radius: 6px;
-  margin: 0 auto; overflow: hidden;
+  position: relative;
+  background: #0d1b2a;
+  border: 2px solid #3a6186;
+  border-radius: 6px;
+  margin: 0 auto;
+  overflow: hidden;
 }
 .vs-target {
-  position: absolute; border-radius: 50%;
-  background: #16213e; border: 2px solid #a8d8ea;
-  color: #a8d8ea; font-size: 0.95rem; font-weight: bold;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; user-select: none;
+  position: absolute;
+  border-radius: 50%;
+  background: #16213e;
+  border: 2px solid #a8d8ea;
+  color: #a8d8ea;
+  font-size: 0.95rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
   transition: background 0.12s, border-color 0.12s;
 }
 .vs-target:hover { background: #1e3a5f; }
-.vs-target.correct { background: #1b5e20 !important; border-color: #66bb6a !important; color: #c8e6c9 !important; cursor: default; }
-.vs-target.error   { background: #7f1d1d !important; border-color: #ef9a9a !important; }
-.vs-status-bar { text-align: center; color: #a8d8ea; font-size: 0.95rem; margin-bottom: 8px; }
-.vs-error-msg  { text-align: center; color: #ef9a9a; font-size: 0.9rem; min-height: 1.4em; margin-top: 6px; }
+.vs-target.correct {
+  background: #1b5e20 !important;
+  border-color: #66bb6a !important;
+  color: #c8e6c9 !important;
+  cursor: default;
+}
+.vs-target.error {
+  background: #7f1d1d !important;
+  border-color: #ef9a9a !important;
+}
+.vs-status-bar {
+  text-align: center;
+  color: #a8d8ea;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.vs-error-msg {
+  text-align: center;
+  color: #ef9a9a;
+  font-size: 0.9rem;
+  min-height: 1.4em;
+  margin-top: 6px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
 
 /* ============================================================
    TASK 2: Object-Location Memory
    ============================================================ */
 .olm-arena {
-  position: relative; background: #0d1b2a;
-  border: 2px solid #3a6186; border-radius: 6px;
-  margin: 0 auto; overflow: hidden; cursor: crosshair;
+  position: relative;
+  background: #0d1b2a;
+  border: 2px solid #3a6186;
+  border-radius: 6px;
+  margin: 0 auto;
+  overflow: hidden;
+  cursor: crosshair;
 }
 .olm-object {
-  position: absolute; transform: translate(-50%, -50%);
-  text-align: center; user-select: none; pointer-events: none;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  user-select: none;
+  pointer-events: none;
 }
-.olm-object.clickable { pointer-events: auto; cursor: pointer; }
+.olm-object.clickable {
+  pointer-events: auto;
+  cursor: pointer;
+}
 .olm-shape {
-  width: 56px; height: 56px; border-radius: 8px;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
   border: 2px solid rgba(255,255,255,0.35);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.5rem; margin: 0 auto 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin: 0 auto 3px;
 }
-.olm-label { font-size: 0.7rem; color: #cdd9e5; white-space: nowrap; }
-.olm-crosshair { position: absolute; pointer-events: none; }
-.olm-crosshair::before, .olm-crosshair::after {
-  content: ''; position: absolute; background: rgba(255,200,100,0.7);
+.olm-label {
+  font-size: 0.7rem;
+  color: #cdd9e5;
+  white-space: nowrap;
 }
-.olm-crosshair::before { width: 1px; height: 20px; top: -10px; left: 0; }
-.olm-crosshair::after  { width: 20px; height: 1px; left: -10px; top: 0; }
 
 /* ============================================================
    TASK 3: Spatial Pointing
    ============================================================ */
-#sp-wrapper { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-#sp-cue-label { font-size: 1.1rem; color: #a8d8ea; font-weight: bold; text-align: center; min-height: 2em; }
-#sp-hint { font-size: 0.85rem; color: #8899aa; text-align: center; }
+#sp-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+#sp-cue-label {
+  font-size: 1.1rem;
+  color: #a8d8ea;
+  font-weight: bold;
+  text-align: center;
+  min-height: 2em;
+}
+#sp-hint {
+  font-size: 0.85rem;
+  color: #8899aa;
+  text-align: center;
+}
 #sp-arena {
-  display: block; cursor: crosshair;
-  border: 2px solid #3a6186; border-radius: 50%;
+  display: block;
+  cursor: crosshair;
+  border: 2px solid #3a6186;
+  border-radius: 50%;
   background: #0d1b2a;
 }
 #sp-confirm-btn {
-  padding: 0.5em 2em; font-size: 1rem;
-  background: #0f3460; color: #fff;
-  border: 2px solid #a8d8ea; border-radius: 6px; cursor: pointer;
+  padding: 0.5em 2em;
+  font-size: 1rem;
+  background: #0f3460;
+  color: #fff;
+  border: 2px solid #a8d8ea;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Segoe UI', Arial, sans-serif;
 }
 #sp-confirm-btn:hover { background: #1a5276; }
 #sp-confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.sp-feedback-correct { color: #66bb6a; font-weight: bold; }
-.sp-feedback-wrong   { color: #ef9a9a; }
 
-/* Fixation */
-.fixation { font-size: 3rem; color: #e0e0e0; text-align: center; }
+/* ---- Fixation cross ---- */
+.fixation {
+  font-size: 3rem;
+  color: #e0e0e0;
+  text-align: center;
+}
 
-/* Completion screen */
-#completion-screen { max-width: 720px; margin: 0 auto; text-align: center; padding: 2em 1em; }
-.summary-table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.88rem; }
-.summary-table th, .summary-table td { padding: 0.45em 0.8em; border: 1px solid #3a6186; text-align: left; }
+/* ---- Completion screen ---- */
+#completion-screen {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 2em 1em;
+}
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.88rem;
+}
+.summary-table th,
+.summary-table td {
+  padding: 0.45em 0.8em;
+  border: 1px solid #3a6186;
+  text-align: left;
+}
 .summary-table th { background: #16213e; color: #a8d8ea; }
 .summary-table tr:nth-child(even) { background: #0d1b2a; }
 
-/* Small-screen warning */
-#small-screen-warning {
-  display: none; position: fixed; inset: 0;
-  background: #1a1a2e; z-index: 99999;
-  flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; padding: 2em; gap: 1em;
+/* ---- Countdown display ---- */
+.countdown-display {
+  font-size: 2.5rem;
+  color: #a8d8ea;
+  font-weight: bold;
 }
-@media (max-width: 750px), (max-height: 520px) {
-  #small-screen-warning { display: flex; }
-}
-
-/* jsPsych survey text input styling */
-.jspsych-survey-text input[type="text"] {
-  background: #16213e !important; color: #e0e0e0 !important;
-  border: 2px solid #3a6186 !important; border-radius: 4px !important;
-  padding: 0.5em !important; font-size: 1rem !important; width: 260px !important;
-}
-.jspsych-survey-text label { color: #b8c6db !important; font-size: 1rem !important; }
-
-/* Countdown */
-.countdown-display { font-size: 2.5rem; color: #a8d8ea; font-weight: bold; }
-
-/* Progress label */
-.progress-label { color: #8899aa; font-size: 0.85rem; margin-top: 0.5em; }
