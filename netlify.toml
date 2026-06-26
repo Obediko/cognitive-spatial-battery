@@ -4,3 +4,5 @@
 [build]
   publish = "."
   # No build command needed for a pure static site
+
+# Trigger deploy: jspsych-content fix
