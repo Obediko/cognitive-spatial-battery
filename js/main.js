@@ -278,7 +278,7 @@ function makeCompletionScreen() {
         + 'Data is NOT automatically saved or sent anywhere.</p>'
         + '</div>';
 
-      var display = document.getElementById('jspsych-target');
+      var display = document.getElementById('jspsych-content') || document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
       if (display) display.innerHTML = html;
 
       var dlCSV = document.getElementById('dl-csv');
