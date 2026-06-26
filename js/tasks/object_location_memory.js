@@ -130,7 +130,7 @@ function buildOLMEncoding(blockNum, blockObjects, positions, trialType) {
       const W = Math.min(window.innerWidth - 20, 900);
       const H = Math.min(window.innerHeight - 130, 600);
 
-      const display = document.getElementById('jspsych-target');
+      const display = document.getElementById('jspsych-content') || document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
       display.innerHTML = '';
 
       const wrapper = document.createElement('div');
@@ -185,7 +185,7 @@ function buildOLMDelay(blockNum, trialType) {
     type: jsPsychCallFunction,
     async: true,
     func(done) {
-      const display = document.getElementById('jspsych-target');
+      const display = document.getElementById('jspsych-content') || document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
       display.innerHTML =
         '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px">' +
         '<div class="fixation">+</div>' +
@@ -214,7 +214,7 @@ function buildOLMRetrieval(blockNum, blockObjects, positions, retrievalOrder, tr
       async: true,
       func(done) {
         const cW = W(), cH = H();
-        const display = document.getElementById('jspsych-target');
+        const display = document.getElementById('jspsych-content') || document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
         display.innerHTML = '';
 
         const wrapper = document.createElement('div');
