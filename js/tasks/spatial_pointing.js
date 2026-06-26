@@ -140,7 +140,7 @@ function buildSPStudy() {
     async: true,
     func(done) {
       const studyMs = window.TIMING.sp_study_ms;
-      const display = document.getElementById('jspsych-target');
+      const display = document.getElementById('jspsych-content') || document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
       display.innerHTML = '';
 
       const wrapper = document.createElement('div');
@@ -191,7 +191,7 @@ function buildSPTrial(trialNum, targetLandmark, startPosObj, practiceOrMain, sho
     type: jsPsychCallFunction,
     async: true,
     func(done) {
-      const display  = document.getElementById('jspsych-target');
+      const display = document.getElementById('jspsych-content') || document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
       display.innerHTML = '';
 
       const lm  = window._spLandmarks.find(l => l.id === targetLandmark.id) || targetLandmark;
