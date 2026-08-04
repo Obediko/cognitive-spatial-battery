@@ -23,3 +23,5 @@ jobs:
         run: node tests/animal_semantic_fluency.test.js
       - name: Test Original Visual Naming scoring
         run: node tests/original_visual_naming.test.js
+      - name: Test Original Complex Figure scoring
+        run: node tests/original_complex_figure.test.js
