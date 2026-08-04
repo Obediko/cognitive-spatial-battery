@@ -63,3 +63,10 @@ assert.deepEqual(
 );
 
 console.log('Animal Semantic Fluency scoring tests passed.');
+
+const mainSource = fs.readFileSync(path.join(__dirname, '..', 'js', 'main.js'), 'utf8');
+assert.match(mainSource, /Continue without fullscreen/);
+assert.match(mainSource, /\.catch\(function\(error\)/);
+assert.match(mainSource, /fullscreen_granted:/);
+
+console.log('Fullscreen fallback guards passed.');
