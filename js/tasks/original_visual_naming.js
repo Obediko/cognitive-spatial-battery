@@ -42,8 +42,7 @@
     plumb_bob: '<path d="M120 20v88"/><path d="M104 108l16-32 16 32 20 48-36 28-36-28z"/><circle cx="120" cy="20" r="6"/>',
     spigot: '<path d="M62 84h92v52H62z"/><path d="M154 96h36v24h-36M190 108v44q0 18-18 18"/><path d="M96 84V58M76 58h40M90 42h12v16"/>',
     trellis: '<rect x="48" y="24" width="144" height="152"/><path d="M48 24l144 152M84 24l108 114M120 24l72 76M156 24l36 38M192 24L48 176M156 24L48 138M120 24L48 100M84 24L48 62"/>',
-    weather_vane: '<path d="M120 42v136M74 80h92"/><path d="M166 80l-24-14v28zM74 80l18-10v20z"/><path d="M120 42l18 26h-36z"/><path d="M92 178h56"/><text x="112" y="28" font-size="20">N</text>',
-    turnstile: '<path d="M120 32v144"/><circle cx="120" cy="94" r="14"/><path d="M120 94L44 62M120 94l76-32M120 94l-64 58M120 94l64 58"/><path d="M92 176h56"/>'
+    weather_vane: '<path d="M120 42v136M74 80h92"/><path d="M166 80l-24-14v28zM74 80l18-10v20z"/><path d="M120 42l18 26h-36z"/><path d="M92 178h56"/><text x="112" y="28" font-size="20">N</text>'
   };
 
   var items = [
@@ -78,8 +77,7 @@
     ['plumb_bob','plumb bob',['plummet'],'a pointed weight on a string used to find a vertical line','pl',3],
     ['spigot','spigot',['tap','faucet'],'a fitting that controls liquid flowing from a pipe or container','spi',3],
     ['trellis','trellis',[],'a framework that supports climbing plants','trel',3],
-    ['weather_vane','weather vane',['wind vane'],'an instrument that turns to show wind direction','wea',3],
-    ['turnstile','turnstile',[],'a rotating barrier that allows one person to pass at a time','turn',3]
+    ['weather_vane','weather vane',['wind vane'],'an instrument that turns to show wind direction','wea',3]
   ].map(function(row, index) {
     return {
       id: 'ovn_' + String(index + 1).padStart(2, '0'),
@@ -101,9 +99,9 @@
     responses = Array.isArray(responses) ? responses : [];
     var uncued = responses.filter(function(r) { return r.outcome === 'uncued_correct'; }).length;
     var semanticCorrect = responses.filter(function(r) { return r.outcome === 'semantic_correct'; }).length;
-    var semanticGiven = responses.filter(function(r) { return r.semanticCueGiven; }).length;
+    var semanticGiven = responses.filter(function(r) { return r.semantic_cue_given; }).length;
     var phonemicCorrect = responses.filter(function(r) { return r.outcome === 'phonemic_correct'; }).length;
-    var phonemicGiven = responses.filter(function(r) { return r.phonemicCueGiven; }).length;
+    var phonemicGiven = responses.filter(function(r) { return r.phonemic_cue_given; }).length;
     return {
       totalWithSemantic: incomplete ? null : uncued + semanticCorrect,
       rawTotalWithSemantic: uncued + semanticCorrect,
