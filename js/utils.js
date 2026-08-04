@@ -165,6 +165,7 @@ function buildSummary() {
 
     /* Animal Semantic Fluency */
     asf_total_valid_unique: asf.asf_total_valid_unique ?? null,
+    asf_total_valid_unique_raw: asf.asf_total_valid_unique_raw ?? null,
     asf_repetitions: asf.asf_repetitions ?? null,
     asf_rule_violations: asf.asf_rule_violations ?? null,
     asf_uncertain_responses: asf.asf_uncertain_responses ?? null,
