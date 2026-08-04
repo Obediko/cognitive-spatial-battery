@@ -18,10 +18,10 @@ assert.ok(scoring, 'OVNScoring must be exported');
 assert.equal(scoring.itemCount, 32, 'OVN must contain 32 original items');
 
 const responses = [
-  { outcome: 'uncued_correct', semanticCueGiven: false, phonemicCueGiven: false },
-  { outcome: 'semantic_correct', semanticCueGiven: true, phonemicCueGiven: false },
-  { outcome: 'phonemic_correct', semanticCueGiven: false, phonemicCueGiven: true },
-  { outcome: 'incorrect', semanticCueGiven: true, phonemicCueGiven: true }
+  { outcome: 'uncued_correct', semantic_cue_given: false, phonemic_cue_given: false },
+  { outcome: 'semantic_correct', semantic_cue_given: true, phonemic_cue_given: false },
+  { outcome: 'phonemic_correct', semantic_cue_given: false, phonemic_cue_given: true },
+  { outcome: 'incorrect', semantic_cue_given: true, phonemic_cue_given: true }
 ];
 
 const complete = scoring.scoreSummary(responses, false);
