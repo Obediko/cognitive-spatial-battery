@@ -35,7 +35,7 @@ Not permitted before validation:
 | asf_ended_early | 0 or 1 | Protocol fidelity |
 | asf_recording_duration_ms | Continuous | Protocol fidelity |
 
-The primary score is the count of distinct responses judged to be valid animals. No errors are subtracted from the total.
+The primary score is the count of distinct responses judged to be valid animals. No errors are subtracted from the total. The ETI-facing score is null when the administration ended early or any response remains uncertain. The raw valid-unique count is retained separately for audit and later adjudication.
 
 ## 3. Practice
 
@@ -136,7 +136,7 @@ The examiner screen must provide:
 - save as examiner-verified or defer scoring;
 - audit timestamp and scoring-dictionary version.
 
-The final valid score is calculated from unique canonical labels among rows marked valid. The software must warn when two valid rows share the same canonical label.
+The final valid score is calculated from unique canonical labels among rows marked valid. The software must warn when two valid rows share the same canonical label. A score may be examiner-verified only when every row has a final decision and the administration completed normally. Uncertain responses produce provisional status and a null ETI-facing score; early termination produces incomplete status and a null ETI-facing score.
 
 ## 8. Device and privacy requirements
 
@@ -163,14 +163,15 @@ The final valid score is calculated from unique canonical labels among rows mark
 | response_audio_mime_type | string or null |
 | transcript | string or null |
 | response_rows | JSON array |
-| total_valid_unique | integer or null |
+| total_valid_unique | integer or null; null when incomplete or provisional |
+| total_valid_unique_raw | integer or null; audit value only |
 | repetitions | integer or null |
 | rule_violations | integer or null |
 | uncertain_responses | integer or null |
 | prompt_used | boolean |
 | ended_early | boolean |
 | microphone_problem | boolean |
-| review_status | unscored, deferred or examiner_verified |
+| review_status | unscored, unreviewed, provisional, incomplete, deferred or examiner_verified |
 | scored_at | ISO-8601 string or null |
 
 ## 10. Validation gates
