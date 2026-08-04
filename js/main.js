@@ -278,6 +278,10 @@ function makeCompletionScreen() {
         + '<button class="battery-btn download" id="dl-csv">&#8595; Download Trials CSV</button>'
         + '<button class="battery-btn download" id="dl-json">&#8595; Download Full JSON</button>'
         + '<button class="battery-btn download" id="dl-summary">&#8595; Download Summary JSON</button>'
+        + ((window.OSRState && window.OSRState.audio && window.OSRState.audio.immediate)
+          ? '<button class="battery-btn download" id="dl-osr-immediate">&#8595; Download OSR Immediate Audio</button>' : '')
+        + ((window.OSRState && window.OSRState.audio && window.OSRState.audio.delayed)
+          ? '<button class="battery-btn download" id="dl-osr-delayed">&#8595; Download OSR Delayed Audio</button>' : '')
         + '</div>'
         + '<p style="margin-top:1.6em;color:#8899aa;font-size:0.8rem">'
         + '&#9888; Close this tab only after downloading your data.<br>'
@@ -290,9 +294,13 @@ function makeCompletionScreen() {
       var dlCSV = document.getElementById('dl-csv');
       var dlJSON = document.getElementById('dl-json');
       var dlSum  = document.getElementById('dl-summary');
+      var dlOSRI = document.getElementById('dl-osr-immediate');
+      var dlOSRD = document.getElementById('dl-osr-delayed');
       if (dlCSV)  dlCSV.addEventListener('click',  exportAllCSV);
       if (dlJSON) dlJSON.addEventListener('click', exportAllJSON);
       if (dlSum)  dlSum.addEventListener('click',  exportSummaryJSON);
+      if (dlOSRI) dlOSRI.addEventListener('click', function() { downloadOSRAudio('immediate'); });
+      if (dlOSRD) dlOSRD.addEventListener('click', function() { downloadOSRAudio('delayed'); });
 
       injectProgressBar();
       setProgress(100);
