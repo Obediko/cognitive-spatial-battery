@@ -10,9 +10,10 @@ Built with [jsPsych 7](https://www.jspsych.org/7.x/), plain HTML/CSS/JS — no b
 A brief computerized baseline cognitive/spatial battery administered during the **intake session** to characterize individual differences relevant to spatial navigation performance.
 
 **Tasks included:**
-1. Computerized Visual Sequencing and Set-Shifting Task
-2. Object-Location Memory Task
-3. 2D Spatial Pointing Task
+1. Original Story Recall (OSR-44) pilot — ETI Core
+2. Computerized Visual Sequencing and Set-Shifting Task
+3. Object-Location Memory Task
+4. 2D Spatial Pointing Task
 
 ## What This Battery Is NOT
 
@@ -87,6 +88,8 @@ window.PILOT_MODE = false; // Real timings for data collection
 Timings affected:
 | Timing | Pilot | Production |
 |--------|-------|------------|
+| OSR minimum delayed-recall interval | 15 s | 10 min |
+| OSR target delayed-recall interval | 20 s | 12 min |
 | OLM Encoding | 5 s | 25 s |
 | OLM Delay | 3 s | 15 s |
 | SP Study | 4 s | 10 s |
@@ -125,6 +128,7 @@ At the end of the battery, three download buttons are shown:
 | Download Trials CSV | One row per click/trial — all tasks combined |
 | Download Full JSON | Trials + summary + task summaries |
 | Download Summary JSON | Derived summary statistics only |
+| Download OSR Audio | Immediate or delayed local response recording |
 
 Each task also offers a "Download Task CSV" button at its end.
 
@@ -137,19 +141,30 @@ Task-specific variables are documented in `protocol_description.md`.
 
 ## Task Descriptions
 
-### 1. Visual Sequencing and Set-Shifting Task
+### 1. Original Story Recall (OSR-44) — experimental
+- Original 68-word story; no NACC story text or protected scoring material.
+- Produces immediate and delayed verbatim scores (0–44).
+- Also records paraphrase scores (0–25), protocol flags and exact delay.
+- Responses are recorded locally with the browser MediaRecorder API.
+- Examiner review provides unit-by-unit scoring and an audit-ready transcript field.
+- Current pilot playback uses the device text-to-speech voice and is marked non-standardised.
+- A frozen human-recorded audio file is required before validation or research deployment.
+- Audio files must be downloaded separately; they are not embedded inside CSV/JSON.
+- Full specification: docs/eti-core/story_recall_spec.md.
+
+### 2. Visual Sequencing and Set-Shifting Task
 **(NOT the Trail Making Test)**
 - **Condition A — Sequencing:** Click circles 1 → 2 → … → 25.
 - **Condition B — Set-Shifting:** Click 1 → A → 2 → B → … → 13 → M.
 - Practice included (with feedback). Main trials without feedback.
 - Derived outcomes: completion time, errors, set-shifting cost (ms), ratio.
 
-### 2. Object-Location Memory Task
+### 3. Object-Location Memory Task
 - 3 main blocks of 8 objects + 1 practice block of 3 objects.
 - Encoding (25 s) → Delay (15 s) → Retrieval (click remembered location).
 - Derived outcomes: mean/median Euclidean error (px), normalized error, response time.
 
-### 3. Spatial Pointing Task
+### 4. Spatial Pointing Task
 - Study phase: 6 landmarks in circular arena.
 - 18 main pointing trials (6 targets × 3 start positions, shuffled).
 - Participant clicks arena to indicate direction from start to remembered target.
@@ -185,6 +200,7 @@ cognitive-spatial-battery/
 │   ├── utils.js                            # Shared utilities, data store, export
 │   ├── main.js                             # Battery orchestration
 │   └── tasks/
+│       ├── original_story_recall.js
 │       ├── visual_sequencing_set_shifting.js
 │       ├── object_location_memory.js
 │       └── spatial_pointing.js
@@ -200,7 +216,7 @@ cognitive-spatial-battery/
 
 If you use this battery in a publication, please describe it as:
 
-> "A custom computerized baseline cognitive/spatial battery implemented in jsPsych 7, comprising a visual sequencing and set-shifting task, an object-location memory task, and a 2D spatial pointing task."
+> "A custom computerized cognitive/spatial battery implemented in jsPsych 7, comprising an experimental original story-recall task, a visual sequencing and set-shifting task, an object-location memory task, and a 2D spatial pointing task."
 
 Do NOT refer to the visual sequencing/set-shifting task as the "Trail Making Test."
 

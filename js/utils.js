@@ -117,6 +117,7 @@ function median(arr) {
 /* ── Build battery-level summary ──────────────────────────── */
 function buildSummary() {
   const bd = window.BatteryData;
+  const osr = bd.taskSummaries['original_story_recall'] || {};
   const vs = bd.taskSummaries['visual_sequencing_set_shifting'] || {};
 
   /* Object-Location Memory - main trials only */
@@ -149,6 +150,17 @@ function buildSummary() {
     session_end:    sessionEnd.toISOString(),
     total_battery_duration_ms: totalDur,
     pilot_mode: window.PILOT_MODE,
+
+    /* Original Story Recall */
+    osr_immediate_verbatim:  osr.osr_immediate_verbatim  ?? null,
+    osr_delayed_verbatim:    osr.osr_delayed_verbatim    ?? null,
+    osr_immediate_paraphrase: osr.osr_immediate_paraphrase ?? null,
+    osr_delayed_paraphrase:   osr.osr_delayed_paraphrase   ?? null,
+    osr_delay_duration_ms:    osr.osr_delay_duration_ms    ?? null,
+    osr_delay_out_of_window:  osr.osr_delay_out_of_window  ?? null,
+    osr_story_audio_standardized: osr.osr_story_audio_standardized ?? null,
+    osr_task_version:         osr.osr_task_version         ?? null,
+    osr_dictionary_version:   osr.osr_dictionary_version   ?? null,
 
     /* Visual Sequencing / Set-Shifting */
     completion_time_sequencing_ms:   vs.completion_time_sequencing_ms  ?? null,

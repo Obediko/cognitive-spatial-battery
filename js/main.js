@@ -95,13 +95,13 @@ function makeWelcomeTrials() {
       + '<p><strong>What this is NOT:</strong> This is not a stimulation-outcome task. '
       + 'Results will be used for participant characterization and may serve as covariates '
       + 'or exploratory moderators in analyses.</p>'
-      + '<p><strong>Duration:</strong> Approximately 15-25 minutes for the full battery.</p>'
-      + '<p><strong>Tasks included:</strong> Visual Sequencing &amp; Set-Shifting &bull; '
+      + '<p><strong>Duration:</strong> Approximately 25-35 minutes for the full pilot battery.</p>'
+      + '<p><strong>Tasks included:</strong> Original Story Recall &bull; Visual Sequencing &amp; Set-Shifting &bull; '
       + 'Object-Location Memory &bull; Spatial Pointing</p>'
       + '</div>'
       + '<p style="color:#8899aa;font-size:0.9rem;margin-top:1em">'
-      + 'Please run this on a <strong>laptop or desktop computer</strong> in a quiet environment.<br>'
-      + 'A mouse or trackpad is required.</p></div>',
+      + 'Please run this on a <strong>laptop or sufficiently large tablet</strong> in a quiet environment.<br>'
+      + 'Mouse, trackpad and touch input are supported.</p></div>',
     choices: ['Begin Setup'],
     data: { battery_phase: 'welcome' }
   };
@@ -135,8 +135,8 @@ function makeWelcomeTrials() {
     stimulus: '<div style="max-width:660px;margin:0 auto;text-align:center">'
       + '<h3 style="color:#a8d8ea;margin-bottom:0.6em">Before We Start</h3>'
       + '<div class="info-box" style="text-align:left">'
-      + '<p>&#10003; Use a <strong>laptop or desktop</strong> - not a phone or tablet.</p>'
-      + '<p>&#10003; Use <strong>Google Chrome</strong> for best compatibility.</p>'
+      + '<p>&#10003; Use a <strong>laptop or sufficiently large tablet</strong> - not a phone.</p>'
+      + '<p>&#10003; Use a current version of <strong>Chrome, Edge or Safari</strong>.</p>'
       + '<p>&#10003; Ensure your screen is at least <strong>900 x 600 px</strong>.</p>'
       + '<p>&#10003; Close other applications to minimise distractions.</p>'
       + '<p>&#10003; You will be prompted to enter <strong>fullscreen mode</strong>.</p>'
@@ -179,7 +179,8 @@ function makeTaskMenu(jsPsych) {
       + '<p style="color:#8899aa;font-size:0.85rem;margin-bottom:1.2em">'
       + 'Select which tasks to run. For the baseline session choose <em>Run Full Battery</em>.</p>'
       + '<div style="display:grid;gap:0.6em;max-width:420px;margin:0 auto">'
-      + '<button class="battery-btn primary" id="btn-full">Run Full Battery (~15-25 min)</button>'
+      + '<button class="battery-btn primary" id="btn-full">Run Full Pilot Battery (~25-35 min)</button>'
+      + '<button class="battery-btn" id="btn-osr">Original Story Recall only</button>'
       + '<button class="battery-btn" id="btn-vs">Visual Sequencing &amp; Set-Shifting only</button>'
       + '<button class="battery-btn" id="btn-olm">Object-Location Memory only</button>'
       + '<button class="battery-btn" id="btn-sp">Spatial Pointing only</button>'
@@ -200,11 +201,13 @@ function makeTaskMenu(jsPsych) {
       }
 
       var btnFull = document.getElementById('btn-full');
+      var btnOSR  = document.getElementById('btn-osr');
       var btnVS   = document.getElementById('btn-vs');
       var btnOLM  = document.getElementById('btn-olm');
       var btnSP   = document.getElementById('btn-sp');
 
       if (btnFull) btnFull.addEventListener('click', function() { finish('full'); });
+      if (btnOSR)  btnOSR.addEventListener('click', function() { finish('osr'); });
       if (btnVS)   btnVS.addEventListener('click',   function() { finish('vs'); });
       if (btnOLM)  btnOLM.addEventListener('click',  function() { finish('olm'); });
       if (btnSP)   btnSP.addEventListener('click',   function() { finish('sp'); });
@@ -255,6 +258,9 @@ function makeCompletionScreen() {
         + '<h3 style="margin-top:1.2em;color:#b8c6db">Summary</h3>'
         + '<table class="summary-table">'
         + '<tr><th>Measure</th><th>Value</th></tr>'
+        + '<tr><td>OSR immediate verbatim</td><td>' + (summary.osr_immediate_verbatim != null ? summary.osr_immediate_verbatim + ' / 44' : 'Not scored') + '</td></tr>'
+        + '<tr><td>OSR delayed verbatim</td><td>' + (summary.osr_delayed_verbatim != null ? summary.osr_delayed_verbatim + ' / 44' : 'Not scored') + '</td></tr>'
+        + '<tr><td>OSR delay</td><td>' + (summary.osr_delay_duration_ms != null ? fmt(summary.osr_delay_duration_ms / 60000, 1) + ' min' : 'N/A') + '</td></tr>'
         + '<tr><td>Sequencing completion time</td><td>' + fmt(summary.completion_time_sequencing_ms) + ' ms</td></tr>'
         + '<tr><td>Set-shifting completion time</td><td>' + fmt(summary.completion_time_set_shifting_ms) + ' ms</td></tr>'
         + '<tr><td>Set-shifting cost</td><td>' + fmt(summary.set_shifting_cost_ms) + ' ms</td></tr>'
@@ -272,6 +278,10 @@ function makeCompletionScreen() {
         + '<button class="battery-btn download" id="dl-csv">&#8595; Download Trials CSV</button>'
         + '<button class="battery-btn download" id="dl-json">&#8595; Download Full JSON</button>'
         + '<button class="battery-btn download" id="dl-summary">&#8595; Download Summary JSON</button>'
+        + ((window.OSRState && window.OSRState.audio && window.OSRState.audio.immediate)
+          ? '<button class="battery-btn download" id="dl-osr-immediate">&#8595; Download OSR Immediate Audio</button>' : '')
+        + ((window.OSRState && window.OSRState.audio && window.OSRState.audio.delayed)
+          ? '<button class="battery-btn download" id="dl-osr-delayed">&#8595; Download OSR Delayed Audio</button>' : '')
         + '</div>'
         + '<p style="margin-top:1.6em;color:#8899aa;font-size:0.8rem">'
         + '&#9888; Close this tab only after downloading your data.<br>'
@@ -284,9 +294,13 @@ function makeCompletionScreen() {
       var dlCSV = document.getElementById('dl-csv');
       var dlJSON = document.getElementById('dl-json');
       var dlSum  = document.getElementById('dl-summary');
+      var dlOSRI = document.getElementById('dl-osr-immediate');
+      var dlOSRD = document.getElementById('dl-osr-delayed');
       if (dlCSV)  dlCSV.addEventListener('click',  exportAllCSV);
       if (dlJSON) dlJSON.addEventListener('click', exportAllJSON);
       if (dlSum)  dlSum.addEventListener('click',  exportSummaryJSON);
+      if (dlOSRI) dlOSRI.addEventListener('click', function() { downloadOSRAudio('immediate'); });
+      if (dlOSRD) dlOSRD.addEventListener('click', function() { downloadOSRAudio('delayed'); });
 
       injectProgressBar();
       setProgress(100);
@@ -304,7 +318,7 @@ window.addEventListener('load', function() {
   checkScreenSize();
 
   /* Safety check: ensure all task builders are available */
-  var required = ['buildVisualSequencingTimeline', 'buildObjectLocationTimeline', 'buildSpatialPointingTimeline'];
+  var required = ['buildOSRImmediateTimeline', 'buildOSRDelayedTimeline', 'buildVisualSequencingTimeline', 'buildObjectLocationTimeline', 'buildSpatialPointingTimeline'];
   for (var ri = 0; ri < required.length; ri++) {
     if (typeof window[required[ri]] !== 'function') {
       var target = document.getElementById('jspsych-target');
@@ -332,6 +346,22 @@ window.addEventListener('load', function() {
   var taskMenu = makeTaskMenu(jsPsych);
 
   /* Conditional timeline nodes */
+  var osrImmediateTimeline = {
+    timeline: buildOSRImmediateTimeline(),
+    conditional_function: function() {
+      var c = window._batteryChoice;
+      return c === 'full' || c === 'osr';
+    }
+  };
+
+  var osrDelayedTimeline = {
+    timeline: buildOSRDelayedTimeline(),
+    conditional_function: function() {
+      var c = window._batteryChoice;
+      return c === 'full' || c === 'osr';
+    }
+  };
+
   var vsTimeline = {
     timeline: buildVisualSequencingTimeline(),
     conditional_function: function() {
@@ -356,16 +386,22 @@ window.addEventListener('load', function() {
     }
   };
 
-  var setP33 = { type: jsPsychCallFunction, func: function() { setProgress(33); } };
-  var setP66 = { type: jsPsychCallFunction, func: function() { setProgress(66); } };
+  var setP15 = { type: jsPsychCallFunction, func: function() { setProgress(15); } };
+  var setP35 = { type: jsPsychCallFunction, func: function() { setProgress(35); } };
+  var setP50 = { type: jsPsychCallFunction, func: function() { setProgress(50); } };
+  var setP70 = { type: jsPsychCallFunction, func: function() { setProgress(70); } };
   var setP90 = { type: jsPsychCallFunction, func: function() { setProgress(90); } };
 
   var timeline = welcomeTrials.concat([
     taskMenu,
+    osrImmediateTimeline,
+    setP15,
     vsTimeline,
-    setP33,
+    setP35,
+    osrDelayedTimeline,
+    setP50,
     olmTimeline,
-    setP66,
+    setP70,
     spTimeline,
     setP90,
     makeCompletionScreen()
