@@ -30,6 +30,38 @@
       .replace(/'/g, '&#39;');
   }
 
+  function asfNormalise(value) {
+    return String(value || '').trim().toLocaleLowerCase('en').replace(/[.?!]+$/g, '');
+  }
+
+  function asfSummariseRows(rows) {
+    rows = Array.isArray(rows) ? rows : [];
+    var validLabels = new Set(rows.filter(function(row) {
+      return row.decision === 'valid' && row.canonical;
+    }).map(function(row) { return asfNormalise(row.canonical); }));
+    return {
+      valid: validLabels.size,
+      repetitions: rows.filter(function(row) { return row.decision === 'repetition'; }).length,
+      violations: rows.filter(function(row) { return row.decision === 'rule_violation'; }).length,
+      uncertain: rows.filter(function(row) { return row.decision === 'uncertain'; }).length,
+      unreviewed: rows.filter(function(row) { return row.decision === 'unreviewed'; }).length,
+      rows: rows
+    };
+  }
+
+  function asfFinaliseScore(summary, endedEarly) {
+    if (endedEarly) return { status: 'incomplete', total: null };
+    if (summary.unreviewed) return { status: 'unreviewed', total: null };
+    if (summary.uncertain) return { status: 'provisional', total: null };
+    return { status: 'examiner_verified', total: summary.valid };
+  }
+
+  window.ASFScoring = {
+    normalise: asfNormalise,
+    summariseRows: asfSummariseRows,
+    finaliseScore: asfFinaliseScore
+  };
+
   function asfFilename(extension) {
     var pid = window.BatteryData.participantId || 'unknown';
     var date = new Date().toISOString().slice(0, 10);
@@ -320,9 +352,7 @@
 
         var body = document.getElementById('asf-response-body');
 
-        function normalise(value) {
-          return String(value || '').trim().toLocaleLowerCase('en').replace(/[.?!]+$/g, '');
-        }
+        var normalise = asfNormalise;
 
         function makeRow(response) {
           var row = document.createElement('div');
@@ -358,18 +388,7 @@
         }
 
         function counts() {
-          var rows = rowObjects();
-          var validLabels = new Set(rows.filter(function(row) {
-            return row.decision === 'valid' && row.canonical;
-          }).map(function(row) { return row.canonical; }));
-          return {
-            valid: validLabels.size,
-            repetitions: rows.filter(function(row) { return row.decision === 'repetition'; }).length,
-            violations: rows.filter(function(row) { return row.decision === 'rule_violation'; }).length,
-            uncertain: rows.filter(function(row) { return row.decision === 'uncertain'; }).length,
-            unreviewed: rows.filter(function(row) { return row.decision === 'unreviewed'; }).length,
-            rows: rows
-          };
+          return asfSummariseRows(rowObjects());
         }
 
         function updateCounts() {
@@ -421,25 +440,27 @@
           var trial = window.BatteryData.trials.slice().reverse().find(function(row) {
             return row.task_name === 'animal_semantic_fluency' && row.phase === 'category_generation';
           });
-          var status = c.uncertain ? 'provisional' : 'examiner_verified';
+          var finalised = asfFinaliseScore(c, window.ASFState.endedEarly);
           if (trial) {
             trial.transcript = document.getElementById('asf-transcript').value.trim() || null;
             trial.response_rows = JSON.stringify(c.rows);
-            trial.total_valid_unique = c.valid;
+            trial.total_valid_unique = finalised.total;
+            trial.total_valid_unique_raw = c.valid;
             trial.repetitions = c.repetitions;
             trial.rule_violations = c.violations;
             trial.uncertain_responses = c.uncertain;
-            trial.review_status = status;
+            trial.review_status = finalised.status;
             trial.scored_at = getTimestamp();
           }
           window.BatteryData.setTaskSummary('animal_semantic_fluency', {
-            asf_total_valid_unique: c.valid,
+            asf_total_valid_unique: finalised.total,
+            asf_total_valid_unique_raw: c.valid,
             asf_repetitions: c.repetitions,
             asf_rule_violations: c.violations,
             asf_uncertain_responses: c.uncertain,
             asf_prompt_used: window.ASFState.promptUsed,
             asf_ended_early: window.ASFState.endedEarly,
-            asf_review_status: status,
+            asf_review_status: finalised.status,
             asf_task_version: ASF_VERSION,
             asf_dictionary_version: ASF_DICTIONARY_VERSION
           });
