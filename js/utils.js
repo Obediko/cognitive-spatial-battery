@@ -121,6 +121,7 @@ function buildSummary() {
   const asf = bd.taskSummaries['animal_semantic_fluency'] || {};
   const ovn = bd.taskSummaries['original_visual_naming'] || {};
   const ocf = bd.taskSummaries['original_complex_figure'] || {};
+  const ons = bd.taskSummaries['original_number_span'] || {};
   const vs = bd.taskSummaries['visual_sequencing_set_shifting'] || {};
 
   /* Object-Location Memory - main trials only */
@@ -202,6 +203,19 @@ function buildSummary() {
     ocf_recognition_correct: ocf.ocf_recognition_correct ?? null,
     ocf_task_version: ocf.ocf_task_version ?? null,
     ocf_stimulus_version: ocf.ocf_stimulus_version ?? null,
+
+    /* Original Number Span */
+    ons_forward_total_correct: ons.ons_forward_total_correct ?? null,
+    ons_forward_longest_span: ons.ons_forward_longest_span ?? null,
+    ons_forward_trials_administered: ons.ons_forward_trials_administered ?? null,
+    ons_forward_discontinued_at_span: ons.ons_forward_discontinued_at_span ?? null,
+    ons_backward_total_correct: ons.ons_backward_total_correct ?? null,
+    ons_backward_longest_span: ons.ons_backward_longest_span ?? null,
+    ons_backward_trials_administered: ons.ons_backward_trials_administered ?? null,
+    ons_backward_discontinued_at_span: ons.ons_backward_discontinued_at_span ?? null,
+    ons_audio_standardized: ons.ons_audio_standardized ?? null,
+    ons_task_version: ons.ons_task_version ?? null,
+    ons_sequence_version: ons.ons_sequence_version ?? null,
 
     /* Visual Sequencing / Set-Shifting */
     completion_time_sequencing_ms:   vs.completion_time_sequencing_ms  ?? null,
@@ -288,3 +302,47 @@ function exportSummaryJSON() {
   const date = new Date().toISOString().slice(0, 10);
   triggerDownload(JSON.stringify(buildSummary(), null, 2), pid + '_' + date + '_summary.json', 'application/json');
 }
+
+
+/* Optional global gamepad focus navigation for button-based screens. */
+function enableGamepadNavigation() {
+  if (window._gamepadNavigationEnabled) return;
+  window._gamepadNavigationEnabled = true;
+  var lastMove = 0;
+  var primaryWasPressed = false;
+  function loop(timestamp) {
+    var pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    var pad = Array.prototype.find.call(pads, function(p) { return p; });
+    if (pad && !document.getElementById('ocf-canvas')) {
+      var dx = ((pad.buttons[15] && pad.buttons[15].pressed) ? 1 : 0)
+        - ((pad.buttons[14] && pad.buttons[14].pressed) ? 1 : 0);
+      var dy = ((pad.buttons[13] && pad.buttons[13].pressed) ? 1 : 0)
+        - ((pad.buttons[12] && pad.buttons[12].pressed) ? 1 : 0);
+      if (Math.abs(pad.axes[0] || 0) > 0.65) dx = pad.axes[0] > 0 ? 1 : -1;
+      if (Math.abs(pad.axes[1] || 0) > 0.65) dy = pad.axes[1] > 0 ? 1 : -1;
+      var direction = dy || dx;
+      if (direction && timestamp - lastMove > 180) {
+        var focusable = Array.prototype.filter.call(
+          document.querySelectorAll('button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'),
+          function(el) { return el.offsetParent !== null; }
+        );
+        if (focusable.length) {
+          var index = focusable.indexOf(document.activeElement);
+          index = index < 0 ? 0 : (index + (direction > 0 ? 1 : -1) + focusable.length) % focusable.length;
+          focusable[index].focus();
+        }
+        lastMove = timestamp;
+      }
+      var primary = !!(pad.buttons[0] && pad.buttons[0].pressed);
+      if (primary && !primaryWasPressed && document.activeElement && typeof document.activeElement.click === 'function') {
+        document.activeElement.click();
+      }
+      primaryWasPressed = primary;
+    } else {
+      primaryWasPressed = false;
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+window.enableGamepadNavigation = enableGamepadNavigation;
