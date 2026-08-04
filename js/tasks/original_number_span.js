@@ -131,6 +131,7 @@
           var played = false;
           var playbackCount = 0;
           var voiceInfo = null;
+          var fallbackRevealed = false;
           var startedAt = Date.now();
           var correctExpected = expectedResponse(item, condition);
 
@@ -172,6 +173,7 @@
             if (!played) return; entered = ''; submit.disabled = false; submit.click();
           };
           document.getElementById('ons-reveal').onclick = function() {
+            fallbackRevealed = true;
             document.getElementById('ons-fallback').hidden = false;
             document.getElementById('ons-fallback').textContent = 'Read at one digit per second: ' + item.digits.join(' · ');
           };
@@ -212,6 +214,7 @@
               playback_standardized: false,
               playback_voice_name: voiceInfo ? voiceInfo.name : null,
               playback_voice_lang: voiceInfo ? voiceInfo.lang : null,
+              examiner_fallback_revealed: fallbackRevealed,
               response_entry_duration_ms: Date.now() - startedAt
             };
             window.ONSState[condition].push(result);
