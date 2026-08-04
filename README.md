@@ -15,6 +15,7 @@ A brief computerized baseline cognitive/spatial battery administered during the 
 3. Computerized Visual Sequencing and Set-Shifting Task
 4. Object-Location Memory Task
 5. 2D Spatial Pointing Task
+6. Number Span (ONS) pilot — ETI Core
 
 ## What This Battery Is NOT
 
@@ -33,6 +34,13 @@ A brief computerized baseline cognitive/spatial battery administered during the 
 - Data is **never transmitted** to any server, cloud service, or third party.
 - Download data **before closing the browser tab** — it cannot be recovered afterwards.
 - The `data/` folder in this repository is a placeholder only. **Never commit real participant data to GitHub.**
+
+---
+
+## Live Demo
+
+- **GitHub Pages (main branch):** https://obediko.github.io/cognitive-spatial-battery/ — redeploys automatically on every push to `main`.
+- **Netlify (if connected):** see [Netlify Deployment](#netlify-deployment) below. Netlify also builds a separate **Deploy Preview** URL for every open pull request, so you can test a branch before merging it — check the PR's checks/status for the preview link.
 
 ---
 
@@ -120,6 +128,30 @@ Images must be:
 
 ---
 
+## Standardized Stimulus Audio
+
+OSR (story + prompts) and Number Span (digits + instructions) both use pre-generated stimulus audio rather than only relying on the browser's built-in voice:
+
+- Files live under `assets/audio/osr/` and `assets/audio/digits/`.
+- All files: WAV, mono, 48 kHz, 16-bit PCM.
+- Each task preloads its audio and falls back to the device's built-in speech voice (per item) if a standardized file fails to load, flagging the affected session (`story_audio_standardized` / `ns_audio_standardized`) so it can be reviewed or excluded.
+- **The voice in these files is currently a synthetic (neural TTS) voice.** This is sufficient for pilot and integration testing but is **not** a frozen, validated research stimulus — a human-recorded (or otherwise approved) set, checked for intelligibility and loudness-matched across files, is required before real data collection. See `docs/eti-core/story_recall_spec.md` and `docs/eti-core/number_span_spec.md` for the full stimulus requirements.
+
+---
+
+## Running Tests
+
+Pure scoring/sequencing logic for the audio-recorded and live-scored tasks is unit-tested with plain Node (no browser, no test framework dependency):
+
+```bash
+node tests/animal_semantic_fluency.test.js
+node tests/number_span.test.js
+```
+
+Each test file loads its task's `.js` source into a minimal `vm` context and exercises only the DOM/Audio-free logic it exports (`window.ASFScoring`, `window.NSScoring`) — see either file for the pattern to follow if you add a new task.
+
+---
+
 ## Data Export
 
 At the end of the battery, three download buttons are shown:
@@ -132,7 +164,7 @@ At the end of the battery, three download buttons are shown:
 | Download OSR Audio | Immediate or delayed local response recording |
 | Download Animal Naming Audio | Local 60-second response recording |
 
-Each task also offers a "Download Task CSV" button at its end.
+Each task also offers a "Download Task CSV" button at its end. Number Span has no audio download — its responses are captured as typed, examiner-scored digit strings in the trial CSV/JSON rather than as recorded audio (see the Number Span task description below for why).
 
 ### CSV Variables (Trials)
 All rows include: `participant_id`, `task_name`, `timestamp`, `window_width_px`, `window_height_px`, `screen_width_px`, `screen_height_px`, `device_pixel_ratio`.
@@ -149,8 +181,7 @@ Task-specific variables are documented in `protocol_description.md`.
 - Also records paraphrase scores (0–25), protocol flags and exact delay.
 - Responses are recorded locally with the browser MediaRecorder API.
 - Examiner review provides unit-by-unit scoring and an audit-ready transcript field.
-- Encoding playback and the recall prompts now use a fixed synthetic-voice recording set (`assets/audio/osr/`) with automatic fallback to the device text-to-speech voice if the standardized file fails to load; each trial logs which one was actually used via `story_audio_standardized`.
-- These synthetic recordings are a placeholder for pilot/integration testing only — a frozen, intelligibility-tested human-recorded (or approved) audio set is still required before validation or research deployment.
+- Encoding playback and the recall prompts use standardized audio (see [Standardized Stimulus Audio](#standardized-stimulus-audio)).
 - Audio files must be downloaded separately; they are not embedded inside CSV/JSON.
 - Full specification: docs/eti-core/story_recall_spec.md.
 
@@ -181,10 +212,9 @@ Task-specific variables are documented in `protocol_description.md`.
 - Derived outcomes: mean/median absolute angular error (°), signed bias (°).
 
 ### 6. Number Span (ONS) — experimental
-- Original forward/backward digit-span task; standardized one-digit-per-second audio presentation.
+- Original forward/backward digit-span task; standardized audio presentation (see [Standardized Stimulus Audio](#standardized-stimulus-audio)), one digit per second (exact onset-to-onset interval).
 - Forward span starts at length 3 (max 9), backward at length 2 (max 8); two trials per length, discontinue after both trials at a length are incorrect.
 - Responses are scored live by the examiner (typed entry, auto-compared against the expected sequence) — not audio-recorded, unlike OSR/ASF; see spec for rationale.
-- Digit/instruction audio falls back to the device voice per-item if a standardized file fails to load, and flags `ns_audio_standardized: false`.
 - Full specification: docs/eti-core/number_span_spec.md.
 
 ---
@@ -200,6 +230,8 @@ Task-specific variables are documented in `protocol_description.md`.
 | Netlify shows 404 | Check that `publish = "."` is set in `netlify.toml`. |
 | Screen warning showing | Increase browser window size to at least 900×600 px. |
 | OLM positions overlap | This can happen on very small screens; use ≥ 1280×800 px. |
+| No sound during OSR / Number Span | Check system/browser volume. Some browsers block autoplay until you've clicked on the page once — click anywhere, then retry. |
+| "Script Load Error" mentioning a `build...Timeline` function | A task's `.js` file failed to load — check the `<script>` tags in `index.html` and the browser console for 404s. |
 
 ---
 
@@ -221,9 +253,21 @@ cognitive-spatial-battery/
 │       ├── animal_semantic_fluency.js
 │       ├── visual_sequencing_set_shifting.js
 │       ├── object_location_memory.js
-│       └── spatial_pointing.js
-├── assets/images/objects/                  # Placeholder for object images
-│   └── README_stimuli.txt
+│       ├── spatial_pointing.js
+│       └── number_span.js
+├── assets/
+│   ├── images/objects/                     # Placeholder for OLM object images
+│   │   └── README_stimuli.txt
+│   └── audio/                              # Standardized stimulus audio (see above)
+│       ├── osr/                            # Story + prompts (OSR-44)
+│       └── digits/                         # Digits 0-9 + span instructions (ONS)
+├── docs/eti-core/                          # Per-task scientific/scoring specs
+│   ├── story_recall_spec.md
+│   ├── animal_fluency_spec.md
+│   └── number_span_spec.md
+├── tests/                                  # Node-based unit tests for pure task logic
+│   ├── animal_semantic_fluency.test.js
+│   └── number_span.test.js
 └── data/
     └── README_do_not_store_real_data_here.txt
 ```
@@ -234,7 +278,7 @@ cognitive-spatial-battery/
 
 If you use this battery in a publication, please describe it as:
 
-> "A custom computerized cognitive/spatial battery implemented in jsPsych 7, comprising experimental original story-recall and animal semantic-fluency tasks, a visual sequencing and set-shifting task, an object-location memory task, and a 2D spatial pointing task."
+> "A custom computerized cognitive/spatial battery implemented in jsPsych 7, comprising experimental original story-recall, animal semantic-fluency, and number-span tasks, a visual sequencing and set-shifting task, an object-location memory task, and a 2D spatial pointing task."
 
 Do NOT refer to the visual sequencing/set-shifting task as the "Trail Making Test."
 
