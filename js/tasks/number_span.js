@@ -261,7 +261,7 @@
             + '<p class="osr-fineprint">Enter the digits exactly as spoken, in the order the participant said them (digits only).</p>'
             + '<input type="text" id="ns-response-input" inputmode="numeric" pattern="[0-9]*" '
             + 'style="font-size:1.4rem;letter-spacing:0.15em;text-align:center;width:100%;max-width:320px;padding:0.5em;margin:0.6em 0" '
-            + 'placeholder="e.g. ' + sequence.join('') + '">'
+            + 'placeholder="Digits only" autocomplete="off">'
             + '<button class="battery-btn primary" id="ns-score-trial" type="button">Score &amp; continue</button>'
             + '<p id="ns-score-status" class="osr-status" aria-live="polite"></p></div>';
 
