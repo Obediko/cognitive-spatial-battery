@@ -55,7 +55,7 @@ Use a standardized, human-recorded audio file. The displayed screen must not sho
 
 Story characteristics to verify during piloting:
 
-- 91 words in the current punctuation-based count;
+- 95 words in the current whitespace-token count;
 - one principal character;
 - chronological everyday event;
 - two clock-time details;
