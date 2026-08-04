@@ -180,6 +180,13 @@ Task-specific variables are documented in `protocol_description.md`.
 - Participant clicks arena to indicate direction from start to remembered target.
 - Derived outcomes: mean/median absolute angular error (°), signed bias (°).
 
+### 6. Number Span (ONS) — experimental
+- Original forward/backward digit-span task; standardized one-digit-per-second audio presentation.
+- Forward span starts at length 3 (max 9), backward at length 2 (max 8); two trials per length, discontinue after both trials at a length are incorrect.
+- Responses are scored live by the examiner (typed entry, auto-compared against the expected sequence) — not audio-recorded, unlike OSR/ASF; see spec for rationale.
+- Digit/instruction audio falls back to the device voice per-item if a standardized file fails to load, and flags `ns_audio_standardized: false`.
+- Full specification: docs/eti-core/number_span_spec.md.
+
 ---
 
 ## Troubleshooting
