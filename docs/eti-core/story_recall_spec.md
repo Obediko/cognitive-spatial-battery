@@ -51,11 +51,11 @@ The software must not save these values under NACC variable names. A later analy
 
 Use a standardized, human-recorded audio file. The displayed screen must not show the story text.
 
-> On Thursday morning, Elena took the seven-fifteen bus to the city library. She planned to return three history books and print a form for her new job. On the second floor, she noticed a blue wallet beside a window. It contained an identity card and two train tickets. Elena gave it to the librarian at the front desk, who called the telephone number on the card. Twenty minutes later, an older man arrived looking worried. He checked the wallet, thanked Elena, and offered her coffee. She smiled, declined, and caught the eleven o’clock bus home.
+> Thursday morning, Elena took the seven-fifteen bus to the library. She returned three books and printed a job form. Upstairs, she found a blue wallet by a window. Inside were an identity card and two train tickets. Elena gave it to the librarian, who phoned the owner. Twenty minutes later, an older man arrived, thanked Elena, and offered coffee. She declined and took the eleven o’clock bus home.
 
 Story characteristics to verify during piloting:
 
-- 95 words in the current whitespace-token count;
+- 68 words in the current whitespace-token count;
 - one principal character;
 - chronological everyday event;
 - two clock-time details;
@@ -141,43 +141,43 @@ The acceptable-verbatim column defines the initial locked lexical set. The parap
 | 4 | took | took; take; taking | travelled; went |
 | 5 | seven-fifteen | seven fifteen; 7:15 | quarter past seven |
 | 6 | bus | bus | public bus |
-| 7 | city library | city library | library in the city; public library |
-| 8 | planned | planned; plan; planning | intended; wanted |
-| 9 | return | return; returned; returning | take back; give back |
-| 10 | three | three; 3 | a trio |
-| 11 | history books | history book; history books | books about history |
-| 12 | print | print; printed; printing | make a printed copy |
+| 7 | library | library | public library |
+| 8 | returned | returned; return; returning | took back; gave back |
+| 9 | three | three; 3 | a trio |
+| 10 | books | book; books | reading materials is too broad |
+| 11 | printed | printed; print; printing | made a printed copy |
+| 12 | job | job | work; employment |
 | 13 | form | form | document; application form |
-| 14 | new job | new job | employment paperwork; form for work |
-| 15 | second floor | second floor; 2nd floor | one floor above the first |
-| 16 | noticed | noticed; notice; noticing | saw; found; spotted |
-| 17 | blue | blue | bluish |
-| 18 | wallet | wallet | billfold; purse only if clearly used as the found container |
-| 19 | beside | beside | next to; by |
-| 20 | window | window | windowpane area |
-| 21 | contained | contained; contain; containing | had inside; held |
-| 22 | identity card | identity card; ID card; identification card | identification |
+| 14 | upstairs | upstairs | upper floor; went up |
+| 15 | found | found; find; finding | noticed; saw; discovered |
+| 16 | blue | blue | bluish |
+| 17 | wallet | wallet | billfold; purse only if clearly used as the found container |
+| 18 | by | by | beside; next to |
+| 19 | window | window | window area |
+| 20 | inside | inside | in it; it contained |
+| 21 | identity | identity; ID; identification | identifying |
+| 22 | card | card | identification document |
 | 23 | two | two; 2 | a pair |
-| 24 | train tickets | train ticket; train tickets | railway tickets |
-| 25 | gave it | gave; give; given | handed it; passed it |
-| 26 | librarian | librarian | library worker; library staff member |
-| 27 | front desk | front desk | reception desk; main desk |
-| 28 | called | called; call; calling | telephoned; phoned |
-| 29 | telephone number | telephone number; phone number | contact number |
-| 30 | card | card | identity card; ID |
-| 31 | twenty minutes later | twenty minutes later; 20 minutes later | after about twenty minutes |
-| 32 | older man | older man | elderly man; older gentleman |
-| 33 | arrived | arrived; arrive; arriving | came; showed up |
-| 34 | worried | worried | anxious; concerned; distressed |
-| 35 | checked | checked; check; checking | inspected; looked through |
-| 36 | wallet | wallet | the found billfold |
-| 37 | thanked | thanked; thank; thanking | expressed thanks; was grateful |
-| 38 | Elena | Elena; clear phonetic transcription variants | her, only when the recipient is unambiguously Elena |
-| 39 | offered | offered; offer; offering | asked to buy or give |
-| 40 | coffee | coffee | a cup of coffee |
-| 41 | smiled | smiled; smile; smiling | reacted with a smile |
-| 42 | declined | declined; decline; declining | refused; said no; did not accept |
-| 43 | eleven o’clock bus | eleven o’clock bus; 11 o’clock bus; eleven bus | bus at eleven |
+| 24 | train | train | railway |
+| 25 | tickets | ticket; tickets | travel passes only if explicitly for the train |
+| 26 | Elena | Elena; clear phonetic transcription variants | she, only when unambiguously Elena |
+| 27 | gave | gave; give; given | handed; passed |
+| 28 | librarian | librarian | library worker; library staff member |
+| 29 | phoned | phoned; phone; phoning | called; telephoned |
+| 30 | owner | owner | person who owned it |
+| 31 | twenty | twenty; 20 | the correct quantity must be identifiable |
+| 32 | minutes later | minute later; minutes later | after that length of time |
+| 33 | older | older | elderly |
+| 34 | man | man | gentleman |
+| 35 | arrived | arrived; arrive; arriving | came; showed up |
+| 36 | thanked | thanked; thank; thanking | expressed thanks; was grateful |
+| 37 | Elena | Elena; clear phonetic transcription variants | her, only when the recipient is unambiguously Elena |
+| 38 | offered | offered; offer; offering | proposed giving; asked whether she wanted |
+| 39 | coffee | coffee | a cup of coffee |
+| 40 | declined | declined; decline; declining | refused; said no; did not accept |
+| 41 | took | took; take; taking | caught; travelled on |
+| 42 | eleven o’clock | eleven o’clock; 11 o’clock | at eleven |
+| 43 | bus | bus | public bus |
 | 44 | home | home | returned to her house |
 
 Important: “Paraphrase examples only” are not automatic verbatim alternatives. They are candidates for the separate 25-unit paraphrase score.
@@ -191,27 +191,27 @@ Award one point for each meaning unit communicated accurately. Exact wording is 
 | 1 | The event occurred on Thursday morning |
 | 2 | The principal character was Elena |
 | 3 | She took a bus at 7:15 |
-| 4 | She travelled to the city library |
-| 5 | She intended to return three history books |
-| 6 | She intended to print a form |
-| 7 | The form concerned a new job |
-| 8 | She went to or was on the second floor |
+| 4 | She travelled to a library |
+| 5 | She returned three books |
+| 6 | She printed a form |
+| 7 | The form concerned a job |
+| 8 | She went upstairs |
 | 9 | She found or noticed a wallet |
 | 10 | The wallet was blue |
 | 11 | It was beside a window |
-| 12 | It contained an identity card |
+| 12 | The wallet contained an identity card |
 | 13 | It contained two train tickets |
 | 14 | Elena handed the wallet to a librarian |
-| 15 | This occurred at the front desk |
-| 16 | The librarian called a telephone number |
-| 17 | The number was on the card |
-| 18 | Approximately twenty minutes passed |
-| 19 | An older, worried man arrived |
-| 20 | He checked the wallet |
-| 21 | He thanked Elena |
-| 22 | He offered Elena coffee |
-| 23 | Elena smiled and declined the offer |
-| 24 | Elena caught the 11 o’clock bus |
+| 15 | The librarian phoned someone |
+| 16 | The person called was the wallet’s owner |
+| 17 | Approximately twenty minutes passed |
+| 18 | An older man arrived |
+| 19 | The older man was the owner of the wallet |
+| 20 | He thanked Elena |
+| 21 | He offered Elena coffee |
+| 22 | Elena declined the offer |
+| 23 | Elena later took another bus |
+| 24 | That bus was at 11 o’clock |
 | 25 | She went home |
 
 Partial fragments do not receive half-points. When a meaning unit contains two essential details joined in one row, both must be present unless the row explicitly permits alternatives.
