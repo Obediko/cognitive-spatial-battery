@@ -95,8 +95,8 @@ function makeWelcomeTrials() {
       + '<p><strong>What this is NOT:</strong> This is not a stimulation-outcome task. '
       + 'Results will be used for participant characterization and may serve as covariates '
       + 'or exploratory moderators in analyses.</p>'
-      + '<p><strong>Duration:</strong> Approximately 28-38 minutes for the full pilot battery.</p>'
-      + '<p><strong>Tasks included:</strong> Original Story Recall &bull; Animal Naming &bull; Visual Sequencing &amp; Set-Shifting &bull; '
+      + '<p><strong>Duration:</strong> Approximately 38-50 minutes for the full pilot battery.</p>'
+      + '<p><strong>Tasks included:</strong> Original Story Recall &bull; Animal Naming &bull; Original Visual Naming &bull; Visual Sequencing &amp; Set-Shifting &bull; '
       + 'Object-Location Memory &bull; Spatial Pointing</p>'
       + '</div>'
       + '<p style="color:#8899aa;font-size:0.9rem;margin-top:1em">'
@@ -218,9 +218,10 @@ function makeTaskMenu(jsPsych) {
       + '<p style="color:#8899aa;font-size:0.85rem;margin-bottom:1.2em">'
       + 'Select which tasks to run. For the baseline session choose <em>Run Full Battery</em>.</p>'
       + '<div style="display:grid;gap:0.6em;max-width:420px;margin:0 auto">'
-      + '<button class="battery-btn primary" id="btn-full">Run Full Pilot Battery (~28-38 min)</button>'
+      + '<button class="battery-btn primary" id="btn-full">Run Full Pilot Battery (~38-50 min)</button>'
       + '<button class="battery-btn" id="btn-osr">Original Story Recall only</button>'
       + '<button class="battery-btn" id="btn-asf">Animal Naming only</button>'
+      + '<button class="battery-btn" id="btn-ovn">Original Visual Naming only</button>'
       + '<button class="battery-btn" id="btn-vs">Visual Sequencing &amp; Set-Shifting only</button>'
       + '<button class="battery-btn" id="btn-olm">Object-Location Memory only</button>'
       + '<button class="battery-btn" id="btn-sp">Spatial Pointing only</button>'
@@ -243,6 +244,7 @@ function makeTaskMenu(jsPsych) {
       var btnFull = document.getElementById('btn-full');
       var btnOSR  = document.getElementById('btn-osr');
       var btnASF  = document.getElementById('btn-asf');
+      var btnOVN  = document.getElementById('btn-ovn');
       var btnVS   = document.getElementById('btn-vs');
       var btnOLM  = document.getElementById('btn-olm');
       var btnSP   = document.getElementById('btn-sp');
@@ -250,6 +252,7 @@ function makeTaskMenu(jsPsych) {
       if (btnFull) btnFull.addEventListener('click', function() { finish('full'); });
       if (btnOSR)  btnOSR.addEventListener('click', function() { finish('osr'); });
       if (btnASF)  btnASF.addEventListener('click', function() { finish('asf'); });
+      if (btnOVN)  btnOVN.addEventListener('click', function() { finish('ovn'); });
       if (btnVS)   btnVS.addEventListener('click',   function() { finish('vs'); });
       if (btnOLM)  btnOLM.addEventListener('click',  function() { finish('olm'); });
       if (btnSP)   btnSP.addEventListener('click',   function() { finish('sp'); });
@@ -304,6 +307,8 @@ function makeCompletionScreen() {
         + '<tr><td>OSR delayed verbatim</td><td>' + (summary.osr_delayed_verbatim != null ? summary.osr_delayed_verbatim + ' / 44' : 'Not scored') + '</td></tr>'
         + '<tr><td>OSR delay</td><td>' + (summary.osr_delay_duration_ms != null ? fmt(summary.osr_delay_duration_ms / 60000, 1) + ' min' : 'N/A') + '</td></tr>'
         + '<tr><td>Animal Naming valid unique</td><td>' + (summary.asf_total_valid_unique != null ? summary.asf_total_valid_unique : 'Not scored') + '</td></tr>'
+        + '<tr><td>Original Visual Naming total</td><td>' + (summary.ovn_total_with_semantic != null ? summary.ovn_total_with_semantic : 'Not scored') + '</td></tr>'
+        + '<tr><td>Original Visual Naming uncued</td><td>' + (summary.ovn_total_uncued != null ? summary.ovn_total_uncued : 'Not scored') + '</td></tr>'
         + '<tr><td>Sequencing completion time</td><td>' + fmt(summary.completion_time_sequencing_ms) + ' ms</td></tr>'
         + '<tr><td>Set-shifting completion time</td><td>' + fmt(summary.completion_time_set_shifting_ms) + ' ms</td></tr>'
         + '<tr><td>Set-shifting cost</td><td>' + fmt(summary.set_shifting_cost_ms) + ' ms</td></tr>'
@@ -425,6 +430,14 @@ window.addEventListener('load', function() {
     }
   };
 
+  var ovnTimeline = {
+    timeline: [makeBreakScreen('Original Visual Naming Task')].concat(buildOriginalVisualNamingTimeline()),
+    conditional_function: function() {
+      var c = window._batteryChoice;
+      return c === 'full' || c === 'ovn';
+    }
+  };
+
   var olmTimeline = {
     timeline: [makeBreakScreen('Object-Location Memory Task')].concat(buildObjectLocationTimeline()),
     conditional_function: function() {
@@ -456,6 +469,7 @@ window.addEventListener('load', function() {
     osrDelayedTimeline,
     setP50,
     asfTimeline,
+    ovnTimeline,
     olmTimeline,
     setP70,
     spTimeline,
