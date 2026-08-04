@@ -46,9 +46,9 @@ const OLM_OBJECTS = [
   { id: 'spoon',      label: 'Spoon',      emoji: '\uD83E\uDD44', color: '#80cbc4', imagePath: 'assets/images/objects/spoon.jpg' },
   { id: 'comb',       label: 'Comb',       emoji: '\uD83E\uDEAE', color: '#aed581', imagePath: 'assets/images/objects/comb.jpg' },
   { id: 'toothbrush', label: 'Toothbrush', emoji: '\uD83E\uDE65', color: '#ffe082', imagePath: 'assets/images/objects/toothbrush.jpg' },
-  { id: 'stone',      label: 'Stone',      emoji: '\uD83E\uDEA8', color: '#a1887f' },
-  { id: 'brush',      label: 'Brush',      emoji: '\uD83E\uDDF9', color: '#4db6ac' },
-  { id: 'flower',     label: 'Flower',     emoji: '\uD83C\uDF38', color: '#f48fb1' }
+  { id: 'bowl',       label: 'Bowl',       emoji: '\uD83E\uDEA8', color: '#a1887f', imagePath: 'assets/images/objects/bowl.jpg' },
+  { id: 'hat',        label: 'Hat',        emoji: '\uD83E\uDDF9', color: '#4db6ac', imagePath: 'assets/images/objects/hat.jpg' },
+  { id: 'flower',     label: 'Flower',     emoji: '\uD83C\uDF38', color: '#f48fb1', imagePath: 'assets/images/objects/flower.jpg' }
 ];
 
 /* Block assignments (indices into OLM_OBJECTS, 8 per block) */
