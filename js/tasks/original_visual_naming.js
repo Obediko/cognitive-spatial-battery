@@ -123,7 +123,8 @@
 
   window.OVNScoring = {
     scoreSummary: scoreSummary,
-    nextFailureRun: nextFailureRun
+    nextFailureRun: nextFailureRun,
+    itemCount: items.length
   };
 
   function buildOriginalVisualNamingTimeline() {
