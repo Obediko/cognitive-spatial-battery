@@ -27,3 +27,5 @@ jobs:
         run: node tests/original_complex_figure.test.js
       - name: Test Original Number Span scoring
         run: node tests/original_number_span.test.js
+      - name: Audit ETI core eight-score contract
+        run: node tests/eti_core_eight_scores.test.js
