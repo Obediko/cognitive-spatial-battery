@@ -120,6 +120,7 @@ function buildSummary() {
   const osr = bd.taskSummaries['original_story_recall'] || {};
   const asf = bd.taskSummaries['animal_semantic_fluency'] || {};
   const ovn = bd.taskSummaries['original_visual_naming'] || {};
+  const ocf = bd.taskSummaries['original_complex_figure'] || {};
   const vs = bd.taskSummaries['visual_sequencing_set_shifting'] || {};
 
   /* Object-Location Memory - main trials only */
@@ -189,6 +190,18 @@ function buildSummary() {
     ovn_review_status: ovn.ovn_review_status ?? null,
     ovn_task_version: ovn.ovn_task_version ?? null,
     ovn_stimulus_set: ovn.ovn_stimulus_set ?? null,
+
+    /* Original Complex Figure */
+    ocf_copy_score: ocf.ocf_copy_score ?? null,
+    ocf_copy_score_raw: ocf.ocf_copy_score_raw ?? null,
+    ocf_copy_status: ocf.ocf_copy_status ?? null,
+    ocf_delayed_score: ocf.ocf_delayed_score ?? null,
+    ocf_delayed_score_raw: ocf.ocf_delayed_score_raw ?? null,
+    ocf_delayed_status: ocf.ocf_delayed_status ?? null,
+    ocf_delay_duration_ms: ocf.ocf_delay_duration_ms ?? null,
+    ocf_recognition_correct: ocf.ocf_recognition_correct ?? null,
+    ocf_task_version: ocf.ocf_task_version ?? null,
+    ocf_stimulus_version: ocf.ocf_stimulus_version ?? null,
 
     /* Visual Sequencing / Set-Shifting */
     completion_time_sequencing_ms:   vs.completion_time_sequencing_ms  ?? null,
