@@ -2,16 +2,16 @@
 
 ## Battery Overview
 
-A brief computerized baseline cognitive/spatial battery will be administered during the intake session to characterize individual differences relevant to spatial navigation performance. The battery includes a computerized visual sequencing and set-shifting task, an object-location memory task, and a spatial pointing task. These measures are not primary stimulation outcomes. They will be used for participant characterization and may be included as covariates or exploratory moderators in analyses of navigation and imaging outcomes.
+A browser-based baseline cognitive/spatial battery will be administered during the intake session to characterize individual differences relevant to spatial navigation performance. The battery contains five original ETI-aligned experimental tasks (eight primary score outputs), plus computerized visual sequencing/set-shifting, object-location memory and spatial pointing tasks. These measures are not primary stimulation outcomes. They will be used for participant characterization and may be included as covariates or exploratory moderators in analyses of navigation and imaging outcomes.
 
 ---
 
 ## Administrative Details
 
 - **Session type:** Intake / baseline session
-- **Administration mode:** Self-administered on a laptop with researcher present
+- **Administration mode:** Researcher-assisted on a laptop or sufficiently large tablet
 - **Platform:** Browser-based (jsPsych 7), Google Chrome recommended
-- **Estimated duration:** 15–25 minutes (full battery)
+- **Estimated duration:** 55–75 minutes (full pilot battery)
 - **Data storage:** Local browser only; exported as CSV/JSON by researcher
 - **Data transmission:** None — no network calls, no external servers
 
@@ -28,7 +28,24 @@ Participants are assigned a **pseudonymous participant ID** (e.g., P001, CSB_042
 
 ---
 
-## Task 1: Computerized Visual Sequencing and Set-Shifting Task
+
+## ETI-aligned experimental core
+
+These tasks preserve publicly described administration and scoring principles while using independent wording, stimuli and digit sequences. They are not substitutes for licensed or normed NACC instruments, and the resulting values must be reported under the original task names below.
+
+| Task | Primary output(s) | Range / rule |
+|------|-------------------|--------------|
+| Original Story Recall (OSR-44) | `osr_immediate_verbatim`, `osr_delayed_verbatim` | 0–44 each after examiner review |
+| Animal Semantic Fluency (ASF-60) | `asf_total_valid_unique` | Valid unique animal names in 60 seconds |
+| Original Visual Naming (OVN-32) | `ovn_total_with_semantic` | Correct uncued or after semantic cue |
+| Original Complex Figure (OCF-17) | `ocf_copy_score`, `ocf_delayed_score` | 0–17 each; incomplete phases are null |
+| Original Number Span (ONS) | `ons_forward_total_correct`, `ons_backward_total_correct` | Correct trials under the two-fail stopping rule |
+
+Full task specifications are in `docs/eti-core/`. Browser speech playback in OSR and ONS is non-standardized pilot scaffolding; frozen approved recordings are required before research use.
+
+---
+
+## Task 6: Computerized Visual Sequencing and Set-Shifting Task
 
 **Important:** This task is NOT the Trail Making Test (TMT). It is a self-built computerized task with different design parameters. Do not label it as TMT in any publication, report, or participant-facing material.
 
@@ -64,7 +81,7 @@ Baseline measure of visual search, processing speed, sequencing ability, and cog
 
 ---
 
-## Task 2: Object-Location Memory Task
+## Task 7: Object-Location Memory Task
 
 ### Purpose
 Baseline measure of spatial associative memory, relevant to entorhinal-hippocampal function.
@@ -95,7 +112,7 @@ To replace placeholder stimuli: see README.md, section "Replacing Object Stimuli
 
 ---
 
-## Task 3: 2D Spatial Pointing Task
+## Task 8: 2D Spatial Pointing Task
 
 ### Purpose
 Baseline measure of spatial orientation and directional memory.
