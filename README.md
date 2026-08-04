@@ -14,9 +14,10 @@ A brief computerized baseline cognitive/spatial battery administered during the 
 2. Animal Semantic Fluency (ASF-60) pilot — ETI Core
 3. Original Visual Naming (OVN-32) pilot — ETI Core
 4. Original Complex Figure (OCF-17) pilot — ETI Core
-5. Computerized Visual Sequencing and Set-Shifting Task
-6. Object-Location Memory Task
-7. 2D Spatial Pointing Task
+5. Original Number Span (ONS) pilot — ETI Core
+6. Computerized Visual Sequencing and Set-Shifting Task
+7. Object-Location Memory Task
+8. 2D Spatial Pointing Task
 
 ## What This Battery Is NOT
 
@@ -181,19 +182,28 @@ Task-specific variables are documented in `protocol_description.md`.
 - Raw normalized stroke paths, timings, input mode and element-level scoring are exported.
 - Full specification: docs/eti-core/original_complex_figure_spec.md.
 
-### 5. Visual Sequencing and Set-Shifting Task
+### 5. Original Number Span (ONS) — experimental
+- Independently generated and versioned forward (3–9) and backward (2–8) digit sequences.
+- Two trials per span; stops after both trials at a length are incorrect.
+- Exports total correct trials and longest successful span separately for each condition.
+- Examiner entry supports keyboard, mouse, touch and gamepad-controlled focus.
+- Device text-to-speech is pilot-only; frozen recordings are required before research use.
+- It is not NACC Number Span and must not be described as equivalent.
+- Full specification: docs/eti-core/original_number_span_spec.md.
+
+### 6. Visual Sequencing and Set-Shifting Task
 **(NOT the Trail Making Test)**
 - **Condition A — Sequencing:** Click circles 1 → 2 → … → 25.
 - **Condition B — Set-Shifting:** Click 1 → A → 2 → B → … → 13 → M.
 - Practice included (with feedback). Main trials without feedback.
 - Derived outcomes: completion time, errors, set-shifting cost (ms), ratio.
 
-### 6. Object-Location Memory Task
+### 7. Object-Location Memory Task
 - 3 main blocks of 8 objects + 1 practice block of 3 objects.
 - Encoding (25 s) → Delay (15 s) → Retrieval (click remembered location).
 - Derived outcomes: mean/median Euclidean error (px), normalized error, response time.
 
-### 7. Spatial Pointing Task
+### 8. Spatial Pointing Task
 - Study phase: 6 landmarks in circular arena.
 - 18 main pointing trials (6 targets × 3 start positions, shuffled).
 - Participant clicks arena to indicate direction from start to remembered target.
@@ -233,6 +243,7 @@ cognitive-spatial-battery/
 │       ├── animal_semantic_fluency.js
 │       ├── original_visual_naming.js
 │       ├── original_complex_figure.js
+│       ├── original_number_span.js
 │       ├── visual_sequencing_set_shifting.js
 │       ├── object_location_memory.js
 │       └── spatial_pointing.js
@@ -248,7 +259,7 @@ cognitive-spatial-battery/
 
 If you use this battery in a publication, please describe it as:
 
-> "A custom computerized cognitive/spatial battery implemented in jsPsych 7, comprising experimental original story-recall, animal semantic-fluency, original visual-naming and original complex-figure tasks, a visual sequencing and set-shifting task, an object-location memory task, and a 2D spatial pointing task."
+> "A custom computerized cognitive/spatial battery implemented in jsPsych 7, comprising experimental original story-recall, animal semantic-fluency, original visual-naming, original complex-figure and original number-span tasks, a visual sequencing and set-shifting task, an object-location memory task, and a 2D spatial pointing task."
 
 Do NOT refer to the visual sequencing/set-shifting task as the "Trail Making Test."
 
