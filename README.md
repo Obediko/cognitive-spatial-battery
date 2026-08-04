@@ -149,8 +149,8 @@ Task-specific variables are documented in `protocol_description.md`.
 - Also records paraphrase scores (0–25), protocol flags and exact delay.
 - Responses are recorded locally with the browser MediaRecorder API.
 - Examiner review provides unit-by-unit scoring and an audit-ready transcript field.
-- Current pilot playback uses the device text-to-speech voice and is marked non-standardised.
-- A frozen human-recorded audio file is required before validation or research deployment.
+- Encoding playback and the recall prompts now use a fixed synthetic-voice recording set (`assets/audio/osr/`) with automatic fallback to the device text-to-speech voice if the standardized file fails to load; each trial logs which one was actually used via `story_audio_standardized`.
+- These synthetic recordings are a placeholder for pilot/integration testing only — a frozen, intelligibility-tested human-recorded (or approved) audio set is still required before validation or research deployment.
 - Audio files must be downloaded separately; they are not embedded inside CSV/JSON.
 - Full specification: docs/eti-core/story_recall_spec.md.
 
