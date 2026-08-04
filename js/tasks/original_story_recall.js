@@ -212,7 +212,18 @@
           window.OSRState.protocolFlags.playback_interrupted = true;
           var status = document.getElementById('osr-play-status');
           if (status) status.innerHTML = '<span class="osr-error">Playback failed: '
-            + osrEscape(event.error || 'unknown error') + '</span>';
+            + osrEscape(event.error || 'unknown error') + '. This session will be flagged.</span>';
+          setTimeout(function() {
+            done({
+              task_name: 'original_story_recall',
+              phase: 'encoding',
+              task_version: OSR_VERSION,
+              story_form: OSR_STORY_FORM,
+              story_audio_standardized: false,
+              playback_failed: true,
+              playback_error: event.error || 'unknown error'
+            });
+          }, 1200);
         };
         utterance.onend = function() {
           done({
