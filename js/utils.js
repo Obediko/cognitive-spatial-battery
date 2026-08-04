@@ -118,6 +118,7 @@ function median(arr) {
 function buildSummary() {
   const bd = window.BatteryData;
   const osr = bd.taskSummaries['original_story_recall'] || {};
+  const asf = bd.taskSummaries['animal_semantic_fluency'] || {};
   const vs = bd.taskSummaries['visual_sequencing_set_shifting'] || {};
 
   /* Object-Location Memory - main trials only */
@@ -161,6 +162,18 @@ function buildSummary() {
     osr_story_audio_standardized: osr.osr_story_audio_standardized ?? null,
     osr_task_version:         osr.osr_task_version         ?? null,
     osr_dictionary_version:   osr.osr_dictionary_version   ?? null,
+
+    /* Animal Semantic Fluency */
+    asf_total_valid_unique: asf.asf_total_valid_unique ?? null,
+    asf_total_valid_unique_raw: asf.asf_total_valid_unique_raw ?? null,
+    asf_repetitions: asf.asf_repetitions ?? null,
+    asf_rule_violations: asf.asf_rule_violations ?? null,
+    asf_uncertain_responses: asf.asf_uncertain_responses ?? null,
+    asf_prompt_used: asf.asf_prompt_used ?? null,
+    asf_ended_early: asf.asf_ended_early ?? null,
+    asf_review_status: asf.asf_review_status ?? null,
+    asf_task_version: asf.asf_task_version ?? null,
+    asf_dictionary_version: asf.asf_dictionary_version ?? null,
 
     /* Visual Sequencing / Set-Shifting */
     completion_time_sequencing_ms:   vs.completion_time_sequencing_ms  ?? null,
