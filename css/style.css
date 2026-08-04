@@ -857,3 +857,19 @@ code { background: #0d1b2a; padding: 0.15em 0.4em; border-radius: 3px; font-size
 .ocf-foil-svg{width:100%;max-height:220px}.ocf-foil span{display:block;font-weight:700}
 @media(max-width:820px){.ocf-workspace,.ocf-score-layout{grid-template-columns:1fr}.ocf-model-card,.ocf-canvas-wrap,.ocf-replay-card{min-height:320px}.ocf-score-row{grid-template-columns:1fr 1fr}.ocf-score-row>div{grid-column:1/-1}}
 @media(max-width:560px){.ocf-heading{flex-direction:column}.ocf-foil-grid{grid-template-columns:1fr}.ocf-toolbar .battery-btn{flex:1 1 45%}}
+
+
+/* ETI CORE: Original Number Span */
+.ons-shell{width:min(760px,95vw);margin:0 auto}
+.ons-header{display:flex;justify-content:space-between;gap:1rem;align-items:start;text-align:left}
+.ons-progress{padding:.55rem .8rem;border-radius:999px;background:rgba(15,52,96,.65);color:#7dd3fc;font-weight:800}
+.ons-play-card,.ons-entry-card{margin-top:1rem;padding:1.1rem;border:1px solid rgba(168,216,234,.2);border-radius:18px;background:rgba(10,28,46,.92)}
+.ons-play-card{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;justify-content:center}
+.ons-play-card p{flex-basis:100%;margin:.2rem}
+.ons-fallback{padding:.65rem;border-radius:10px;background:rgba(120,53,15,.3);color:#fde68a;font-size:1.1rem;letter-spacing:.2em}
+.ons-response{display:block;min-height:64px;margin:.7rem auto;padding:.55rem;border:2px solid #3a6186;border-radius:12px;background:#081727;color:#f8fafc;font-size:2rem;letter-spacing:.25em}
+.ons-keypad{display:grid;grid-template-columns:repeat(5,minmax(56px,1fr));gap:.55rem;max-width:600px;margin:1rem auto}
+.ons-digit{min-width:56px;min-height:58px;border:1px solid #3a6186;border-radius:12px;background:#16213e;color:#f8fafc;font-size:1.35rem;font-weight:750;cursor:pointer}
+.ons-digit:hover,.ons-digit:focus-visible{border-color:#facc15;outline:3px solid #facc15;outline-offset:2px}
+.ons-actions{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center}
+@media(max-width:560px){.ons-header{flex-direction:column}.ons-keypad{grid-template-columns:repeat(3,1fr)}.ons-digit:last-child{grid-column:2}.ons-actions .battery-btn{flex:1 1 45%}}

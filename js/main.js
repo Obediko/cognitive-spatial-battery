@@ -95,8 +95,8 @@ function makeWelcomeTrials() {
       + '<p><strong>What this is NOT:</strong> This is not a stimulation-outcome task. '
       + 'Results will be used for participant characterization and may serve as covariates '
       + 'or exploratory moderators in analyses.</p>'
-      + '<p><strong>Duration:</strong> Approximately 50-65 minutes for the full pilot battery.</p>'
-      + '<p><strong>Tasks included:</strong> Original Story Recall &bull; Animal Naming &bull; Original Visual Naming &bull; Original Complex Figure &bull; Visual Sequencing &amp; Set-Shifting &bull; '
+      + '<p><strong>Duration:</strong> Approximately 55-75 minutes for the full pilot battery.</p>'
+      + '<p><strong>Tasks included:</strong> Original Story Recall &bull; Animal Naming &bull; Original Visual Naming &bull; Original Complex Figure &bull; Original Number Span &bull; Visual Sequencing &amp; Set-Shifting &bull; '
       + 'Object-Location Memory &bull; Spatial Pointing</p>'
       + '</div>'
       + '<p style="color:#8899aa;font-size:0.9rem;margin-top:1em">'
@@ -218,11 +218,12 @@ function makeTaskMenu(jsPsych) {
       + '<p style="color:#8899aa;font-size:0.85rem;margin-bottom:1.2em">'
       + 'Select which tasks to run. For the baseline session choose <em>Run Full Battery</em>.</p>'
       + '<div style="display:grid;gap:0.6em;max-width:420px;margin:0 auto">'
-      + '<button class="battery-btn primary" id="btn-full">Run Full Pilot Battery (~50-65 min)</button>'
+      + '<button class="battery-btn primary" id="btn-full">Run Full Pilot Battery (~55-75 min)</button>'
       + '<button class="battery-btn" id="btn-osr">Original Story Recall only</button>'
       + '<button class="battery-btn" id="btn-asf">Animal Naming only</button>'
       + '<button class="battery-btn" id="btn-ovn">Original Visual Naming only</button>'
       + '<button class="battery-btn" id="btn-ocf">Original Complex Figure only</button>'
+      + '<button class="battery-btn" id="btn-ons">Original Number Span only</button>'
       + '<button class="battery-btn" id="btn-vs">Visual Sequencing &amp; Set-Shifting only</button>'
       + '<button class="battery-btn" id="btn-olm">Object-Location Memory only</button>'
       + '<button class="battery-btn" id="btn-sp">Spatial Pointing only</button>'
@@ -247,6 +248,7 @@ function makeTaskMenu(jsPsych) {
       var btnASF  = document.getElementById('btn-asf');
       var btnOVN  = document.getElementById('btn-ovn');
       var btnOCF  = document.getElementById('btn-ocf');
+      var btnONS  = document.getElementById('btn-ons');
       var btnVS   = document.getElementById('btn-vs');
       var btnOLM  = document.getElementById('btn-olm');
       var btnSP   = document.getElementById('btn-sp');
@@ -256,6 +258,7 @@ function makeTaskMenu(jsPsych) {
       if (btnASF)  btnASF.addEventListener('click', function() { finish('asf'); });
       if (btnOVN)  btnOVN.addEventListener('click', function() { finish('ovn'); });
       if (btnOCF)  btnOCF.addEventListener('click', function() { finish('ocf'); });
+      if (btnONS)  btnONS.addEventListener('click', function() { finish('ons'); });
       if (btnVS)   btnVS.addEventListener('click',   function() { finish('vs'); });
       if (btnOLM)  btnOLM.addEventListener('click',  function() { finish('olm'); });
       if (btnSP)   btnSP.addEventListener('click',   function() { finish('sp'); });
@@ -314,6 +317,8 @@ function makeCompletionScreen() {
         + '<tr><td>Original Visual Naming uncued</td><td>' + (summary.ovn_total_uncued != null ? summary.ovn_total_uncued : 'Not scored') + '</td></tr>'
         + '<tr><td>Original Complex Figure copy</td><td>' + (summary.ocf_copy_score != null ? summary.ocf_copy_score + ' / 17' : 'Not scored') + '</td></tr>'
         + '<tr><td>Original Complex Figure delayed</td><td>' + (summary.ocf_delayed_score != null ? summary.ocf_delayed_score + ' / 17' : 'Not scored') + '</td></tr>'
+        + '<tr><td>Number Span forward correct trials</td><td>' + (summary.ons_forward_total_correct != null ? summary.ons_forward_total_correct : 'Not scored') + '</td></tr>'
+        + '<tr><td>Number Span backward correct trials</td><td>' + (summary.ons_backward_total_correct != null ? summary.ons_backward_total_correct : 'Not scored') + '</td></tr>'
         + '<tr><td>Sequencing completion time</td><td>' + fmt(summary.completion_time_sequencing_ms) + ' ms</td></tr>'
         + '<tr><td>Set-shifting completion time</td><td>' + fmt(summary.completion_time_set_shifting_ms) + ' ms</td></tr>'
         + '<tr><td>Set-shifting cost</td><td>' + fmt(summary.set_shifting_cost_ms) + ' ms</td></tr>'
@@ -375,7 +380,7 @@ window.addEventListener('load', function() {
   checkScreenSize();
 
   /* Safety check: ensure all task builders are available */
-  var required = ['buildOSRImmediateTimeline', 'buildOSRDelayedTimeline', 'buildAnimalFluencyTimeline', 'buildOriginalVisualNamingTimeline', 'buildOCFImmediateTimeline', 'buildOCFDelayedTimeline', 'buildVisualSequencingTimeline', 'buildObjectLocationTimeline', 'buildSpatialPointingTimeline'];
+  var required = ['buildOSRImmediateTimeline', 'buildOSRDelayedTimeline', 'buildAnimalFluencyTimeline', 'buildOriginalVisualNamingTimeline', 'buildOCFImmediateTimeline', 'buildOCFDelayedTimeline', 'buildOriginalNumberSpanTimeline', 'buildVisualSequencingTimeline', 'buildObjectLocationTimeline', 'buildSpatialPointingTimeline'];
   for (var ri = 0; ri < required.length; ri++) {
     if (typeof window[required[ri]] !== 'function') {
       var target = document.getElementById('jspsych-target');
@@ -392,6 +397,7 @@ window.addEventListener('load', function() {
   }
 
   injectProgressBar();
+  if (typeof enableGamepadNavigation === 'function') enableGamepadNavigation();
 
   /* Initialise jsPsych */
   var jsPsych = initJsPsych({
@@ -467,6 +473,14 @@ window.addEventListener('load', function() {
     }
   };
 
+  var onsTimeline = {
+    timeline: [makeBreakScreen('Original Number Span')].concat(buildOriginalNumberSpanTimeline()),
+    conditional_function: function() {
+      var c = window._batteryChoice;
+      return c === 'full' || c === 'ons';
+    }
+  };
+
   var spTimeline = {
     timeline: [makeBreakScreen('Spatial Pointing Task')].concat(buildSpatialPointingTimeline()),
     conditional_function: function() {
@@ -495,6 +509,7 @@ window.addEventListener('load', function() {
     olmTimeline,
     setP70,
     ocfDelayedTimeline,
+    onsTimeline,
     spTimeline,
     setP90,
     makeCompletionScreen()
