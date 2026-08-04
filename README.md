@@ -149,8 +149,8 @@ Task-specific variables are documented in `protocol_description.md`.
 - Also records paraphrase scores (0–25), protocol flags and exact delay.
 - Responses are recorded locally with the browser MediaRecorder API.
 - Examiner review provides unit-by-unit scoring and an audit-ready transcript field.
-- Current pilot playback uses the device text-to-speech voice and is marked non-standardised.
-- A frozen human-recorded audio file is required before validation or research deployment.
+- Encoding playback and the recall prompts now use a fixed synthetic-voice recording set (`assets/audio/osr/`) with automatic fallback to the device text-to-speech voice if the standardized file fails to load; each trial logs which one was actually used via `story_audio_standardized`.
+- These synthetic recordings are a placeholder for pilot/integration testing only — a frozen, intelligibility-tested human-recorded (or approved) audio set is still required before validation or research deployment.
 - Audio files must be downloaded separately; they are not embedded inside CSV/JSON.
 - Full specification: docs/eti-core/story_recall_spec.md.
 
@@ -179,6 +179,13 @@ Task-specific variables are documented in `protocol_description.md`.
 - 18 main pointing trials (6 targets × 3 start positions, shuffled).
 - Participant clicks arena to indicate direction from start to remembered target.
 - Derived outcomes: mean/median absolute angular error (°), signed bias (°).
+
+### 6. Number Span (ONS) — experimental
+- Original forward/backward digit-span task; standardized one-digit-per-second audio presentation.
+- Forward span starts at length 3 (max 9), backward at length 2 (max 8); two trials per length, discontinue after both trials at a length are incorrect.
+- Responses are scored live by the examiner (typed entry, auto-compared against the expected sequence) — not audio-recorded, unlike OSR/ASF; see spec for rationale.
+- Digit/instruction audio falls back to the device voice per-item if a standardized file fails to load, and flags `ns_audio_standardized: false`.
+- Full specification: docs/eti-core/number_span_spec.md.
 
 ---
 

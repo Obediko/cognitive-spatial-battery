@@ -120,6 +120,7 @@ function buildSummary() {
   const osr = bd.taskSummaries['original_story_recall'] || {};
   const asf = bd.taskSummaries['animal_semantic_fluency'] || {};
   const vs = bd.taskSummaries['visual_sequencing_set_shifting'] || {};
+  const ns = bd.taskSummaries['number_span'] || {};
 
   /* Object-Location Memory - main trials only */
   const olmTrials  = bd.trials.filter(r => r.task_name === 'object_location_memory' && r.trial_type === 'main');
@@ -196,6 +197,14 @@ function buildSummary() {
     sp_median_absolute_angular_error_deg: median(spAbs),
     sp_signed_bias_deg:                   mean(spSigned),
     sp_response_time_mean_ms:             mean(spRT),
+
+    /* Number Span */
+    ns_forward_span: ns.ns_forward_span ?? null,
+    ns_backward_span: ns.ns_backward_span ?? null,
+    ns_forward_correct_trials: ns.ns_forward_correct_trials ?? null,
+    ns_backward_correct_trials: ns.ns_backward_correct_trials ?? null,
+    ns_audio_standardized: ns.ns_audio_standardized ?? null,
+    ns_task_version: ns.ns_task_version ?? null,
 
     /* Browser/display info */
     window_width_px:    window.innerWidth,

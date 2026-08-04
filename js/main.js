@@ -224,6 +224,7 @@ function makeTaskMenu(jsPsych) {
       + '<button class="battery-btn" id="btn-vs">Visual Sequencing &amp; Set-Shifting only</button>'
       + '<button class="battery-btn" id="btn-olm">Object-Location Memory only</button>'
       + '<button class="battery-btn" id="btn-sp">Spatial Pointing only</button>'
+      + '<button class="battery-btn" id="btn-ns">Number Span only</button>'
       + '</div>'
       + '<p style="color:#8899aa;font-size:0.8rem;margin-top:1.2em">'
       + 'Pilot mode: set <code>window.PILOT_MODE = false</code> in utils.js for real sessions.'
@@ -246,6 +247,7 @@ function makeTaskMenu(jsPsych) {
       var btnVS   = document.getElementById('btn-vs');
       var btnOLM  = document.getElementById('btn-olm');
       var btnSP   = document.getElementById('btn-sp');
+      var btnNS   = document.getElementById('btn-ns');
 
       if (btnFull) btnFull.addEventListener('click', function() { finish('full'); });
       if (btnOSR)  btnOSR.addEventListener('click', function() { finish('osr'); });
@@ -253,6 +255,7 @@ function makeTaskMenu(jsPsych) {
       if (btnVS)   btnVS.addEventListener('click',   function() { finish('vs'); });
       if (btnOLM)  btnOLM.addEventListener('click',  function() { finish('olm'); });
       if (btnSP)   btnSP.addEventListener('click',   function() { finish('sp'); });
+      if (btnNS)   btnNS.addEventListener('click',   function() { finish('ns'); });
     }
   };
 }
@@ -365,7 +368,7 @@ window.addEventListener('load', function() {
   checkScreenSize();
 
   /* Safety check: ensure all task builders are available */
-  var required = ['buildOSRImmediateTimeline', 'buildOSRDelayedTimeline', 'buildAnimalFluencyTimeline', 'buildVisualSequencingTimeline', 'buildObjectLocationTimeline', 'buildSpatialPointingTimeline'];
+  var required = ['buildOSRImmediateTimeline', 'buildOSRDelayedTimeline', 'buildAnimalFluencyTimeline', 'buildVisualSequencingTimeline', 'buildObjectLocationTimeline', 'buildSpatialPointingTimeline', 'buildNumberSpanTimeline'];
   for (var ri = 0; ri < required.length; ri++) {
     if (typeof window[required[ri]] !== 'function') {
       var target = document.getElementById('jspsych-target');
@@ -441,6 +444,14 @@ window.addEventListener('load', function() {
     }
   };
 
+  var nsTimeline = {
+    timeline: [makeBreakScreen('Number Span Task')].concat(buildNumberSpanTimeline()),
+    conditional_function: function() {
+      var c = window._batteryChoice;
+      return c === 'full' || c === 'ns';
+    }
+  };
+
   var setP15 = { type: jsPsychCallFunction, func: function() { setProgress(15); } };
   var setP35 = { type: jsPsychCallFunction, func: function() { setProgress(35); } };
   var setP50 = { type: jsPsychCallFunction, func: function() { setProgress(50); } };
@@ -460,6 +471,7 @@ window.addEventListener('load', function() {
     setP70,
     spTimeline,
     setP90,
+    nsTimeline,
     makeCompletionScreen()
   ]);
 

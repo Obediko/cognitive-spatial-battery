@@ -9,6 +9,66 @@
   var OSR_DICTIONARY_VERSION = 'osr44-en-0.1';
   var OSR_STORY_FORM = 'osr44-library-wallet-a';
   var OSR_STORY_TEXT = 'Thursday morning, Elena took the seven-fifteen bus to the library. She returned three books and printed a job form. Upstairs, she found a blue wallet by a window. Inside were an identity card and two train tickets. Elena gave it to the librarian, who phoned the owner. Twenty minutes later, an older man arrived, thanked Elena, and offered coffee. She declined and took the eleven o’clock bus home.';
+
+  var OSR_AUDIO_BASE = 'assets/audio/osr/';
+  var OSR_AUDIO_FILES = {
+    story: OSR_AUDIO_BASE + 'osr44_library_wallet_a_v1.wav',
+    instruction: OSR_AUDIO_BASE + 'osr_instruction_v1.wav',
+    immediatePrompt: OSR_AUDIO_BASE + 'osr_immediate_prompt_v1.wav',
+    delayedPrompt: OSR_AUDIO_BASE + 'osr_delayed_prompt_v1.wav',
+    neutralPrompt: OSR_AUDIO_BASE + 'osr_neutral_prompt_v1.wav'
+  };
+  var OSR_AUDIO_LOAD_TIMEOUT_MS = 8000;
+
+  // Loads a standardized audio file and resolves with a ready-to-play <audio>
+  // element. Rejects (rather than hanging) on load error or timeout so callers
+  // can fall back to another playback method.
+  function osrLoadAudio(src) {
+    return new Promise(function(resolve, reject) {
+      var el = new Audio();
+      var settled = false;
+      var timeoutId = setTimeout(function() {
+        if (settled) return;
+        settled = true;
+        el.removeEventListener('canplaythrough', onReady);
+        el.removeEventListener('error', onError);
+        reject(new Error('timeout loading ' + src));
+      }, OSR_AUDIO_LOAD_TIMEOUT_MS);
+
+      function onReady() {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        resolve(el);
+      }
+      function onError() {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        reject(new Error('failed to load ' + src));
+      }
+
+      el.addEventListener('canplaythrough', onReady, { once: true });
+      el.addEventListener('error', onError, { once: true });
+      el.preload = 'auto';
+      el.src = src;
+      el.load();
+    });
+  }
+
+  // Plays a loaded audio element and resolves when playback ends (or rejects
+  // on playback error), giving callers a single place to hook onstart/onend.
+  function osrPlayLoadedAudio(el, onStart) {
+    return new Promise(function(resolve, reject) {
+      el.addEventListener('ended', function() { resolve(); }, { once: true });
+      el.addEventListener('error', function() { reject(new Error('playback error')); }, { once: true });
+      if (typeof onStart === 'function') el.addEventListener('play', onStart, { once: true });
+      var playPromise = el.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(function(error) { reject(error); });
+      }
+    });
+  }
   var OSR_MIN_DELAY_MS = window.PILOT_MODE ? 15000 : 10 * 60 * 1000;
   var OSR_TARGET_DELAY_MS = window.PILOT_MODE ? 20000 : 12 * 60 * 1000;
   var OSR_MAX_DELAY_MS = window.PILOT_MODE ? 60000 : 15 * 60 * 1000;
@@ -121,9 +181,37 @@
         + '<p>Do not write anything down and do not use another device.</p>'
         + '<p>Your response will be recorded locally for scoring.</p></div>'
         + '<p class="osr-fineprint">The recording stays in this browser session and is not uploaded.</p>'
+        + '<button class="battery-btn" id="osr-replay-instructions" type="button">Replay instructions audio</button>'
+        + '<p id="osr-instruction-audio-status" class="osr-status" aria-live="polite"></p>'
         + '</div>',
       choices: ['Continue to microphone check'],
-      data: { task_name: 'original_story_recall', phase: 'instructions', task_version: OSR_VERSION }
+      data: { task_name: 'original_story_recall', phase: 'instructions', task_version: OSR_VERSION },
+      on_load: function() {
+        var button = document.getElementById('osr-replay-instructions');
+        var status = document.getElementById('osr-instruction-audio-status');
+        var currentAudio = null;
+
+        function playInstructionAudio() {
+          if (button) { button.disabled = true; }
+          if (status) status.textContent = 'Playing…';
+          osrLoadAudio(OSR_AUDIO_FILES.instruction).then(function(audioEl) {
+            currentAudio = audioEl;
+            return osrPlayLoadedAudio(audioEl);
+          }).then(function() {
+            if (status) status.textContent = '';
+            if (button) button.disabled = false;
+          }).catch(function() {
+            // Standardized audio unavailable: examiner can read the on-screen
+            // text aloud instead, so this is a soft failure, not a blocker.
+            if (status) status.innerHTML =
+              '<span class="osr-error">Standardized audio unavailable — please read the instructions aloud instead.</span>';
+            if (button) button.disabled = false;
+          });
+        }
+
+        if (button) button.addEventListener('click', playInstructionAudio);
+        playInstructionAudio();
+      }
     };
   }
 
@@ -177,66 +265,98 @@
           + '<h2>The story is playing</h2><p>Please listen. The text will not appear on screen.</p>'
           + '<p id="osr-play-status" class="osr-status" aria-live="polite">Preparing audio…</p></div>';
 
-        if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
-          window.OSRState.protocolFlags.playback_interrupted = true;
-          document.getElementById('osr-play-status').innerHTML =
-            '<span class="osr-error">No playback engine is available. This pilot session cannot continue.</span>';
-          return;
-        }
-
-        var utterance = new SpeechSynthesisUtterance(OSR_STORY_TEXT);
-        var voices = window.speechSynthesis.getVoices();
-        var voice = voices.find(function(v) { return /^en(-|_)/i.test(v.lang) && /female|samantha|zira|serena/i.test(v.name); })
-          || voices.find(function(v) { return /^en(-|_)/i.test(v.lang); })
-          || voices[0] || null;
-        if (voice) utterance.voice = voice;
-        utterance.lang = voice ? voice.lang : 'en-GB';
-        utterance.rate = 0.88;
-        utterance.pitch = 1;
-        utterance.volume = 1;
-
-        window.OSRState.voiceMetadata = {
-          name: voice ? voice.name : null,
-          lang: voice ? voice.lang : utterance.lang,
-          rate: utterance.rate,
-          pitch: utterance.pitch,
-          local_service: voice ? voice.localService : null
-        };
-        window.OSRState.storyAudioStandardized = false;
-
-        utterance.onstart = function() {
-          var status = document.getElementById('osr-play-status');
-          if (status) status.textContent = 'Playing…';
-        };
-        utterance.onerror = function(event) {
-          window.OSRState.protocolFlags.playback_interrupted = true;
-          var status = document.getElementById('osr-play-status');
-          if (status) status.innerHTML = '<span class="osr-error">Playback failed: '
-            + osrEscape(event.error || 'unknown error') + '. This session will be flagged.</span>';
-          setTimeout(function() {
-            done({
-              task_name: 'original_story_recall',
-              phase: 'encoding',
-              task_version: OSR_VERSION,
-              story_form: OSR_STORY_FORM,
-              story_audio_standardized: false,
-              playback_failed: true,
-              playback_error: event.error || 'unknown error'
-            });
-          }, 1200);
-        };
-        utterance.onend = function() {
-          done({
+        function finishTrial(extra) {
+          var base = {
             task_name: 'original_story_recall',
             phase: 'encoding',
             task_version: OSR_VERSION,
-            story_form: OSR_STORY_FORM,
-            story_audio_standardized: false,
+            story_form: OSR_STORY_FORM
+          };
+          done(Object.assign(base, extra));
+        }
+
+        function speakWithBrowserTts(reasonForFallback) {
+          if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
+            window.OSRState.protocolFlags.playback_interrupted = true;
+            document.getElementById('osr-play-status').innerHTML =
+              '<span class="osr-error">No playback engine is available. This pilot session cannot continue.</span>';
+            return;
+          }
+
+          var utterance = new SpeechSynthesisUtterance(OSR_STORY_TEXT);
+          var voices = window.speechSynthesis.getVoices();
+          var voice = voices.find(function(v) { return /^en(-|_)/i.test(v.lang) && /female|samantha|zira|serena/i.test(v.name); })
+            || voices.find(function(v) { return /^en(-|_)/i.test(v.lang); })
+            || voices[0] || null;
+          if (voice) utterance.voice = voice;
+          utterance.lang = voice ? voice.lang : 'en-GB';
+          utterance.rate = 0.88;
+          utterance.pitch = 1;
+          utterance.volume = 1;
+
+          window.OSRState.voiceMetadata = {
+            name: voice ? voice.name : null,
+            lang: voice ? voice.lang : utterance.lang,
+            rate: utterance.rate,
+            pitch: utterance.pitch,
+            local_service: voice ? voice.localService : null
+          };
+          window.OSRState.storyAudioStandardized = false;
+          window.OSRState.protocolFlags.playback_interrupted = true;
+
+          utterance.onstart = function() {
+            var status = document.getElementById('osr-play-status');
+            if (status) status.textContent = 'Playing (fallback voice)…';
+          };
+          utterance.onerror = function(event) {
+            var status = document.getElementById('osr-play-status');
+            if (status) status.innerHTML = '<span class="osr-error">Playback failed: '
+              + osrEscape(event.error || 'unknown error') + '. This session will be flagged.</span>';
+            setTimeout(function() {
+              finishTrial({
+                story_audio_standardized: false,
+                playback_failed: true,
+                playback_error: event.error || 'unknown error',
+                playback_fallback_reason: reasonForFallback
+              });
+            }, 1200);
+          };
+          utterance.onend = function() {
+            finishTrial({
+              story_audio_standardized: false,
+              playback_fallback_reason: reasonForFallback,
+              voice_metadata: JSON.stringify(window.OSRState.voiceMetadata)
+            });
+          };
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(utterance);
+        }
+
+        var status = document.getElementById('osr-play-status');
+
+        osrLoadAudio(OSR_AUDIO_FILES.story).then(function(audioEl) {
+          return osrPlayLoadedAudio(audioEl, function() {
+            if (status) status.textContent = 'Playing…';
+          });
+        }).then(function() {
+          window.OSRState.storyAudioStandardized = true;
+          window.OSRState.voiceMetadata = {
+            source: 'standardized_recording',
+            file: OSR_AUDIO_FILES.story
+          };
+          finishTrial({
+            story_audio_standardized: true,
             voice_metadata: JSON.stringify(window.OSRState.voiceMetadata)
           });
-        };
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
+        }).catch(function(error) {
+          // Standardized recording missing or failed to play (e.g. file not
+          // deployed, network blip, unsupported codec). Fall back to browser
+          // TTS rather than blocking the session, but flag it clearly so this
+          // participant's story-recall data can be reviewed/excluded if the
+          // fallback voice isn't acceptable for scoring.
+          if (status) status.textContent = 'Standardized audio unavailable, using fallback voice…';
+          speakWithBrowserTts(error && error.message ? error.message : 'unknown error');
+        });
       }
     };
   }
@@ -253,13 +373,47 @@
         display.innerHTML = '<div class="osr-card"><span class="osr-kicker">'
           + (condition === 'immediate' ? 'Immediate recall' : 'Delayed recall') + '</span>'
           + '<h2>Tell the story back</h2><p class="osr-prompt">' + prompt + '</p>'
+          + '<button class="battery-btn" id="osr-replay-prompt" type="button">Replay prompt audio</button>'
+          + '<p id="osr-prompt-audio-status" class="osr-status" aria-live="polite"></p>'
           + '<button class="battery-btn primary" id="osr-start-recording">Start recording</button>'
           + '<button class="battery-btn" id="osr-stop-recording" disabled>Finish response</button>'
           + '<div id="osr-recording-indicator" class="osr-recording-indicator" hidden>'
           + '<span class="osr-recording-dot"></span> Recording <strong id="osr-recording-time">00:00</strong></div>'
+          + '<button class="battery-btn" id="osr-play-neutral-prompt" type="button">Play neutral prompt</button>'
           + '<label class="osr-examiner-flag"><input type="checkbox" id="osr-neutral-prompt"> '
           + 'Examiner used the single neutral prompt</label>'
           + '<p id="osr-record-status" class="osr-status" aria-live="polite"></p></div>';
+
+        (function() {
+          var promptFile = condition === 'immediate' ? OSR_AUDIO_FILES.immediatePrompt : OSR_AUDIO_FILES.delayedPrompt;
+          var replayButton = document.getElementById('osr-replay-prompt');
+          var promptStatus = document.getElementById('osr-prompt-audio-status');
+          var neutralButton = document.getElementById('osr-play-neutral-prompt');
+          var neutralCheckbox = document.getElementById('osr-neutral-prompt');
+
+          function playFile(file, statusEl, triggerButton) {
+            if (triggerButton) triggerButton.disabled = true;
+            if (statusEl) statusEl.textContent = 'Playing…';
+            osrLoadAudio(file).then(function(audioEl) {
+              return osrPlayLoadedAudio(audioEl);
+            }).then(function() {
+              if (statusEl) statusEl.textContent = '';
+              if (triggerButton) triggerButton.disabled = false;
+            }).catch(function() {
+              if (statusEl) statusEl.innerHTML =
+                '<span class="osr-error">Standardized audio unavailable — please read the prompt aloud instead.</span>';
+              if (triggerButton) triggerButton.disabled = false;
+            });
+          }
+
+          if (replayButton) replayButton.addEventListener('click', function() { playFile(promptFile, promptStatus, replayButton); });
+          if (neutralButton) neutralButton.addEventListener('click', function() {
+            playFile(OSR_AUDIO_FILES.neutralPrompt, promptStatus, neutralButton);
+            if (neutralCheckbox) neutralCheckbox.checked = true;
+          });
+          // Auto-play the recall prompt once when the trial loads.
+          playFile(promptFile, promptStatus, replayButton);
+        })();
 
         var startButton = document.getElementById('osr-start-recording');
         var stopButton = document.getElementById('osr-stop-recording');
