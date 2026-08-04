@@ -119,6 +119,7 @@ function buildSummary() {
   const bd = window.BatteryData;
   const osr = bd.taskSummaries['original_story_recall'] || {};
   const asf = bd.taskSummaries['animal_semantic_fluency'] || {};
+  const ovn = bd.taskSummaries['original_visual_naming'] || {};
   const vs = bd.taskSummaries['visual_sequencing_set_shifting'] || {};
 
   /* Object-Location Memory - main trials only */
@@ -174,6 +175,20 @@ function buildSummary() {
     asf_review_status: asf.asf_review_status ?? null,
     asf_task_version: asf.asf_task_version ?? null,
     asf_dictionary_version: asf.asf_dictionary_version ?? null,
+
+    /* Original Visual Naming */
+    ovn_total_with_semantic: ovn.ovn_total_with_semantic ?? null,
+    ovn_total_with_semantic_raw: ovn.ovn_total_with_semantic_raw ?? null,
+    ovn_total_uncued: ovn.ovn_total_uncued ?? null,
+    ovn_semantic_cues_given: ovn.ovn_semantic_cues_given ?? null,
+    ovn_semantic_cues_correct: ovn.ovn_semantic_cues_correct ?? null,
+    ovn_phonemic_cues_given: ovn.ovn_phonemic_cues_given ?? null,
+    ovn_phonemic_cues_correct: ovn.ovn_phonemic_cues_correct ?? null,
+    ovn_items_administered: ovn.ovn_items_administered ?? null,
+    ovn_stopped_after_six_failures: ovn.ovn_stopped_after_six_failures ?? null,
+    ovn_review_status: ovn.ovn_review_status ?? null,
+    ovn_task_version: ovn.ovn_task_version ?? null,
+    ovn_stimulus_set: ovn.ovn_stimulus_set ?? null,
 
     /* Visual Sequencing / Set-Shifting */
     completion_time_sequencing_ms:   vs.completion_time_sequencing_ms  ?? null,
