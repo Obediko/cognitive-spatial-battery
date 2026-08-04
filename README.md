@@ -146,6 +146,7 @@ Pure scoring/sequencing logic for the audio-recorded and live-scored tasks is un
 ```bash
 node tests/animal_semantic_fluency.test.js
 node tests/number_span.test.js
+node tests/osr_transcription.test.js
 ```
 
 Each test file loads its task's `.js` source into a minimal `vm` context and exercises only the DOM/Audio-free logic it exports (`window.ASFScoring`, `window.NSScoring`) — see either file for the pattern to follow if you add a new task.
@@ -180,6 +181,7 @@ Task-specific variables are documented in `protocol_description.md`.
 - Produces immediate and delayed verbatim scores (0–44).
 - Also records paraphrase scores (0–25), protocol flags and exact delay.
 - Responses are recorded locally with the browser MediaRecorder API.
+- **Automatic transcription and verbatim pre-fill**: the scoring screen runs an in-browser speech-to-text model (no audio ever leaves the browser) to pre-fill the transcript and the 44 verbatim checkboxes. This is a pre-fill only — the examiner reviews and corrects every box before saving; paraphrase units are never auto-scored. See `docs/eti-core/story_recall_spec.md` §8.1 for exactly what is/isn't automated and why accuracy hasn't been formally validated yet.
 - Examiner review provides unit-by-unit scoring and an audit-ready transcript field.
 - Encoding playback and the recall prompts use standardized audio (see [Standardized Stimulus Audio](#standardized-stimulus-audio)).
 - Audio files must be downloaded separately; they are not embedded inside CSV/JSON.
@@ -232,6 +234,7 @@ Task-specific variables are documented in `protocol_description.md`.
 | OLM positions overlap | This can happen on very small screens; use ≥ 1280×800 px. |
 | No sound during OSR / Number Span | Check system/browser volume. Some browsers block autoplay until you've clicked on the page once — click anywhere, then retry. |
 | "Script Load Error" mentioning a `build...Timeline` function | A task's `.js` file failed to load — check the `<script>` tags in `index.html` and the browser console for 404s. |
+| OSR scoring screen stuck on "Loading speech recognition model…" | First use downloads the model (~100+ MB) from a CDN; this can take a while on a slow connection. It only needs to download once per browser (cached afterward). If it never finishes, check the browser console — the scoring screen still works fully manually if you skip past it. |
 
 ---
 
@@ -250,6 +253,7 @@ cognitive-spatial-battery/
 │   ├── main.js                             # Battery orchestration
 │   └── tasks/
 │       ├── original_story_recall.js
+│       ├── osr_transcription.js
 │       ├── animal_semantic_fluency.js
 │       ├── visual_sequencing_set_shifting.js
 │       ├── object_location_memory.js
@@ -267,7 +271,8 @@ cognitive-spatial-battery/
 │   └── number_span_spec.md
 ├── tests/                                  # Node-based unit tests for pure task logic
 │   ├── animal_semantic_fluency.test.js
-│   └── number_span.test.js
+│   ├── number_span.test.js
+│   └── osr_transcription.test.js
 └── data/
     └── README_do_not_store_real_data_here.txt
 ```

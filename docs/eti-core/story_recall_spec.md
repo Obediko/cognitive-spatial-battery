@@ -248,6 +248,19 @@ The scoring screen must show:
 
 The interface must not reveal the answer key to the participant. Participant mode and examiner mode require separate routes or an examiner lock.
 
+### 8.1 Automatic transcription and verbatim pre-fill (implemented)
+
+The scoring screen automatically transcribes the recorded response using an in-browser speech-to-text model (Whisper `small.en`, run client-side via transformers.js — see `js/tasks/osr_transcription.js`) and pre-fills:
+
+- the editable transcript field, with the raw model output;
+- the 44 verbatim-unit checkboxes, by searching the normalized transcript for any of a unit's acceptable surface forms (the existing "took / take / taking"-style alternates already in the scoring dictionary).
+
+This is a **pre-fill, not a final score** — every checkbox remains editable, and `review_status` only becomes `examiner_verified` once the examiner has reviewed and clicked Save. If transcription fails or is unavailable (model failed to load, browser without the required Audio/WebAssembly APIs, etc.), the screen falls back to the fully manual flow described above, with no interruption to scoring.
+
+**Not yet implemented**: the "evidence excerpt" per unit (i.e. highlighting *which part* of the transcript triggered a match) is not shown — only the resulting checkbox state. Paraphrase units are deliberately **not** auto-scored: paraphrase/gist matching is a semantic judgment call that a substring/keyword matcher cannot make reliably, so all 25 paraphrase checkboxes remain fully manual.
+
+**Accuracy has not been formally validated.** `small.en` is a real trade-off against a larger model or a cloud API, chosen specifically to keep audio from ever leaving the browser (see §9). Before relying on the auto-fill for actual scoring decisions, run a calibration pass: have examiners score a sample of recordings both with and without the pre-fill, and compare agreement.
+
 ## 9. Device and privacy behaviour
 
 - Story playback and response recording must work on current Chrome, Edge and Safari where browser permissions allow.
@@ -273,6 +286,9 @@ Required trial/session fields:
 | instruction_audio_version | string |
 | response_audio_filename | string or null |
 | transcript | string or null |
+| transcript_source | automatic_asr_examiner_reviewed or examiner_manual |
+| asr_attempted | boolean |
+| asr_model | string or null |
 | verbatim_unit_scores | array of 44 booleans |
 | paraphrase_unit_scores | array of 25 booleans |
 | verbatim_total | integer 0–44 |
