@@ -152,15 +152,54 @@ function makeWelcomeTrials() {
   };
 
   var fullscreen = {
-    type: jsPsychFullscreen,
-    fullscreen_mode: true,
-    message: '<div style="text-align:center;max-width:600px;margin:0 auto">'
-      + '<h3 style="color:#a8d8ea">Fullscreen Mode</h3>'
-      + '<p>The battery will now switch to fullscreen for consistent spatial measurements.</p>'
-      + '<p style="color:#8899aa;font-size:0.85rem">Press <strong>Escape</strong> to exit fullscreen.</p>'
-      + '</div>',
-    button_label: 'Enter Fullscreen',
-    data: { battery_phase: 'fullscreen' }
+    type: jsPsychCallFunction,
+    async: true,
+    func: function(done) {
+      var display = document.getElementById('jspsych-content') ||
+        document.querySelector('.jspsych-content') ||
+        document.getElementById('jspsych-target');
+      display.innerHTML = '<div style="text-align:center;max-width:600px;margin:0 auto">'
+        + '<h3 style="color:#a8d8ea">Fullscreen Mode</h3>'
+        + '<p>Fullscreen is recommended for consistent spatial measurements.</p>'
+        + '<p style="color:#8899aa;font-size:0.85rem">If your browser blocks fullscreen, the battery will continue and record that condition.</p>'
+        + '<button class="battery-btn primary" id="enter-fullscreen">Enter Fullscreen</button>'
+        + '<button class="battery-btn" id="skip-fullscreen" style="margin-left:0.6rem">Continue without fullscreen</button>'
+        + '<p id="fullscreen-status" class="osr-status" aria-live="polite"></p></div>';
+
+      function finish(granted, reason) {
+        window.BatteryData.addTrials({
+          battery_phase: 'fullscreen',
+          fullscreen_granted: granted,
+          fullscreen_failure_reason: reason || null
+        });
+        done();
+      }
+
+      document.getElementById('skip-fullscreen').addEventListener('click', function() {
+        finish(false, 'participant_skipped');
+      });
+      document.getElementById('enter-fullscreen').addEventListener('click', function() {
+        var request = document.documentElement.requestFullscreen ||
+          document.documentElement.webkitRequestFullscreen;
+        if (!request) {
+          finish(false, 'unsupported');
+          return;
+        }
+        try {
+          var result = request.call(document.documentElement);
+          if (result && typeof result.then === 'function') {
+            result.then(function() { finish(true, null); })
+              .catch(function(error) {
+                finish(false, error && error.message ? error.message : 'not_granted');
+              });
+          } else {
+            finish(!!document.fullscreenElement, document.fullscreenElement ? null : 'not_granted');
+          }
+        } catch (error) {
+          finish(false, error && error.message ? error.message : 'not_granted');
+        }
+      });
+    }
   };
 
   return [welcome, participantId, deviceCheck, fullscreen];
