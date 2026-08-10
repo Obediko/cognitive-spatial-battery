@@ -5,9 +5,10 @@
 'use strict';
 
 (function() {
-  var NS_VERSION = '0.1.0-pilot';
+  var NS_VERSION = '0.2.0-pilot';
+  var NS_SEQUENCE_VERSION = 'ons-controlled-form-a-1.0';
   var NS_AUDIO_BASE = 'assets/audio/digits/';
-  var NS_ONSET_INTERVAL_MS = 1000; // exact onset-to-onset spacing between digits
+  var NS_ONSET_INTERVAL_MS = 1000; // nominal onset spacing; actual onsets are recorded
   var NS_AUDIO_LOAD_TIMEOUT_MS = 8000;
   var NS_POST_SEQUENCE_BUFFER_MS = 600; // extra pause after the last digit before responding
 
@@ -30,7 +31,7 @@
     version: NS_VERSION,
     audioStandardized: true, // flipped to false the first time any file fails to load/play
     digitBlobUrls: {},       // digit -> object URL (preloaded once)
-    usedSequences: {},       // 'direction:length' -> array of previously used sequence strings
+    playbackOnsets: [],     // planned and observed audio starts for timing QA
     discontinued: { forward: false, backward: false },
     lengthPassed: { forward: {}, backward: {} } // length -> boolean, at least one correct trial
   };
@@ -169,62 +170,78 @@
     };
   }
 
-  // Generates a random digit sequence of the given length: no immediately
-  // repeated digit, no run of 3+ consecutive ascending or descending digits,
-  // and not identical to a sequence already used at this direction/length in
-  // this session.
-  function nsGenerateSequence(direction, length) {
-    var key = direction + ':' + length;
-    var used = window.NSState.usedSequences[key] || (window.NSState.usedSequences[key] = []);
-
-    function hasLongRun(seq) {
-      var ascRun = 1, descRun = 1;
-      for (var i = 1; i < seq.length; i++) {
-        if (seq[i] === seq[i - 1] + 1) { ascRun++; descRun = 1; } else if (seq[i] === seq[i - 1] - 1) { descRun++; ascRun = 1; } else { ascRun = 1; descRun = 1; }
-        if (ascRun >= 3 || descRun >= 3) return true;
-      }
-      return false;
+  // Versioned, investigator-controlled Form A. Every participant receives
+  // the same items unless a future, separately versioned form is selected.
+  var NS_CONTROLLED_SEQUENCES = {
+    forward: {
+      3: [[4,9,2],[7,1,5]],
+      4: [[6,2,9,4],[3,8,1,7]],
+      5: [[8,3,6,1,9],[2,7,4,9,5]],
+      6: [[5,9,2,7,1,6],[8,1,4,9,3,7]],
+      7: [[3,8,5,1,9,4,7],[6,2,9,5,1,8,4]],
+      8: [[7,3,9,1,6,2,8,5],[4,8,2,7,1,9,5,3]],
+      9: [[2,7,4,9,1,6,3,8,5],[8,3,6,1,9,4,7,2,5]]
+    },
+    backward: {
+      2: [[4,7],[9,2]],
+      3: [[6,1,8],[3,9,5]],
+      4: [[7,2,9,4],[5,8,1,6]],
+      5: [[9,3,7,1,5],[2,8,4,6,1]],
+      6: [[4,9,2,7,5,1],[8,3,6,1,9,4]],
+      7: [[5,1,8,3,9,2,6],[7,4,9,1,6,3,8]],
+      8: [[6,2,9,4,1,7,3,8],[3,8,5,1,9,2,7,4]]
     }
+  };
 
-    var attempt, key2, tries = 0;
-    do {
-      attempt = [];
-      for (var i = 0; i < length; i++) {
-        var next;
-        do { next = Math.floor(Math.random() * 10); } while (i > 0 && next === attempt[i - 1]);
-        attempt.push(next);
-      }
-      key2 = attempt.join('');
-      tries++;
-    } while ((hasLongRun(attempt) || used.indexOf(key2) !== -1) && tries < 50);
-
-    used.push(key2);
-    return attempt;
+  function nsControlledSequence(direction, length, trialIndex) {
+    var byLength = NS_CONTROLLED_SEQUENCES[direction] && NS_CONTROLLED_SEQUENCES[direction][length];
+    if (!byLength || !byLength[trialIndex - 1]) {
+      throw new Error('No controlled Number Span item for ' + direction + ' length ' + length + ' trial ' + trialIndex);
+    }
+    return byLength[trialIndex - 1].slice();
   }
 
-  // Plays a digit sequence with exact one-second onset-to-onset spacing.
-  // Resolves once the final digit's clip has finished playing (or its
-  // scheduled slot has elapsed, for fallback speech which may run long).
+  // Plays with nominal one-second spacing, records actual starts, and always
+  // resolves via a hard deadline even if a browser rejects or stalls media.
   function nsPlaySequence(sequence) {
     return new Promise(function(resolve) {
-      var lastSlotDone = Promise.resolve();
+      var resolved = false;
+      var startedAt = performance.now();
+      var hardDeadline = setTimeout(finish, sequence.length * NS_ONSET_INTERVAL_MS + NS_AUDIO_LOAD_TIMEOUT_MS);
+
+      function finish() {
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(hardDeadline);
+        setTimeout(resolve, NS_POST_SEQUENCE_BUFFER_MS);
+      }
+
       sequence.forEach(function(digit, index) {
+        var planned = startedAt + index * NS_ONSET_INTERVAL_MS;
         setTimeout(function() {
+          var observed = performance.now();
+          window.NSState.playbackOnsets.push({
+            sequence_digit_index: index,
+            digit: digit,
+            planned_onset_ms: planned,
+            observed_onset_ms: observed,
+            onset_error_ms: observed - planned
+          });
           var url = window.NSState.digitBlobUrls[digit];
           if (url) {
             var el = new Audio(url);
-            el.play().catch(function() { /* ignore; onset schedule is unaffected */ });
             if (index === sequence.length - 1) {
-              el.addEventListener('ended', function() { resolve(); }, { once: true });
-              el.addEventListener('error', function() { setTimeout(resolve, NS_POST_SEQUENCE_BUFFER_MS); }, { once: true });
+              el.addEventListener('ended', finish, { once: true });
+              el.addEventListener('error', finish, { once: true });
             }
+            el.play().catch(function() {
+              window.NSState.audioStandardized = false;
+              if (index === sequence.length - 1) finish();
+            });
           } else {
             window.NSState.audioStandardized = false;
-            if (index === sequence.length - 1) {
-              nsSpeakFallback(String(digit)).then(function() { setTimeout(resolve, NS_POST_SEQUENCE_BUFFER_MS); });
-            } else {
-              nsSpeakFallback(String(digit));
-            }
+            var fallback = nsSpeakFallback(String(digit));
+            if (index === sequence.length - 1) fallback.then(finish);
           }
         }, index * NS_ONSET_INTERVAL_MS);
       });
@@ -242,7 +259,7 @@
       async: true,
       func: function(done) {
         var display = nsDisplay();
-        var sequence = nsGenerateSequence(direction, length);
+        var sequence = nsControlledSequence(direction, length, trialIndex);
         display.innerHTML = '<div class="osr-card osr-listening"><span class="osr-kicker">'
           + (direction === 'forward' ? 'Forward span' : 'Backward span') + ' · length ' + length
           + ' · trial ' + trialIndex + '</span>'
@@ -275,6 +292,7 @@
             window.BatteryData.addTrials({
               task_name: 'number_span',
               task_version: NS_VERSION,
+              sequence_version: NS_SEQUENCE_VERSION,
               phase: 'trial',
               direction: direction,
               span_length: length,
@@ -283,7 +301,8 @@
               expected_response: expected,
               examiner_response: response,
               correct: correct,
-              audio_standardized: window.NSState.audioStandardized
+              audio_standardized: window.NSState.audioStandardized,
+              playback_onsets: window.NSState.playbackOnsets.splice(0)
             });
             if (correct) window.NSState.lengthPassed[direction][length] = true;
             done({ correct: correct });
@@ -351,7 +370,8 @@
           ns_forward_correct_trials: rows.filter(function(r) { return r.direction === 'forward' && r.correct; }).length,
           ns_backward_correct_trials: rows.filter(function(r) { return r.direction === 'backward' && r.correct; }).length,
           ns_audio_standardized: window.NSState.audioStandardized,
-          ns_task_version: NS_VERSION
+          ns_task_version: NS_VERSION,
+          ns_sequence_version: NS_SEQUENCE_VERSION
         });
       }
     };
@@ -383,7 +403,8 @@
   // Exposed for deterministic unit testing (see tests/number_span.test.js).
   // Pure logic only — no DOM/Audio/fetch dependencies.
   window.NSScoring = {
-    generateSequence: nsGenerateSequence,
+    controlledSequence: nsControlledSequence,
+    sequenceVersion: NS_SEQUENCE_VERSION,
     expectedResponse: nsExpectedResponse,
     shouldDiscontinue: function(lengthPassedAtThisLength) { return !lengthPassedAtThisLength; }
   };

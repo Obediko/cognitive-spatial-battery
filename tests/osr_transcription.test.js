@@ -60,3 +60,21 @@ const units = [
 })();
 
 console.log('osr_transcription.test.js: all assertions passed');
+
+
+assert.deepStrictEqual(
+  scoring.matchVerbatimUnits('she met a woman during training', [
+    [1, 'he'],
+    [2, 'man'],
+    [3, 'train']
+  ]),
+  [false, false, false],
+  'matching must respect whole-token boundaries'
+);
+
+const evidence = scoring.matchVerbatimUnitEvidence('three minutes later the bell rang', [
+  [1, 'minute(s) later']
+]);
+assert.strictEqual(evidence[0].matched, true);
+assert.strictEqual(evidence[0].alternate, 'minutes later');
+assert.ok(evidence[0].excerpt.includes('minutes later'));
