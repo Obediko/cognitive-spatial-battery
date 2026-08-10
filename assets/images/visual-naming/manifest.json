@@ -1,0 +1,450 @@
+{
+  "manifest_version": "template-1.0",
+  "stimulus_set_status": "awaiting_upload",
+  "required_count": 32,
+  "items": [
+    {
+      "order": 1,
+      "item_id": "ovn_01",
+      "filename": "cup.png",
+      "target": "cup",
+      "accepted_alternatives": [
+        "mug"
+      ],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 2,
+      "item_id": "ovn_02",
+      "filename": "chair.png",
+      "target": "chair",
+      "accepted_alternatives": [
+        "seat"
+      ],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 3,
+      "item_id": "ovn_03",
+      "filename": "key.png",
+      "target": "key",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 4,
+      "item_id": "ovn_04",
+      "filename": "bicycle.png",
+      "target": "bicycle",
+      "accepted_alternatives": [
+        "bike"
+      ],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 5,
+      "item_id": "ovn_05",
+      "filename": "spoon.png",
+      "target": "spoon",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 6,
+      "item_id": "ovn_06",
+      "filename": "umbrella.png",
+      "target": "umbrella",
+      "accepted_alternatives": [
+        "parasol"
+      ],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 7,
+      "item_id": "ovn_07",
+      "filename": "ladder.png",
+      "target": "ladder",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 8,
+      "item_id": "ovn_08",
+      "filename": "kettle.png",
+      "target": "kettle",
+      "accepted_alternatives": [
+        "teakettle"
+      ],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 9,
+      "item_id": "ovn_09",
+      "filename": "scissors.png",
+      "target": "scissors",
+      "accepted_alternatives": [
+        "shears"
+      ],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 10,
+      "item_id": "ovn_10",
+      "filename": "anchor.png",
+      "target": "anchor",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 11,
+      "item_id": "ovn_11",
+      "filename": "binoculars.png",
+      "target": "binoculars",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 12,
+      "item_id": "ovn_12",
+      "filename": "stethoscope.png",
+      "target": "stethoscope",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 13,
+      "item_id": "ovn_13",
+      "filename": "compass.png",
+      "target": "compass",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 14,
+      "item_id": "ovn_14",
+      "filename": "hammock.png",
+      "target": "hammock",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 15,
+      "item_id": "ovn_15",
+      "filename": "whisk.png",
+      "target": "whisk",
+      "accepted_alternatives": [
+        "beater"
+      ],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 16,
+      "item_id": "ovn_16",
+      "filename": "accordion.png",
+      "target": "accordion",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 17,
+      "item_id": "ovn_17",
+      "filename": "abacus.png",
+      "target": "abacus",
+      "accepted_alternatives": [
+        "counting frame"
+      ],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 18,
+      "item_id": "ovn_18",
+      "filename": "sundial.png",
+      "target": "sundial",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 19,
+      "item_id": "ovn_19",
+      "filename": "sextant.png",
+      "target": "sextant",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 20,
+      "item_id": "ovn_20",
+      "filename": "hourglass.png",
+      "target": "hourglass",
+      "accepted_alternatives": [
+        "sand timer"
+      ],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 21,
+      "item_id": "ovn_21",
+      "filename": "pulley.png",
+      "target": "pulley",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 22,
+      "item_id": "ovn_22",
+      "filename": "thimble.png",
+      "target": "thimble",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 23,
+      "item_id": "ovn_23",
+      "filename": "calipers.png",
+      "target": "calipers",
+      "accepted_alternatives": [
+        "calliper"
+      ],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 24,
+      "item_id": "ovn_24",
+      "filename": "metronome.png",
+      "target": "metronome",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 25,
+      "item_id": "ovn_25",
+      "filename": "periscope.png",
+      "target": "periscope",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 26,
+      "item_id": "ovn_26",
+      "filename": "bellows.png",
+      "target": "bellows",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 27,
+      "item_id": "ovn_27",
+      "filename": "astrolabe.png",
+      "target": "astrolabe",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 28,
+      "item_id": "ovn_28",
+      "filename": "yoke.png",
+      "target": "yoke",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 29,
+      "item_id": "ovn_29",
+      "filename": "plumb_bob.png",
+      "target": "plumb bob",
+      "accepted_alternatives": [
+        "plummet"
+      ],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 30,
+      "item_id": "ovn_30",
+      "filename": "spigot.png",
+      "target": "spigot",
+      "accepted_alternatives": [
+        "tap",
+        "faucet"
+      ],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 31,
+      "item_id": "ovn_31",
+      "filename": "trellis.png",
+      "target": "trellis",
+      "accepted_alternatives": [],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    },
+    {
+      "order": 32,
+      "item_id": "ovn_32",
+      "filename": "weather_vane.png",
+      "target": "weather vane",
+      "accepted_alternatives": [
+        "wind vane"
+      ],
+      "creator_or_source": null,
+      "source_url": null,
+      "license": null,
+      "permission_record": null,
+      "sha256": null,
+      "review_status": "pending"
+    }
+  ]
+}
