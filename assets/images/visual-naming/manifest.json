@@ -1,450 +1,387 @@
 {
-  "manifest_version": "template-1.0",
-  "stimulus_set_status": "awaiting_upload",
-  "required_count": 32,
-  "items": [
+  "schemaVersion": "1.0.0",
+  "title": "Visual Naming Stimulus Manifest",
+  "verificationDate": "2026-08-10",
+  "stimulusCount": 32,
+  "assetDirectory": "assets/images/visual-naming",
+  "notice": "This manifest records provenance, licence claims, attribution requirements, and image modifications. It is not itself a licence grant.",
+  "modifications": [
+    "Images may have been cropped.",
+    "Images may have been resized.",
+    "Images may have been placed on a standardized background.",
+    "No authorship or endorsement by the original creators is implied."
+  ],
+  "collections": {
+    "boss": {
+      "name": "Bank of Standardized Stimuli (BOSS)",
+      "authors": [
+        "Mathieu B. Brodeur",
+        "Emmanuelle Dionne-Dostie",
+        "Tina Montreuil",
+        "Martin Lepage"
+      ],
+      "publicationYear": 2010,
+      "publicationTitle": "The Bank of Standardized Stimuli (BOSS), a New Set of 480 Normative Photos of Objects to Be Used as Visual Stimuli in Cognitive Research",
+      "publicationUrl": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0010773",
+      "sourceUrl": "https://sites.google.com/site/bosstimuli/",
+      "reportedLicense": "CC BY-SA 3.0",
+      "reportedLicenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "reportedEvidenceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4980665/",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceNote": "The supplied manifest reports CC BY-SA 3.0 based on a publication that reused BOSS images. The original BOSS publication applies a Creative Commons licence to the article and states that the stimuli can be obtained by contacting the corresponding author. An official image-level licence or written redistribution permission should be retained before treating these files as cleared for public redistribution.",
+      "requiredAttribution": "Bank of Standardized Stimuli (BOSS); Brodeur, Dionne-Dostie, Montreuil and Lepage (2010). State that each image was cropped or resized where applicable."
+    },
+    "wikimediaCommons": {
+      "name": "Wikimedia Commons",
+      "sourceUrl": "https://commons.wikimedia.org/",
+      "licenceStatus": "item-specific",
+      "licenceNote": "Each image is governed by the licence stated in its individual stimulus record. Attribution, licence links, modification notices, and ShareAlike requirements must be retained where applicable."
+    }
+  },
+  "stimuli": [
     {
-      "order": 1,
-      "item_id": "ovn_01",
+      "id": "cup",
       "filename": "cup.png",
-      "target": "cup",
-      "accepted_alternatives": [
-        "mug"
-      ],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "mug01.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image mug01.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 2,
-      "item_id": "ovn_02",
+      "id": "chair",
       "filename": "chair.png",
-      "target": "chair",
-      "accepted_alternatives": [
-        "seat"
-      ],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "chair.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image chair.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 3,
-      "item_id": "ovn_03",
+      "id": "key",
       "filename": "key.png",
-      "target": "key",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "key01.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image key01.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 4,
-      "item_id": "ovn_04",
+      "id": "bicycle",
       "filename": "bicycle.png",
-      "target": "bicycle",
-      "accepted_alternatives": [
-        "bike"
-      ],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "bicycle.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image bicycle.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 5,
-      "item_id": "ovn_05",
+      "id": "spoon",
       "filename": "spoon.png",
-      "target": "spoon",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "spoon01.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image spoon01.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 6,
-      "item_id": "ovn_06",
+      "id": "umbrella",
       "filename": "umbrella.png",
-      "target": "umbrella",
-      "accepted_alternatives": [
-        "parasol"
-      ],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "umbrella04.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image umbrella04.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 7,
-      "item_id": "ovn_07",
+      "id": "ladder",
       "filename": "ladder.png",
-      "target": "ladder",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "ladder.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image ladder.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 8,
-      "item_id": "ovn_08",
+      "id": "kettle",
       "filename": "kettle.png",
-      "target": "kettle",
-      "accepted_alternatives": [
-        "teakettle"
-      ],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "kettle01.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image kettle01.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 9,
-      "item_id": "ovn_09",
+      "id": "scissors",
       "filename": "scissors.png",
-      "target": "scissors",
-      "accepted_alternatives": [
-        "shears"
-      ],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "scissors01.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image scissors01.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 10,
-      "item_id": "ovn_10",
+      "id": "anchor",
       "filename": "anchor.png",
-      "target": "anchor",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "anchor.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image anchor.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 11,
-      "item_id": "ovn_11",
+      "id": "binoculars",
       "filename": "binoculars.png",
-      "target": "binoculars",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "binoculars01b.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image binoculars01b.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 12,
-      "item_id": "ovn_12",
+      "id": "stethoscope",
       "filename": "stethoscope.png",
-      "target": "stethoscope",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "Stethoscope.png",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Stethoscope.png",
+      "creator": "Sprinno",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenceStatus": "public-domain-dedication",
+      "attribution": "Sprinno, Stethoscope.png, via Wikimedia Commons. Cropped and resized for this stimulus set."
     },
     {
-      "order": 13,
-      "item_id": "ovn_13",
+      "id": "compass",
       "filename": "compass.png",
-      "target": "compass",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "64-point compass.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:64-point_compass.jpg",
+      "creator": "John Maynard Friedman",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "licenceStatus": "attribution-and-sharealike-required",
+      "attribution": "John Maynard Friedman, 64-point compass.jpg, CC BY-SA 4.0, via Wikimedia Commons. Cropped and resized."
     },
     {
-      "order": 14,
-      "item_id": "ovn_14",
+      "id": "hammock",
       "filename": "hammock.png",
-      "target": "hammock",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "Hammock 040522.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hammock_040522.jpg",
+      "creator": "Dennis Mojado",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+      "licenceStatus": "attribution-required",
+      "attribution": "Dennis Mojado, Hammock 040522.jpg, CC BY 2.0, via Wikimedia Commons. Cropped and resized."
     },
     {
-      "order": 15,
-      "item_id": "ovn_15",
+      "id": "whisk",
       "filename": "whisk.png",
-      "target": "whisk",
-      "accepted_alternatives": [
-        "beater"
-      ],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "whisk.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image whisk.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 16,
-      "item_id": "ovn_16",
+      "id": "accordion",
       "filename": "accordion.png",
-      "target": "accordion",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "accordion01.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image accordion01.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 17,
-      "item_id": "ovn_17",
+      "id": "abacus",
       "filename": "abacus.png",
-      "target": "abacus",
-      "accepted_alternatives": [
-        "counting frame"
-      ],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "Schoty abacus.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Schoty_abacus.jpg",
+      "creator": "Staecker",
+      "license": "Public domain",
+      "licenseUrl": null,
+      "licenceStatus": "public-domain",
+      "attribution": "Staecker, Schoty abacus.jpg, via Wikimedia Commons. Cropped and resized."
     },
     {
-      "order": 18,
-      "item_id": "ovn_18",
+      "id": "sundial",
       "filename": "sundial.png",
-      "target": "sundial",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "Garden sundial MN 2007.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Garden_sundial_MN_2007.JPG",
+      "creator": "SEWilco",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "alternativeLicenses": [
+        "GFDL 1.2 or later",
+        "CC BY-SA 2.5"
+      ],
+      "licenceStatus": "attribution-and-sharealike-required",
+      "attribution": "SEWilco, Garden sundial MN 2007.JPG, CC BY-SA 3.0, via Wikimedia Commons. Cropped and resized."
     },
     {
-      "order": 19,
-      "item_id": "ovn_19",
+      "id": "sextant",
       "filename": "sextant.png",
-      "target": "sextant",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "Sextant.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sextant.jpg",
+      "creator": "U.S. National Oceanic and Atmospheric Administration",
+      "license": "Public domain — United States federal work",
+      "licenseUrl": null,
+      "licenceStatus": "public-domain",
+      "attribution": "NOAA Historic Coast and Geodetic Survey Collection, image theb2176, via Wikimedia Commons. Cropped and resized."
     },
     {
-      "order": 20,
-      "item_id": "ovn_20",
+      "id": "hourglass",
       "filename": "hourglass.png",
-      "target": "hourglass",
-      "accepted_alternatives": [
-        "sand timer"
-      ],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "hourglass.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image hourglass.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 21,
-      "item_id": "ovn_21",
+      "id": "pulley",
       "filename": "pulley.png",
-      "target": "pulley",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "Pulley.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pulley.jpg",
+      "creator": "Hans Hillewaert",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "licenceStatus": "attribution-and-sharealike-required",
+      "attribution": "Hans Hillewaert, Pulley.jpg, CC BY-SA 4.0, via Wikimedia Commons. Cropped and resized."
     },
     {
-      "order": 22,
-      "item_id": "ovn_22",
+      "id": "thimble",
       "filename": "thimble.png",
-      "target": "thimble",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "thimble.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image thimble.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 23,
-      "item_id": "ovn_23",
+      "id": "calipers",
       "filename": "calipers.png",
-      "target": "calipers",
-      "accepted_alternatives": [
-        "calliper"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "Vernier caliper.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Vernier_caliper.jpg",
+      "creator": "Lgreen~commonswiki",
+      "license": "CC BY 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.5/",
+      "alternativeLicenses": [
+        "CC BY-SA 3.0",
+        "GFDL 1.2 or later"
       ],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "licenceStatus": "attribution-required",
+      "attribution": "Lgreen~commonswiki, Vernier caliper.jpg, CC BY 2.5, via Wikimedia Commons. Cropped and resized."
     },
     {
-      "order": 24,
-      "item_id": "ovn_24",
+      "id": "metronome",
       "filename": "metronome.png",
-      "target": "metronome",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "metronome.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image metronome.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 25,
-      "item_id": "ovn_25",
+      "id": "periscope",
       "filename": "periscope.png",
-      "target": "periscope",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "Submarine Periscope in B-396 Museum Front 10-feb-2015.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Submarine_Periscope_in_B-396_Museum_Front_10-feb-2015.jpg",
+      "creator": "Mike1979 Russia",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "licenceStatus": "attribution-and-sharealike-required",
+      "attribution": "Mike1979 Russia, Submarine Periscope in B-396 Museum Front 10-feb-2015.jpg, CC BY-SA 3.0, via Wikimedia Commons. Cropped and resized."
     },
     {
-      "order": 26,
-      "item_id": "ovn_26",
+      "id": "bellows",
       "filename": "bellows.png",
-      "target": "bellows",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "Bellows, fire (AM 621365).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bellows,_fire_(AM_621365).jpg",
+      "creator": "Auckland Museum",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenceStatus": "attribution-required",
+      "attribution": "Auckland Museum, Bellows, fire (AM 621365).jpg, CC BY 4.0, via Wikimedia Commons. Cropped and resized."
     },
     {
-      "order": 27,
-      "item_id": "ovn_27",
+      "id": "astrolabe",
       "filename": "astrolabe.png",
-      "target": "astrolabe",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "MHS 35146 Astrolabe.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:MHS_35146_Astrolabe.jpg",
+      "creator": "History of Science Museum, University of Oxford",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "licenceStatus": "attribution-and-sharealike-required",
+      "attribution": "History of Science Museum, University of Oxford, MHS 35146 Astrolabe.jpg, CC BY-SA 4.0, via Wikimedia Commons. Cropped and resized."
     },
     {
-      "order": 28,
-      "item_id": "ovn_28",
+      "id": "yoke",
       "filename": "yoke.png",
-      "target": "yoke",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "Ox yoke - Log House Museum.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ox_yoke_-_Log_House_Museum.jpg",
+      "creator": "Joe Mabel",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "alternativeLicenses": [
+        "GFDL 1.2 or later"
+      ],
+      "licenceStatus": "attribution-and-sharealike-required",
+      "attribution": "Joe Mabel, Ox yoke - Log House Museum.jpg, CC BY-SA 3.0, via Wikimedia Commons. Cropped and resized."
     },
     {
-      "order": 29,
-      "item_id": "ovn_29",
+      "id": "plumb_bob",
       "filename": "plumb_bob.png",
-      "target": "plumb bob",
-      "accepted_alternatives": [
-        "plummet"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "Plumb bob.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Plumb_bob.jpg",
+      "creator": "Jim Thomas",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "alternativeLicenses": [
+        "GFDL 1.2 or later"
       ],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "licenceStatus": "attribution-and-sharealike-required",
+      "attribution": "Jim Thomas, Plumb bob.jpg, CC BY-SA 3.0, via Wikimedia Commons. Cropped and resized."
     },
     {
-      "order": 30,
-      "item_id": "ovn_30",
+      "id": "spigot",
       "filename": "spigot.png",
-      "target": "spigot",
-      "accepted_alternatives": [
-        "tap",
-        "faucet"
-      ],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "faucet.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image faucet.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
-      "order": 31,
-      "item_id": "ovn_31",
+      "id": "trellis",
       "filename": "trellis.png",
-      "target": "trellis",
-      "accepted_alternatives": [],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "wikimediaCommons",
+      "sourceFilename": "Wooden garden trellis.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wooden_garden_trellis.jpg",
+      "creator": "SHOWOOD",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "licenceStatus": "attribution-and-sharealike-required",
+      "attribution": "SHOWOOD, Wooden garden trellis.jpg, CC BY-SA 4.0, via Wikimedia Commons. Cropped and resized."
     },
     {
-      "order": 32,
-      "item_id": "ovn_32",
+      "id": "weather_vane",
       "filename": "weather_vane.png",
-      "target": "weather vane",
-      "accepted_alternatives": [
-        "wind vane"
-      ],
-      "creator_or_source": null,
-      "source_url": null,
-      "license": null,
-      "permission_record": null,
-      "sha256": null,
-      "review_status": "pending"
+      "sourceCollection": "boss",
+      "sourceFilename": "weathervane.jpg",
+      "reportedLicense": "CC BY-SA 3.0",
+      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "attribution": "BOSS image weathervane.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     }
   ]
 }
