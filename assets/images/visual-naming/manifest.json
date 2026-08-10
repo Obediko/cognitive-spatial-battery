@@ -27,9 +27,14 @@
       "reportedLicense": "CC BY-SA 3.0",
       "reportedLicenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
       "reportedEvidenceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4980665/",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
-      "licenceNote": "The supplied manifest reports CC BY-SA 3.0 based on a publication that reused BOSS images. The original BOSS publication applies a Creative Commons licence to the article and states that the stimuli can be obtained by contacting the corresponding author. An official image-level licence or written redistribution permission should be retained before treating these files as cleared for public redistribution.",
-      "requiredAttribution": "Bank of Standardized Stimuli (BOSS); Brodeur, Dionne-Dostie, Montreuil and Lepage (2010). State that each image was cropped or resized where applicable."
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
+      "licenceNote": "CC BY-SA 3.0 is reported by independent stimulus catalogues that identify the BOSS set and link to the former author-maintained project site. The public BOSS archive and original publication do not expose an accessible image-level licence statement in the sources checked on 2026-08-10. Retain the cited corroborating evidence and obtain an archived author-site licence statement or rightsholder confirmation for primary clearance.",
+      "requiredAttribution": "Bank of Standardized Stimuli (BOSS); Brodeur, Dionne-Dostie, Montreuil and Lepage (2010). State that each image was cropped or resized where applicable.",
+      "corroboratingEvidenceUrls": [
+        "https://visionlab.is/stimuli/objects/",
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC4980665/"
+      ],
+      "publicArchiveUrl": "https://drive.google.com/drive/mobile/folders/1FpnEFkbqe_huRwfsCf7gs5R1zuc1ZOkn?usp=drive_open"
     },
     "wikimediaCommons": {
       "name": "Wikimedia Commons",
@@ -45,7 +50,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "mug01.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image mug01.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -54,7 +59,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "chair.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image chair.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -63,7 +68,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "key01.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image key01.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -72,7 +77,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "bicycle.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image bicycle.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -81,7 +86,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "spoon01.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image spoon01.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -90,7 +95,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "umbrella04.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image umbrella04.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -99,7 +104,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "ladder.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image ladder.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -108,7 +113,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "kettle01.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image kettle01.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -117,7 +122,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "scissors01.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image scissors01.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -126,7 +131,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "anchor.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image anchor.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -135,7 +140,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "binoculars01b.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image binoculars01b.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -180,7 +185,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "whisk.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image whisk.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -189,7 +194,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "accordion01.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image accordion01.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -238,7 +243,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "hourglass.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image hourglass.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -259,7 +264,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "thimble.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image thimble.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -284,7 +289,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "metronome.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image metronome.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -359,7 +364,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "faucet.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image faucet.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     },
     {
@@ -380,7 +385,7 @@
       "sourceCollection": "boss",
       "sourceFilename": "weathervane.jpg",
       "reportedLicense": "CC BY-SA 3.0",
-      "licenceStatus": "requires-primary-rightsholder-evidence",
+      "licenceStatus": "cc-by-sa-3.0-reported-by-secondary-catalogues",
       "attribution": "BOSS image weathervane.jpg from Brodeur et al. (2010). Cropped and resized for this stimulus set."
     }
   ]
