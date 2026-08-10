@@ -377,6 +377,8 @@
           + '<h2>' + (phase === 'copy' ? 'Copy' : 'Delayed recall') + ' scoring</h2></div>'
           + '<div class="ocf-score-layout"><div class="ocf-replay-card">' + replaySvg(strokes) + '</div>'
           + '<div class="ocf-score-panel">' + rows
+          + '<button class="battery-btn" id="ocf-suggest-score">Generate provisional computer suggestions</button>'
+          + '<p class="osr-fineprint">Experimental aid only. The examiner must inspect and confirm every box; this is not a validated automatic score.</p>'
           + '<label class="ocf-bonus"><input type="checkbox" id="ocf-bonus"> Global bonus: all elements accurate, correctly placed and proportionate</label>'
           + '<div class="ocf-live-score">Current score <strong id="ocf-total">0</strong> / 17</div>'
           + '<button class="battery-btn primary" id="ocf-save-score">Save score</button></div></div></div>';
@@ -397,6 +399,18 @@
         Array.prototype.forEach.call(document.querySelectorAll('input'), function(input) {
           input.addEventListener('change', update);
         });
+        var suggestionUsed = false;
+        var suggestionRows = null;
+        document.getElementById('ocf-suggest-score').onclick = function() {
+          suggestionRows = suggestElements(strokes);
+          suggestionRows.forEach(function(suggestion, i) {
+            var row = document.querySelectorAll('.ocf-score-row')[i];
+            row.querySelector('.ocf-accuracy').checked = suggestion.accuracy;
+            row.querySelector('.ocf-placement').checked = suggestion.placement;
+          });
+          suggestionUsed = true;
+          update();
+        };
         document.getElementById('ocf-save-score').onclick = function() {
           var rowsData = collect();
           var score = scoreElements(rowsData, document.getElementById('ocf-bonus').checked, incomplete);
@@ -410,7 +424,10 @@
             bonus: score.bonus,
             total_score: score.total,
             total_score_raw: score.rawTotal,
-            review_status: score.status
+            review_status: score.status,
+            automated_suggestion_used: suggestionUsed,
+            automated_suggestion: suggestionRows ? JSON.stringify(suggestionRows) : null,
+            automated_suggestion_version: suggestionUsed ? 'ocf-rule-aid-0.1-unvalidated' : null
           });
           var key = phase === 'copy' ? 'ocf_copy' : 'ocf_delayed';
           var previous = window.BatteryData.taskSummaries.original_complex_figure || {};
