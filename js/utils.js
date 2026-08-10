@@ -133,6 +133,192 @@ function clearBatteryCheckpoint() {
   window.requestAnimationFrame(loop);
 })();
 
+/* ── Reliability helpers ───────────────────────────────────── */
+window.BatteryReliability = (function() {
+  var DEFAULT_TIMEOUT_MS = 12000;
+
+  function withTimeout(promise, timeoutMs, label) {
+    timeoutMs = timeoutMs || DEFAULT_TIMEOUT_MS;
+    return new Promise(function(resolve, reject) {
+      var settled = false;
+      var timer = setTimeout(function() {
+        if (settled) return;
+        settled = true;
+        reject(new Error((label || 'operation') + ' timed out after ' + timeoutMs + ' ms'));
+      }, timeoutMs);
+      Promise.resolve(promise).then(function(value) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(value);
+      }).catch(function(error) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(error);
+      });
+    });
+  }
+
+  function requestMicrophone(timeoutMs) {
+    timeoutMs = timeoutMs || DEFAULT_TIMEOUT_MS;
+    return new Promise(function(resolve, reject) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        reject(new Error('Microphone capture is unavailable'));
+        return;
+      }
+      var settled = false;
+      var timer = setTimeout(function() {
+        if (settled) return;
+        settled = true;
+        reject(new Error('Microphone permission timed out'));
+      }, timeoutMs);
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+        if (settled) {
+          stream.getTracks().forEach(function(track) { track.stop(); });
+          return;
+        }
+        settled = true;
+        clearTimeout(timer);
+        resolve(stream);
+      }).catch(function(error) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(error);
+      });
+    });
+  }
+
+  function stopRecorder(recorder, chunks, timeoutMs) {
+    timeoutMs = timeoutMs || 3000;
+    return new Promise(function(resolve) {
+      if (!recorder || recorder.state === 'inactive') {
+        resolve(null);
+        return;
+      }
+      var settled = false;
+      var mime = recorder.mimeType || 'audio/webm';
+      var previousStop = recorder.onstop;
+      function finish(timedOut) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        recorder.onstop = previousStop || null;
+        resolve({
+          blob: chunks && chunks.length ? new Blob(chunks, { type: mime }) : null,
+          timedOut: !!timedOut
+        });
+      }
+      recorder.onstop = function(event) {
+        if (typeof previousStop === 'function') {
+          try { previousStop.call(recorder, event); } catch (error) { console.warn(error); }
+        }
+        finish(false);
+      };
+      var timer = setTimeout(function() { finish(true); }, timeoutMs);
+      try { recorder.stop(); } catch (error) { finish(true); }
+    });
+  }
+
+  function revokeObjectUrl(url) {
+    if (!url || typeof URL === 'undefined' || !URL.revokeObjectURL) return;
+    try { URL.revokeObjectURL(url); } catch (error) { console.warn(error); }
+  }
+
+  function decimateStroke(stroke, minimumDistance, maximumPoints) {
+    stroke = Array.isArray(stroke) ? stroke : [];
+    minimumDistance = minimumDistance || 0.0025;
+    maximumPoints = maximumPoints || 1200;
+    if (stroke.length <= 2) return stroke.slice();
+    var kept = [stroke[0]];
+    var last = stroke[0];
+    for (var i = 1; i < stroke.length - 1; i += 1) {
+      var point = stroke[i];
+      var dx = point.x - last.x;
+      var dy = point.y - last.y;
+      if (Math.sqrt(dx * dx + dy * dy) >= minimumDistance) {
+        kept.push(point);
+        last = point;
+      }
+    }
+    kept.push(stroke[stroke.length - 1]);
+    if (kept.length <= maximumPoints) return kept;
+    var stride = (kept.length - 1) / (maximumPoints - 1);
+    return Array.from({ length: maximumPoints }, function(_, index) {
+      return kept[Math.min(kept.length - 1, Math.round(index * stride))];
+    });
+  }
+
+  function installGamepadPointer(canvas, onSelect, options) {
+    options = options || {};
+    if (!canvas || !navigator.getGamepads || !window.requestAnimationFrame) return function() {};
+    var parent = canvas.parentElement;
+    var cursor = document.createElement('div');
+    cursor.className = 'battery-gamepad-pointer';
+    cursor.setAttribute('aria-hidden', 'true');
+    cursor.style.cssText = 'position:absolute;width:22px;height:22px;border:3px solid #0f172a;'
+      + 'background:#fbbf24;border-radius:50%;transform:translate(-50%,-50%);'
+      + 'box-shadow:0 0 0 2px #fff;pointer-events:none;z-index:20;display:none;';
+    if (parent && getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+    if (parent) parent.appendChild(cursor);
+    var x = canvas.width / 2;
+    var y = canvas.height / 2;
+    var lastTime = 0;
+    var previousPressed = false;
+    var stopped = false;
+    var raf = null;
+
+    function loop(now) {
+      if (stopped) return;
+      var pads = navigator.getGamepads();
+      var pad = pads && Array.prototype.find.call(pads, function(item) { return item; });
+      if (pad) {
+        var dt = Math.min(40, lastTime ? now - lastTime : 16);
+        lastTime = now;
+        var dead = 0.18;
+        var ax = Math.abs(pad.axes[0] || 0) > dead ? pad.axes[0] : 0;
+        var ay = Math.abs(pad.axes[1] || 0) > dead ? pad.axes[1] : 0;
+        ax += ((pad.buttons[15] && pad.buttons[15].pressed) ? 1 : 0)
+          - ((pad.buttons[14] && pad.buttons[14].pressed) ? 1 : 0);
+        ay += ((pad.buttons[13] && pad.buttons[13].pressed) ? 1 : 0)
+          - ((pad.buttons[12] && pad.buttons[12].pressed) ? 1 : 0);
+        x = Math.max(0, Math.min(canvas.width, x + ax * dt * (options.speed || 0.45)));
+        y = Math.max(0, Math.min(canvas.height, y + ay * dt * (options.speed || 0.45)));
+        var rect = canvas.getBoundingClientRect();
+        cursor.style.display = 'block';
+        cursor.style.left = (x / canvas.width * rect.width) + 'px';
+        cursor.style.top = (y / canvas.height * rect.height) + 'px';
+        var pressed = !!(pad.buttons[0] && pad.buttons[0].pressed);
+        if (pressed && !previousPressed && typeof onSelect === 'function') {
+          window.BatteryInput.current = 'gamepad';
+          onSelect(x, y);
+        }
+        previousPressed = pressed;
+      } else {
+        cursor.style.display = 'none';
+        previousPressed = false;
+      }
+      raf = requestAnimationFrame(loop);
+    }
+    raf = requestAnimationFrame(loop);
+    return function() {
+      stopped = true;
+      if (raf) cancelAnimationFrame(raf);
+      if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+    };
+  }
+
+  return {
+    withTimeout: withTimeout,
+    requestMicrophone: requestMicrophone,
+    stopRecorder: stopRecorder,
+    revokeObjectUrl: revokeObjectUrl,
+    decimateStroke: decimateStroke,
+    installGamepadPointer: installGamepadPointer
+  };
+})();
+
 /* ── Global in-session data store ─────────────────────────── */
 window.BatteryData = {
   participantId: '',
