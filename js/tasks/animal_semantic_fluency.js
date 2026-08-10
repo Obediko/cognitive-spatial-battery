@@ -5,7 +5,7 @@
 'use strict';
 
 (function() {
-  var ASF_VERSION = '0.1.0-pilot';
+  var ASF_VERSION = '0.2.0-pilot';
   var ASF_DICTIONARY_VERSION = 'asf60-en-0.1';
   var ASF_TIME_LIMIT_MS = window.PILOT_MODE ? 15000 : 60000;
 
@@ -98,35 +98,18 @@
 
   function asfPracticeTrial() {
     return {
-      type: jsPsychCallFunction,
-      async: true,
-      func: function(done) {
-        var display = asfDisplay();
-        display.innerHTML = '<div class="osr-card"><span class="osr-kicker">Practice</span>'
-          + '<h2>Try a different category first</h2>'
-          + '<p class="osr-prompt">Name two things that people use for writing.</p>'
-          + '<p>Say your answers aloud to the examiner.</p>'
-          + '<div class="asf-practice-actions">'
-          + '<button class="battery-btn primary" id="asf-practice-understood">Examiner: understood</button>'
-          + '<button class="battery-btn" id="asf-practice-repeat">Examiner: re-explain once</button></div>'
-          + '<p id="asf-practice-note" class="osr-status"></p></div>';
-        var repeatUsed = false;
-        document.getElementById('asf-practice-repeat').addEventListener('click', function() {
-          repeatUsed = true;
-          document.getElementById('asf-practice-note').textContent =
-            'Explain that both answers must belong to the same requested group. Do not use animal examples.';
-          this.disabled = true;
-        });
-        document.getElementById('asf-practice-understood').addEventListener('click', function() {
-          window.BatteryData.addTrials({
-            task_name: 'animal_semantic_fluency',
-            task_version: ASF_VERSION,
-            phase: 'practice',
-            practice_category: 'writing implements',
-            practice_reexplanation_used: repeatUsed
-          });
-          done();
-        });
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<div class="osr-card"><span class="osr-kicker">Practice</span>'
+        + '<h2>Try a different category first</h2>'
+        + '<p class="osr-prompt">Say aloud two things that people use for writing.</p>'
+        + '<p>When you have said two answers, continue. Both answers should belong to the requested group.</p></div>',
+      choices: ['I have said two answers'],
+      data: {
+        task_name: 'animal_semantic_fluency',
+        task_version: ASF_VERSION,
+        phase: 'practice',
+        practice_category: 'writing implements',
+        practice_self_administered: true
       }
     };
   }
@@ -334,7 +317,8 @@
           + (audio ? '<audio controls class="osr-audio-review" src="' + audio + '"></audio>'
             : '<p class="osr-error">No audio was captured. Use the live transcript if available.</p>')
           + '<label class="osr-transcript-label">Transcript'
-          + '<textarea id="asf-transcript" rows="6" placeholder="Enter one response per line, or separate responses with commas or semicolons."></textarea></label>'
+          + '<textarea id="asf-transcript" rows="6" placeholder="Whisper will suggest a transcript; one response per line works best."></textarea></label>'
+          + '<p id="asf-asr-status" class="osr-status" aria-live="polite"></p>'
           + '<div class="asf-parser-actions"><button class="battery-btn" id="asf-parse">Create response rows</button>'
           + '<button class="battery-btn" id="asf-add-row">Add response</button></div>'
           + '<div id="asf-duplicate-warning" class="asf-duplicate-warning" hidden></div>'
@@ -351,6 +335,8 @@
           + '</div></div>';
 
         var body = document.getElementById('asf-response-body');
+        var asrOutcome = { attempted: false, succeeded: false, model: null };
+        var reviewActive = true;
 
         var normalise = asfNormalise;
 
@@ -417,13 +403,39 @@
           }
         }
 
-        document.getElementById('asf-parse').addEventListener('click', function() {
+        function parseTranscriptIntoRows() {
           var entries = document.getElementById('asf-transcript').value
             .split(/[\n,;]+/).map(function(value) { return value.trim(); }).filter(Boolean);
           body.innerHTML = '';
           entries.forEach(makeRow);
           updateCounts();
-        });
+        }
+
+        var asrStatus = document.getElementById('asf-asr-status');
+        if (window.ASFState.audio && window.OSRTranscription && typeof window.OSRTranscription.transcribeBlob === 'function') {
+          asrOutcome.attempted = true;
+          asrOutcome.model = window.OSRTranscription.modelId;
+          asrStatus.textContent = 'Loading local Whisper transcription…';
+          window.OSRTranscription.transcribeBlob(window.ASFState.audio, function(progress) {
+            if (reviewActive) asrStatus.textContent = 'Loading local Whisper model… ' + Math.round(progress) + '%';
+          }).then(function(transcript) {
+            if (!reviewActive || !document.getElementById('asf-transcript')) return;
+            document.getElementById('asf-transcript').value = transcript
+              .replace(/[.!?]+\s*/g, '\n')
+              .replace(/,\s*/g, '\n')
+              .trim();
+            parseTranscriptIntoRows();
+            asrOutcome.succeeded = true;
+            asrStatus.textContent = 'Whisper suggestion ready. Verify the audio, response boundaries, spelling and every scoring decision.';
+          }).catch(function(error) {
+            if (!reviewActive) return;
+            asrStatus.textContent = 'Automatic transcription unavailable: ' + (error && error.message ? error.message : 'unknown error') + '. Transcribe manually.';
+          });
+        } else {
+          asrStatus.textContent = 'No local audio available for automatic transcription.';
+        }
+
+        document.getElementById('asf-parse').addEventListener('click', parseTranscriptIntoRows);
         document.getElementById('asf-add-row').addEventListener('click', function() {
           makeRow('');
           updateCounts();
@@ -432,6 +444,7 @@
         if (dl) dl.addEventListener('click', downloadASFAudio);
 
         document.getElementById('asf-save').addEventListener('click', function() {
+          reviewActive = false;
           var c = counts();
           if (c.unreviewed) {
             window.alert('Classify every response before saving, or defer scoring.');
@@ -443,6 +456,9 @@
           var finalised = asfFinaliseScore(c, window.ASFState.endedEarly);
           if (trial) {
             trial.transcript = document.getElementById('asf-transcript').value.trim() || null;
+            trial.transcript_source = asrOutcome.succeeded ? 'local_whisper_examiner_reviewed' : 'examiner_manual';
+            trial.asr_attempted = asrOutcome.attempted;
+            trial.asr_model = asrOutcome.model;
             trial.response_rows = JSON.stringify(c.rows);
             trial.total_valid_unique = finalised.total;
             trial.total_valid_unique_raw = c.valid;
@@ -467,6 +483,7 @@
           done();
         });
         document.getElementById('asf-defer').addEventListener('click', function() {
+          reviewActive = false;
           window.BatteryData.setTaskSummary('animal_semantic_fluency', {
             asf_total_valid_unique: null,
             asf_prompt_used: window.ASFState.promptUsed,
@@ -500,10 +517,14 @@
       asfPracticeTrial(),
       asfMicrophoneTrial(),
       asfMainTrial(),
-      asfScoringTrial(),
       asfEndTrial()
     ];
   }
 
+  function buildAnimalFluencyReviewTimeline() {
+    return [asfScoringTrial()];
+  }
+
   window.buildAnimalFluencyTimeline = buildAnimalFluencyTimeline;
+  window.buildAnimalFluencyReviewTimeline = buildAnimalFluencyReviewTimeline;
 })();
