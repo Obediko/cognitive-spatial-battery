@@ -266,7 +266,7 @@ function buildOLMRetrieval(blockNum, blockObjects, positions, retrievalOrder, tr
 
         const hint = document.createElement('div');
         hint.style.cssText = 'color:#8899aa;font-size:0.8rem;text-align:center;';
-        hint.textContent = 'Click the location where you think the ' + obj.label + ' was.';
+        hint.textContent = 'Click or use the joystick and primary button to mark where the ' + obj.label + ' was.';
 
         wrapper.appendChild(cueArea);
         wrapper.appendChild(arena);
@@ -294,14 +294,18 @@ function buildOLMRetrieval(blockNum, blockObjects, positions, retrievalOrder, tr
 
         const startTime = performance.now();
 
-        arena.addEventListener('click', function onArenaClick(e) {
+        let responded = false;
+        let destroyGamepadPointer = function() {};
+        function selectLocation(respX, respY) {
+          if (responded) return;
+          responded = true;
           arena.removeEventListener('click', onArenaClick);
           arena.style.cursor = 'default';
+          destroyGamepadPointer();
 
-          const rect   = arena.getBoundingClientRect();
-          const respX  = Math.round(e.clientX - rect.left);
-          const respY  = Math.round(e.clientY - rect.top);
-          const rt     = Math.round(performance.now() - startTime);
+          respX = Math.round(Math.max(0, Math.min(cW, respX)));
+          respY = Math.round(Math.max(0, Math.min(cH, respY)));
+          const rt = Math.round(performance.now() - startTime);
 
           /* Compute Euclidean error in px */
           const errPx  = +euclideanDistance(respX, respY, corrX, corrY).toFixed(2);
@@ -353,7 +357,21 @@ function buildOLMRetrieval(blockNum, blockObjects, positions, retrievalOrder, tr
           } else {
             setTimeout(() => { display.innerHTML = ''; done(); }, 200);
           }
-        });
+        }
+
+        function onArenaClick(e) {
+          const rect = arena.getBoundingClientRect();
+          selectLocation(
+            (e.clientX - rect.left) * cW / rect.width,
+            (e.clientY - rect.top) * cH / rect.height
+          );
+        }
+        arena.addEventListener('click', onArenaClick);
+        destroyGamepadPointer = window.BatteryReliability.installGamepadPointer(
+          arena,
+          function(x, y) { selectLocation(x, y); },
+          { width: cW, height: cH, speed: 0.45 }
+        );
       }
     };
   });
