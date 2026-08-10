@@ -97,10 +97,17 @@
       + '<g class="ovn-line">' + drawings[item.art] + '</g></svg>';
   }
 
+  function ovnDeliveryPath(art) {
+    var source = '/assets/images/visual-naming/' + art + '.png';
+    return /\\.netlify\\.app$/i.test(window.location.hostname)
+      ? '/.netlify/images?url=' + encodeURIComponent(source) + '&w=640&q=82'
+      : source;
+  }
+
   function ovnStimulusMarkup(item) {
-    var path = 'assets/images/visual-naming/' + item.art + '.png';
+    var path = ovnDeliveryPath(item.art);
     return '<div class="ovn-stimulus-frame" data-ovn-art="' + item.art + '">'
-      + '<img class="ovn-stimulus-image" src="' + path + '" alt="Object naming stimulus" decoding="async">'
+      + '<img class="ovn-stimulus-image" src="' + path + '" alt="Object naming stimulus" decoding="async" fetchpriority="high">'
       + '<div class="ovn-stimulus-fallback" hidden>' + ovnSvg(item) + '</div>'
       + '<p class="ovn-stimulus-status osr-status" aria-live="polite">Preparing image…</p></div>';
   }
@@ -150,7 +157,7 @@
       if (next) {
         var preload = new Image();
         preload.decoding = 'async';
-        preload.src = 'assets/images/visual-naming/' + next.art + '.png';
+        preload.src = ovnDeliveryPath(next.art);
       }
     });
     return ready;
