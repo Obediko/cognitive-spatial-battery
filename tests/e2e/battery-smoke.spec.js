@@ -33,3 +33,33 @@ test('desktop workspace uses the available screen width', async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
+
+
+test('complex figure accepts multiple separate mouse strokes', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Begin Setup' }).click();
+  await page.locator('input[type="text"]').fill('E2E_OCF');
+  await page.getByRole('button', { name: 'Confirm ID' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('button', { name: 'Continue without fullscreen' }).click();
+  await page.getByRole('button', { name: 'Original Complex Figure only' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('button', { name: 'Begin copy' }).click();
+
+  const box = await page.locator('#ocf-canvas').boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box.x + 80, box.y + 90);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 210, box.y + 170, { steps: 8 });
+  await page.mouse.up();
+  await page.mouse.move(box.x + 280, box.y + 110);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 410, box.y + 230, { steps: 8 });
+  await page.mouse.up();
+  await page.getByRole('button', { name: 'Finish drawing' }).click();
+
+  await expect.poll(() => page.evaluate(() => {
+    const row = window.BatteryData.trials.find((trial) => trial.phase === 'copy_drawing');
+    return row ? row.stroke_count : null;
+  })).toBe(2);
+});
