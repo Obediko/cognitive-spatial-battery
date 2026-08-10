@@ -30,7 +30,7 @@ const SP_LANDMARKS = [
 ];
 
 /* ── Arena constants ─────────────────────────────────────── */
-const SP_ARENA_R    = 300;  // radius of circular arena in px
+const SP_ARENA_R    = 250;  // radius of circular arena in px
 const SP_ARENA_SIZE = SP_ARENA_R * 2 + 20; // canvas bounding box
 const SP_LM_R       = 0.72; // landmark radius as fraction of arena radius
 
@@ -65,14 +65,14 @@ function spDrawArena(ctx, cx, cy, landmarks, startPos, showLandmarks, chosenAngl
   /* Arena circle */
   ctx.beginPath();
   ctx.arc(cx, cy, SP_ARENA_R, 0, 2 * Math.PI);
-  ctx.fillStyle = '#0d1b2a';
+  ctx.fillStyle = '#ffffff';
   ctx.fill();
-  ctx.strokeStyle = '#3a6186';
+  ctx.strokeStyle = '#475569';
   ctx.lineWidth = 2;
   ctx.stroke();
 
   /* Cardinal direction tick marks */
-  ctx.strokeStyle = 'rgba(168,216,234,0.2)';
+  ctx.strokeStyle = 'rgba(51,65,85,0.35)';
   ctx.lineWidth = 1;
   [0, 90, 180, 270].forEach(deg => {
     const rad = deg * Math.PI / 180;
@@ -87,29 +87,31 @@ function spDrawArena(ctx, cx, cy, landmarks, startPos, showLandmarks, chosenAngl
   if (showLandmarks) {
     landmarks.forEach(lm => {
       /* Dot */
-      ctx.beginPath(); ctx.arc(lm.x, lm.y, 34, 0, 2 * Math.PI);
-      ctx.fillStyle = lm.color; ctx.fill();
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+      const markerFill = lm.id === 'fountain' ? '#dbeafe' : '#ffffff';
+      ctx.beginPath(); ctx.arc(lm.x, lm.y, 24, 0, 2 * Math.PI);
+      ctx.fillStyle = markerFill; ctx.fill();
+      ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.stroke();
 
       /* Emoji */
-      ctx.font = '30px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '22px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#0f172a';
       ctx.fillText(lm.emoji, lm.x, lm.y);
 
       /* Label */
       const labelX = cx + (lm.x - cx) * 1.14;
       const labelY = cy + (lm.y - cy) * 1.18;
-      ctx.font = 'bold 16px Segoe UI,Arial,sans-serif';
-      ctx.fillStyle = '#cdd9e5'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = 'bold 13px Segoe UI,Arial,sans-serif';
+      ctx.fillStyle = '#0f172a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(lm.label, labelX, labelY);
     });
   }
 
   /* Start position marker */
   if (startPos) {
-    ctx.beginPath(); ctx.arc(startPos.x, startPos.y, 14, 0, 2 * Math.PI);
-    ctx.fillStyle = '#a8d8ea'; ctx.fill();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.font = 'bold 12px Segoe UI,Arial,sans-serif';
+    ctx.beginPath(); ctx.arc(startPos.x, startPos.y, 11, 0, 2 * Math.PI);
+    ctx.fillStyle = '#fef3c7'; ctx.fill();
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.font = 'bold 11px Segoe UI,Arial,sans-serif';
     ctx.fillStyle = '#0d1b2a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('S', startPos.x, startPos.y);
   }
@@ -121,7 +123,7 @@ function spDrawArena(ctx, cx, cy, landmarks, startPos, showLandmarks, chosenAngl
     const ex = startPos.x + arrowLen * Math.cos(rad);
     const ey = startPos.y + arrowLen * Math.sin(rad);
     ctx.beginPath(); ctx.moveTo(startPos.x, startPos.y); ctx.lineTo(ex, ey);
-    ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.strokeStyle = '#b45309'; ctx.lineWidth = 2.5; ctx.stroke();
     /* Arrowhead */
     const headLen = 12, headAngle = 0.4;
     ctx.beginPath();
@@ -129,7 +131,7 @@ function spDrawArena(ctx, cx, cy, landmarks, startPos, showLandmarks, chosenAngl
     ctx.lineTo(ex - headLen * Math.cos(rad - headAngle), ey - headLen * Math.sin(rad - headAngle));
     ctx.moveTo(ex, ey);
     ctx.lineTo(ex - headLen * Math.cos(rad + headAngle), ey - headLen * Math.sin(rad + headAngle));
-    ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = '#b45309'; ctx.lineWidth = 2; ctx.stroke();
   }
 }
 
@@ -298,7 +300,7 @@ function buildSPTrial(trialNum, targetLandmark, startPosObj, practiceOrMain, sho
           const ex = sp.x + SP_ARENA_R * 0.85 * Math.cos(corrRad);
           const ey = sp.y + SP_ARENA_R * 0.85 * Math.sin(corrRad);
           ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(ex, ey);
-          ctx.strokeStyle = '#66bb6a'; ctx.lineWidth = 2.5; ctx.setLineDash([5, 3]); ctx.stroke();
+          ctx.strokeStyle = '#15803d'; ctx.lineWidth = 2.5; ctx.setLineDash([5, 3]); ctx.stroke();
           ctx.setLineDash([]);
           hint.innerHTML = '<span style="color:#66bb6a">Correct direction shown in green.</span> &nbsp; Your response in yellow. &nbsp; Error: <strong>' + absErr.toFixed(1) + '&deg;</strong>';
           confirmBtn.disabled = true;
