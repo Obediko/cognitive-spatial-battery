@@ -11,6 +11,7 @@ const asf = fs.readFileSync(path.join(root, 'js/tasks/animal_semantic_fluency.js
 const ovn = fs.readFileSync(path.join(root, 'js/tasks/original_visual_naming.js'), 'utf8');
 const ocf = fs.readFileSync(path.join(root, 'js/tasks/original_complex_figure.js'), 'utf8');
 const sp = fs.readFileSync(path.join(root, 'js/tasks/spatial_pointing.js'), 'utf8');
+const css = fs.readFileSync(path.join(root, 'css/style.css'), 'utf8');
 
 [
   'buildOSRReviewTimeline',
@@ -32,7 +33,12 @@ assert.ok(ovn.includes("protocol_mode: 'deferred_uncued'"));
 assert.ok(ovn.includes('OSRTranscription.transcribeBlob'));
 assert.ok(ocf.includes('function buildOCFReviewTimeline()'));
 assert.ok(ocf.includes("canvas.addEventListener('lostpointercapture'"));
-assert.ok(sp.includes('const SP_ARENA_R    = 300;'));
-assert.ok(sp.includes("ctx.font = '30px serif';"));
+assert.ok(sp.includes('const SP_ARENA_R    = 250;'));
+assert.ok(sp.includes("ctx.fillStyle = '#ffffff';"));
+assert.ok(sp.includes("lm.id === 'fountain' ? '#dbeafe' : '#ffffff'"));
+assert.ok(sp.includes("ctx.arc(lm.x, lm.y, 24"));
+assert.ok(sp.includes("ctx.font = '22px serif';"));
+assert.ok(css.includes('--sp-arena-size: min(500px, 88vw, 68vh);'));
+assert.ok(css.includes('aspect-ratio: 1 / 1;'));
 
 console.log('deferred_review_integration.test.js: all assertions passed');
