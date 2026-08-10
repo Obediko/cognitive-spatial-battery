@@ -6,9 +6,11 @@
 'use strict';
 
 (function() {
-  var OVN_VERSION = '0.1.0-pilot';
+  var OVN_VERSION = '0.2.0-pilot';
   var OVN_STIMULUS_SET = 'ovn32-en-0.1';
   var RESPONSE_LIMIT_MS = 20000;
+  window.OVN_DEFER_EXAMINER_REVIEW = window.OVN_DEFER_EXAMINER_REVIEW !== false;
+  window.OVNState = window.OVNState || { itemAudio: [], itemAudioUrls: [], deferredResponses: [] };
 
   var drawings = {
     cup: '<path d="M70 58h80v62c0 25-18 40-40 40s-40-15-40-40z"/><path d="M150 76h18c30 0 30 44 0 44h-18"/><path d="M58 166h106"/>',
@@ -95,6 +97,24 @@
       + '<g class="ovn-line">' + drawings[item.art] + '</g></svg>';
   }
 
+  function ovnStimulusMarkup(item) {
+    var path = 'assets/images/visual-naming/' + item.art + '.png';
+    return '<object class="ovn-stimulus-object" data="' + path + '" type="image/png" '
+      + 'aria-label="Object naming stimulus: ' + item.id + '">' + ovnSvg(item) + '</object>';
+  }
+
+  function ovnNormalise(value) {
+    return String(value || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function ovnTranscriptMatches(item, transcript) {
+    var observed = ovnNormalise(transcript);
+    if (!observed) return false;
+    return [item.target].concat(item.alternatives || []).some(function(answer) {
+      return ovnNormalise(answer) === observed;
+    });
+  }
+
   function scoreSummary(responses, incomplete) {
     responses = Array.isArray(responses) ? responses : [];
     var uncued = responses.filter(function(r) { return r.outcome === 'uncued_correct'; }).length;
@@ -122,10 +142,11 @@
   window.OVNScoring = {
     scoreSummary: scoreSummary,
     nextFailureRun: nextFailureRun,
+    transcriptMatches: ovnTranscriptMatches,
     itemCount: items.length
   };
 
-  function buildOriginalVisualNamingTimeline() {
+  function buildOriginalVisualNamingLiveTimeline() {
     var instructions = {
       type: jsPsychHtmlButtonResponse,
       stimulus: '<div class="osr-card"><span class="osr-kicker">ETI Core · Visual naming</span>'
@@ -237,7 +258,7 @@
           itemStartedAt = Date.now();
           display.innerHTML = '<div class="ovn-shell"><div class="ovn-progress">Item ' + (index + 1) + ' of ' + items.length
             + '<span>Consecutive total-score failures: ' + failureRun + '/6</span></div>'
-            + '<div class="ovn-layout"><div class="ovn-picture-card">' + ovnSvg(item)
+            + '<div class="ovn-layout"><div class="ovn-picture-card">' + ovnStimulusMarkup(item)
             + '<div class="ovn-clock"><strong id="ovn-time">20</strong><span>seconds uncued</span></div></div>'
             + '<div class="ovn-examiner"><span class="osr-kicker">Examiner controls</span>'
             + '<label>Verbatim response<input id="ovn-response" autocomplete="off"></label>'
@@ -299,5 +320,234 @@
     return [instructions, administration, end];
   }
 
+  function ovnDeferredAdministrationTrial() {
+    return {
+      type: jsPsychCallFunction,
+      async: true,
+      func: function(done) {
+        var display = document.getElementById('jspsych-content') ||
+          document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
+        var stream = null;
+        var recorder = null;
+        var chunks = [];
+        var index = 0;
+        var itemStartedAt = 0;
+        var timer = null;
+        var finished = false;
+        var captured = [];
+
+        window.OVNState.itemAudio = [];
+        window.OVNState.itemAudioUrls = [];
+        window.OVNState.deferredResponses = [];
+
+        function finishAll() {
+          if (finished) return;
+          finished = true;
+          if (timer) clearInterval(timer);
+          if (stream) stream.getTracks().forEach(function(track) { track.stop(); });
+          window.BatteryData.addTrials(captured);
+          done();
+        }
+
+        function saveClipAndAdvance(blob) {
+          var item = items[index];
+          var duration = Date.now() - itemStartedAt;
+          window.OVNState.itemAudio[index] = blob || null;
+          window.OVNState.itemAudioUrls[index] = blob ? URL.createObjectURL(blob) : null;
+          captured.push({
+            task_name: 'original_visual_naming',
+            phase: 'deferred_uncued_item',
+            task_version: OVN_VERSION,
+            stimulus_set: OVN_STIMULUS_SET,
+            protocol_mode: 'deferred_uncued',
+            item_id: item.id,
+            item_order: index + 1,
+            provisional_difficulty: item.provisionalDifficulty,
+            response_time_ms: duration,
+            response_audio_mime_type: blob ? blob.type : null,
+            review_status: 'pending'
+          });
+          index += 1;
+          if (index >= items.length) finishAll();
+          else showItem();
+        }
+
+        function endItem() {
+          if (timer) clearInterval(timer);
+          var next = document.getElementById('ovn-deferred-next');
+          if (next) next.disabled = true;
+          if (recorder && recorder.state !== 'inactive') {
+            recorder.onstop = function() {
+              saveClipAndAdvance(new Blob(chunks, { type: recorder.mimeType || 'audio/webm' }));
+            };
+            recorder.stop();
+          } else {
+            saveClipAndAdvance(null);
+          }
+        }
+
+        function showItem() {
+          var item = items[index];
+          chunks = [];
+          itemStartedAt = Date.now();
+          display.innerHTML = '<div class="ovn-shell ovn-participant"><div class="ovn-progress">Item ' + (index + 1)
+            + ' of ' + items.length + '<span>Speak one answer clearly</span></div>'
+            + '<div class="ovn-picture-card">' + ovnStimulusMarkup(item)
+            + '<div class="ovn-clock"><strong id="ovn-time">20</strong><span>seconds</span></div></div>'
+            + '<button class="battery-btn primary" id="ovn-deferred-next">Answer given — next item</button>'
+            + '<p class="osr-fineprint">Your response is recorded locally for review after the battery.</p></div>';
+          if (stream && typeof MediaRecorder !== 'undefined') {
+            try {
+              recorder = new MediaRecorder(stream);
+              recorder.ondataavailable = function(event) { if (event.data && event.data.size) chunks.push(event.data); };
+              recorder.start();
+            } catch (error) {
+              recorder = null;
+            }
+          }
+          document.getElementById('ovn-deferred-next').onclick = endItem;
+          timer = setInterval(function() {
+            var remaining = Math.max(0, RESPONSE_LIMIT_MS - (Date.now() - itemStartedAt));
+            var time = document.getElementById('ovn-time');
+            if (time) time.textContent = Math.ceil(remaining / 1000);
+            if (remaining <= 0) endItem();
+          }, 100);
+        }
+
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && typeof MediaRecorder !== 'undefined') {
+          navigator.mediaDevices.getUserMedia({ audio: true }).then(function(activeStream) {
+            stream = activeStream;
+            showItem();
+          }).catch(function() {
+            showItem();
+          });
+        } else {
+          showItem();
+        }
+      }
+    };
+  }
+
+  function ovnDeferredReviewTrial() {
+    return {
+      type: jsPsychCallFunction,
+      async: true,
+      func: function(done) {
+        var display = document.getElementById('jspsych-content') ||
+          document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
+        var index = 0;
+        var reviewed = [];
+        var reviewToken = 0;
+
+        function finishReview() {
+          var uncertain = reviewed.some(function(row) { return row.outcome === 'uncertain'; });
+          var correct = reviewed.filter(function(row) { return row.outcome === 'uncued_correct'; }).length;
+          window.OVNState.deferredResponses = reviewed;
+          window.BatteryData.addTrials(reviewed);
+          window.BatteryData.setTaskSummary('original_visual_naming', {
+            ovn_total_with_semantic: null,
+            ovn_total_uncued: uncertain ? null : correct,
+            ovn_total_uncued_raw: correct,
+            ovn_items_administered: reviewed.length,
+            ovn_review_status: uncertain ? 'provisional' : 'examiner_verified',
+            ovn_protocol_mode: 'deferred_uncued',
+            ovn_task_version: OVN_VERSION,
+            ovn_stimulus_set: OVN_STIMULUS_SET
+          });
+          done();
+        }
+
+        function save(outcome) {
+          var item = items[index];
+          var transcriptBox = document.getElementById('ovn-review-transcript');
+          reviewed.push({
+            task_name: 'original_visual_naming',
+            phase: 'deferred_examiner_review',
+            task_version: OVN_VERSION,
+            stimulus_set: OVN_STIMULUS_SET,
+            protocol_mode: 'deferred_uncued',
+            item_id: item.id,
+            item_order: index + 1,
+            transcript: transcriptBox ? transcriptBox.value.trim() || null : null,
+            outcome: outcome,
+            semantic_cue_given: false,
+            phonemic_cue_given: false,
+            asr_model: window.OSRTranscription ? window.OSRTranscription.modelId : null,
+            review_status: outcome === 'uncertain' ? 'provisional' : 'examiner_verified'
+          });
+          index += 1;
+          if (index >= items.length) finishReview();
+          else showReview();
+        }
+
+        function showReview() {
+          var token = ++reviewToken;
+          var item = items[index];
+          var audioUrl = window.OVNState.itemAudioUrls[index];
+          var blob = window.OVNState.itemAudio[index];
+          display.innerHTML = '<div class="ovn-shell"><div class="ovn-progress">Review item ' + (index + 1)
+            + ' of ' + items.length + '<span>Target: ' + item.target + '</span></div>'
+            + '<div class="ovn-layout"><div class="ovn-picture-card">' + ovnStimulusMarkup(item) + '</div>'
+            + '<div class="ovn-examiner"><span class="osr-kicker">Examiner review</span>'
+            + (audioUrl ? '<audio controls autoplay class="osr-audio-review" src="' + audioUrl + '"></audio>' : '<p class="osr-error">No item audio captured.</p>')
+            + '<label>Whisper transcript<input id="ovn-review-transcript" autocomplete="off"></label>'
+            + '<p id="ovn-review-asr" class="osr-status" aria-live="polite"></p>'
+            + '<div class="ovn-actions"><button class="battery-btn primary" id="ovn-review-correct">Correct</button>'
+            + '<button class="battery-btn" id="ovn-review-incorrect">Incorrect</button>'
+            + '<button class="battery-btn" id="ovn-review-uncertain">Uncertain</button></div></div></div></div>';
+          document.getElementById('ovn-review-correct').onclick = function() { save('uncued_correct'); };
+          document.getElementById('ovn-review-incorrect').onclick = function() { save('incorrect'); };
+          document.getElementById('ovn-review-uncertain').onclick = function() { save('uncertain'); };
+
+          var status = document.getElementById('ovn-review-asr');
+          if (blob && window.OSRTranscription && typeof window.OSRTranscription.transcribeBlob === 'function') {
+            status.textContent = 'Transcribing locally with Whisper…';
+            window.OSRTranscription.transcribeBlob(blob, function(progress) {
+              if (token === reviewToken && status) status.textContent = 'Loading Whisper… ' + Math.round(progress) + '%';
+            }).then(function(transcript) {
+              if (token !== reviewToken || !document.getElementById('ovn-review-transcript')) return;
+              document.getElementById('ovn-review-transcript').value = transcript;
+              var suggested = ovnTranscriptMatches(item, transcript);
+              status.textContent = suggested
+                ? 'Whisper exact-name suggestion: correct. Examiner must verify the recording.'
+                : 'No exact accepted-name match. Check the recording before deciding.';
+            }).catch(function(error) {
+              if (token === reviewToken) status.textContent = 'Whisper unavailable: ' + (error && error.message ? error.message : 'unknown error');
+            });
+          }
+        }
+
+        showReview();
+      }
+    };
+  }
+
+  function buildOriginalVisualNamingTimeline() {
+    if (!window.OVN_DEFER_EXAMINER_REVIEW) return buildOriginalVisualNamingLiveTimeline();
+    return [
+      {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: '<div class="osr-card"><span class="osr-kicker">Visual naming</span>'
+          + '<h2>Name each object</h2><p>Say one name clearly for each object, then continue to the next item.</p>'
+          + '<p class="osr-fineprint">This deferred protocol measures uncued naming only; no semantic or phonemic cues are administered.</p></div>',
+        choices: ['Begin'],
+        data: { task_name: 'original_visual_naming', phase: 'instructions', protocol_mode: 'deferred_uncued', task_version: OVN_VERSION }
+      },
+      ovnDeferredAdministrationTrial(),
+      {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: '<div class="osr-card"><h2>Object Naming responses captured</h2>'
+          + '<p>The recordings will be transcribed and checked after participant testing.</p></div>',
+        choices: ['Continue battery'],
+        data: { task_name: 'original_visual_naming', phase: 'participant_end', protocol_mode: 'deferred_uncued', task_version: OVN_VERSION }
+      }
+    ];
+  }
+
+  function buildOriginalVisualNamingReviewTimeline() {
+    return window.OVN_DEFER_EXAMINER_REVIEW ? [ovnDeferredReviewTrial()] : [];
+  }
+
   window.buildOriginalVisualNamingTimeline = buildOriginalVisualNamingTimeline;
+  window.buildOriginalVisualNamingReviewTimeline = buildOriginalVisualNamingReviewTimeline;
 })();

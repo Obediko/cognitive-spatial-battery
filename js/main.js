@@ -381,7 +381,7 @@ window.addEventListener('load', function() {
   checkScreenSize();
 
   /* Safety check: ensure all task builders are available */
-  var required = ['buildOSRImmediateTimeline', 'buildOSRDelayedTimeline', 'buildAnimalFluencyTimeline', 'buildOriginalVisualNamingTimeline', 'buildOCFImmediateTimeline', 'buildOCFDelayedTimeline', 'buildVisualSequencingTimeline', 'buildObjectLocationTimeline', 'buildSpatialPointingTimeline', 'buildNumberSpanTimeline'];
+  var required = ['buildOSRImmediateTimeline', 'buildOSRDelayedTimeline', 'buildOSRReviewTimeline', 'buildAnimalFluencyTimeline', 'buildAnimalFluencyReviewTimeline', 'buildOriginalVisualNamingTimeline', 'buildOriginalVisualNamingReviewTimeline', 'buildOCFImmediateTimeline', 'buildOCFDelayedTimeline', 'buildOCFReviewTimeline', 'buildVisualSequencingTimeline', 'buildObjectLocationTimeline', 'buildSpatialPointingTimeline', 'buildNumberSpanTimeline'];
   for (var ri = 0; ri < required.length; ri++) {
     if (typeof window[required[ri]] !== 'function') {
       var target = document.getElementById('jspsych-target');
@@ -465,6 +465,53 @@ window.addEventListener('load', function() {
     }
   };
 
+  var examinerHandoffTimeline = {
+    timeline: [{
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<div class="osr-card"><span class="osr-kicker">Participant testing complete</span>'
+        + '<h2>Hand the device to the examiner</h2>'
+        + '<p>The remaining screens contain recordings, expected answers and scoring controls.</p>'
+        + '<div class="warning-box">The participant should no longer view or operate the screen.</div></div>',
+      choices: ['Examiner: begin final review'],
+      data: { battery_phase: 'examiner_handoff' }
+    }],
+    conditional_function: function() {
+      return ['full', 'osr', 'asf', 'ovn', 'ocf'].indexOf(window._batteryChoice) !== -1;
+    }
+  };
+
+  var osrReviewTimeline = {
+    timeline: buildOSRReviewTimeline(),
+    conditional_function: function() {
+      var c = window._batteryChoice;
+      return c === 'full' || c === 'osr';
+    }
+  };
+
+  var asfReviewTimeline = {
+    timeline: buildAnimalFluencyReviewTimeline(),
+    conditional_function: function() {
+      var c = window._batteryChoice;
+      return c === 'full' || c === 'asf';
+    }
+  };
+
+  var ovnReviewTimeline = {
+    timeline: buildOriginalVisualNamingReviewTimeline(),
+    conditional_function: function() {
+      var c = window._batteryChoice;
+      return c === 'full' || c === 'ovn';
+    }
+  };
+
+  var ocfReviewTimeline = {
+    timeline: buildOCFReviewTimeline(),
+    conditional_function: function() {
+      var c = window._batteryChoice;
+      return c === 'full' || c === 'ocf';
+    }
+  };
+
   var olmTimeline = {
     timeline: [makeBreakScreen('Object-Location Memory Task')].concat(buildObjectLocationTimeline()),
     conditional_function: function() {
@@ -512,6 +559,11 @@ window.addEventListener('load', function() {
     setP90,
     nsTimeline,
     ocfDelayedTimeline,
+    examinerHandoffTimeline,
+    osrReviewTimeline,
+    asfReviewTimeline,
+    ovnReviewTimeline,
+    ocfReviewTimeline,
     makeCompletionScreen()
   ]);
 

@@ -82,6 +82,7 @@ CI checks JavaScript syntax, all task scoring tests, eight-task integration/expo
 - `docs/eti-core/` — task-specific specifications
 - `docs/validation/` — release gates and empirical validation plan
 - `assets/stimulus_manifest.json` — provenance and validation status
+- `assets/images/visual-naming/manifest.json` — item-level photo provenance, licences, and attribution
 - `tests/` — unit, integration, and browser checks
 
 ## Citation and naming
@@ -90,4 +91,4 @@ Describe the software as a custom jsPsych cognitive/spatial battery with origina
 
 ## Licence
 
-Code is MIT licensed. Stimulus provenance and reuse status are tracked separately in the manifest. A code licence does not override third-party rights.
+Code is MIT licensed. Stimulus provenance and reuse status are tracked separately in `assets/stimulus_manifest.json` and the item-level visual-naming manifest. A code licence does not override third-party rights.

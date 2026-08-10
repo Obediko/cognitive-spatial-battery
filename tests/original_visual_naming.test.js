@@ -50,4 +50,8 @@ assert.equal(failures, 0, 'uncued correct resets the failure run');
 failures = scoring.nextFailureRun(5, 'incorrect');
 assert.equal(failures, 6, 'incorrect increments the failure run');
 
+assert.equal(scoring.transcriptMatches({ target: 'weather vane', alternatives: ['wind vane'] }, 'Weather vane.'), true);
+assert.equal(scoring.transcriptMatches({ target: 'bicycle', alternatives: ['bike'] }, 'bike'), true);
+assert.equal(scoring.transcriptMatches({ target: 'key', alternatives: [] }, 'monkey'), false, 'accepted names require an exact normalized match');
+
 console.log('Original Visual Naming scoring tests passed.');

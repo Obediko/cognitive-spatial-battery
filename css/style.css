@@ -922,3 +922,33 @@ code { background: #0d1b2a; padding: 0.15em 0.4em; border-radius: 3px; font-size
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Deferred review and enlarged spatial stimuli */
+#sp-arena {
+  width: min(620px, 92vw);
+  height: auto;
+  max-height: min(70vh, 620px);
+}
+.ovn-stimulus-object {
+  display: block;
+  width: min(520px, 90%);
+  height: min(430px, 52vh);
+  margin: 0 auto;
+  object-fit: contain;
+}
+.ovn-stimulus-object .ovn-stimulus {
+  width: 100%;
+  height: 100%;
+}
+.ovn-participant {
+  width: min(900px, 96vw);
+  text-align: center;
+}
+.ovn-participant .ovn-picture-card {
+  min-height: min(580px, 68vh);
+}
+@media (max-width: 700px) {
+  #sp-arena { width: min(94vw, 620px); max-height: 62vh; }
+  .ovn-stimulus-object { height: min(360px, 48vh); }
+}

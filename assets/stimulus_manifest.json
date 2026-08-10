@@ -29,6 +29,15 @@
       "validation": "pending_name_agreement_and_recognizability"
     },
     {
+      "group": "ovn_photos",
+      "path": "assets/images/visual-naming/*.png",
+      "creator_method": "mixed BOSS and Wikimedia Commons photographs; see item-level manifest",
+      "licence_review": "item-level terms recorded; BOSS CC BY-SA 3.0 reported by secondary stimulus catalogues",
+      "attribution_manifest": "assets/images/visual-naming/manifest.json",
+      "source_ledger": "assets/images/visual-naming/source_manifest.csv",
+      "validation": "32_of_32_files_mapped; pending_population_name_agreement_and_familiarity_validation"
+    },
+    {
       "group": "ocf_figure",
       "path": "embedded SVG in js/tasks/original_complex_figure.js",
       "creator_method": "original programmatic abstract figure and foils",

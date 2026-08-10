@@ -747,20 +747,33 @@
     return [
       osrDelayGateTrial(),
       osrRecordTrial('delayed'),
-      osrScoringTrial('immediate'),
-      osrScoringTrial('delayed'),
-      osrFinalizeTrial(),
       {
         type: jsPsychHtmlButtonResponse,
         stimulus: '<div class="osr-card"><span class="osr-kicker">ETI Core</span>'
-          + '<h2>Story recall complete</h2><p>The recordings and scores remain local to this browser session.</p>'
-          + '<p class="osr-fineprint">Download the full session data before closing this tab.</p></div>',
+          + '<h2>Story responses captured</h2><p>Immediate and delayed recordings have been saved locally.</p>'
+          + '<p class="osr-fineprint">Transcription and examiner verification will occur after participant testing.</p></div>',
         choices: ['Continue battery'],
-        data: { task_name: 'original_story_recall', phase: 'end', task_version: OSR_VERSION }
+        data: { task_name: 'original_story_recall', phase: 'participant_end', task_version: OSR_VERSION }
       }
+    ];
+  }
+
+  function buildOSRReviewTimeline() {
+    return [
+      {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: '<div class="osr-card"><span class="osr-kicker">Examiner review</span>'
+          + '<h2>Story Recall scoring</h2><p>Local Whisper will suggest transcripts and verbatim matches. Review every suggestion and score paraphrases manually.</p></div>',
+        choices: ['Begin story review'],
+        data: { task_name: 'original_story_recall', phase: 'review_intro', task_version: OSR_VERSION }
+      },
+      osrScoringTrial('immediate'),
+      osrScoringTrial('delayed'),
+      osrFinalizeTrial()
     ];
   }
 
   window.buildOSRImmediateTimeline = buildOSRImmediateTimeline;
   window.buildOSRDelayedTimeline = buildOSRDelayedTimeline;
+  window.buildOSRReviewTimeline = buildOSRReviewTimeline;
 })();
