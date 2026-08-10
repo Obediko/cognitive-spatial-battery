@@ -575,8 +575,10 @@
             + '<div class="ovn-layout"><div class="ovn-picture-card">' + ovnStimulusMarkup(item) + '</div>'
             + '<div class="ovn-examiner"><span class="osr-kicker">Examiner review</span>'
             + (audioUrl ? '<audio controls autoplay class="osr-audio-review" src="' + audioUrl + '"></audio>' : '<p class="osr-error">No item audio captured.</p>')
-            + '<label>Whisper transcript<input id="ovn-review-transcript" autocomplete="off"></label>'
-            + '<p id="ovn-review-asr" class="osr-status" aria-live="polite"></p>'
+            + '<label>Transcript<input id="ovn-review-transcript" autocomplete="off" placeholder="Enter manually or request a local Whisper suggestion"></label>'
+            + (blob && window.OSRTranscription
+              ? '<button class="battery-btn" id="ovn-review-transcribe">Transcribe this recording</button>' : '')
+            + '<p id="ovn-review-asr" class="osr-status" aria-live="polite">Whisper is optional and will not start automatically.</p>'
             + '<div class="ovn-actions"><button class="battery-btn primary" id="ovn-review-correct">Correct</button>'
             + '<button class="battery-btn" id="ovn-review-incorrect">Incorrect</button>'
             + '<button class="battery-btn" id="ovn-review-uncertain">Uncertain</button></div></div></div></div>';
@@ -586,20 +588,29 @@
           ovnPrepareStimulus(item, display);
 
           var status = document.getElementById('ovn-review-asr');
-          if (blob && window.OSRTranscription && typeof window.OSRTranscription.transcribeBlob === 'function') {
-            status.textContent = 'Transcribing locally with Whisper…';
-            window.OSRTranscription.transcribeBlob(blob, function(progress) {
-              if (token === reviewToken && status) status.textContent = 'Loading Whisper… ' + Math.round(progress) + '%';
-            }).then(function(transcript) {
-              if (token !== reviewToken || !document.getElementById('ovn-review-transcript')) return;
-              document.getElementById('ovn-review-transcript').value = transcript;
-              var suggested = ovnTranscriptMatches(item, transcript);
-              status.textContent = suggested
-                ? 'Whisper exact-name suggestion: correct. Examiner must verify the recording.'
-                : 'No exact accepted-name match. Check the recording before deciding.';
-            }).catch(function(error) {
-              if (token === reviewToken) status.textContent = 'Whisper unavailable: ' + (error && error.message ? error.message : 'unknown error');
-            });
+          var transcribeButton = document.getElementById('ovn-review-transcribe');
+          if (transcribeButton && blob && typeof window.OSRTranscription.transcribeBlob === 'function') {
+            transcribeButton.onclick = function() {
+              transcribeButton.disabled = true;
+              status.textContent = 'Transcribing in the background. The page remains usable…';
+              window.OSRTranscription.transcribeBlob(blob, function(progress) {
+                if (token === reviewToken && status) status.textContent = 'Loading Whisper in the background… ' + Math.round(progress) + '%';
+              }).then(function(transcript) {
+                if (token !== reviewToken || !document.getElementById('ovn-review-transcript')) return;
+                document.getElementById('ovn-review-transcript').value = transcript;
+                var suggested = ovnTranscriptMatches(item, transcript);
+                status.textContent = suggested
+                  ? 'Whisper exact-name suggestion: correct. Examiner must verify the recording.'
+                  : 'No exact accepted-name match. Check the recording before deciding.';
+                transcribeButton.disabled = false;
+                transcribeButton.textContent = 'Transcribe again';
+              }).catch(function(error) {
+                if (token !== reviewToken) return;
+                status.textContent = 'Whisper unavailable: ' + (error && error.message ? error.message : 'unknown error')
+                  + '. Enter the transcript manually or score from the recording.';
+                transcribeButton.disabled = false;
+              });
+            };
           }
         }
 
