@@ -211,6 +211,10 @@
             window.ASFState.audio = blob;
             if (window.ASFState.audioUrl) URL.revokeObjectURL(window.ASFState.audioUrl);
             window.ASFState.audioUrl = URL.createObjectURL(blob);
+            window.BatteryArtifactStore.put(
+              batteryArtifactKey(window.BatteryData.participantId, 'asf', 'main'),
+              blob
+            );
           }
           window.BatteryData.addTrials({
             task_name: 'animal_semantic_fluency',
