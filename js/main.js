@@ -97,11 +97,12 @@ function makeWelcomeTrials() {
       + 'or exploratory moderators in analyses.</p>'
       + '<p><strong>Duration:</strong> Approximately 28-38 minutes for the full pilot battery.</p>'
       + '<p><strong>Tasks included:</strong> Original Story Recall &bull; Animal Naming &bull; Visual Sequencing &amp; Set-Shifting &bull; '
+      + 'Original Visual Naming &bull; Original Complex Figure &bull; Number Span &bull; Visual Sequencing &amp; Set-Shifting &bull; '
       + 'Object-Location Memory &bull; Spatial Pointing</p>'
       + '</div>'
       + '<p style="color:#8899aa;font-size:0.9rem;margin-top:1em">'
       + 'Please run this on a <strong>laptop or sufficiently large tablet</strong> in a quiet environment.<br>'
-      + 'Mouse, trackpad and touch input are supported.</p></div>',
+      + 'Mouse, trackpad, touch and standard gamepad input are supported; the input modality is recorded.</p></div>',
     choices: ['Begin Setup'],
     data: { battery_phase: 'welcome' }
   };
@@ -126,7 +127,8 @@ function makeWelcomeTrials() {
       var pid = (data.response && data.response.participant_id)
         ? data.response.participant_id.trim() : 'UNKNOWN';
       window.BatteryData.participantId = pid;
-      window.BatteryData.sessionStart = getTimestamp();
+      if (!restoreBatteryCheckpoint(pid)) window.BatteryData.sessionStart = getTimestamp();
+      checkpointBatterySession();
     }
   };
 
@@ -221,6 +223,8 @@ function makeTaskMenu(jsPsych) {
       + '<button class="battery-btn primary" id="btn-full">Run Full Pilot Battery (~28-38 min)</button>'
       + '<button class="battery-btn" id="btn-osr">Original Story Recall only</button>'
       + '<button class="battery-btn" id="btn-asf">Animal Naming only</button>'
+      + '<button class="battery-btn" id="btn-ovn">Original Visual Naming only</button>'
+      + '<button class="battery-btn" id="btn-ocf">Original Complex Figure only</button>'
       + '<button class="battery-btn" id="btn-vs">Visual Sequencing &amp; Set-Shifting only</button>'
       + '<button class="battery-btn" id="btn-olm">Object-Location Memory only</button>'
       + '<button class="battery-btn" id="btn-sp">Spatial Pointing only</button>'
@@ -244,6 +248,8 @@ function makeTaskMenu(jsPsych) {
       var btnFull = document.getElementById('btn-full');
       var btnOSR  = document.getElementById('btn-osr');
       var btnASF  = document.getElementById('btn-asf');
+      var btnOVN  = document.getElementById('btn-ovn');
+      var btnOCF  = document.getElementById('btn-ocf');
       var btnVS   = document.getElementById('btn-vs');
       var btnOLM  = document.getElementById('btn-olm');
       var btnSP   = document.getElementById('btn-sp');
@@ -252,6 +258,8 @@ function makeTaskMenu(jsPsych) {
       if (btnFull) btnFull.addEventListener('click', function() { finish('full'); });
       if (btnOSR)  btnOSR.addEventListener('click', function() { finish('osr'); });
       if (btnASF)  btnASF.addEventListener('click', function() { finish('asf'); });
+      if (btnOVN)  btnOVN.addEventListener('click', function() { finish('ovn'); });
+      if (btnOCF)  btnOCF.addEventListener('click', function() { finish('ocf'); });
       if (btnVS)   btnVS.addEventListener('click',   function() { finish('vs'); });
       if (btnOLM)  btnOLM.addEventListener('click',  function() { finish('olm'); });
       if (btnSP)   btnSP.addEventListener('click',   function() { finish('sp'); });
@@ -307,6 +315,11 @@ function makeCompletionScreen() {
         + '<tr><td>OSR delayed verbatim</td><td>' + (summary.osr_delayed_verbatim != null ? summary.osr_delayed_verbatim + ' / 44' : 'Not scored') + '</td></tr>'
         + '<tr><td>OSR delay</td><td>' + (summary.osr_delay_duration_ms != null ? fmt(summary.osr_delay_duration_ms / 60000, 1) + ' min' : 'N/A') + '</td></tr>'
         + '<tr><td>Animal Naming valid unique</td><td>' + (summary.asf_total_valid_unique != null ? summary.asf_total_valid_unique : 'Not scored') + '</td></tr>'
+        + '<tr><td>Original Visual Naming (with semantic cue)</td><td>' + (summary.ovn_total_with_semantic != null ? summary.ovn_total_with_semantic : 'Not scored') + '</td></tr>'
+        + '<tr><td>Complex Figure copy</td><td>' + (summary.ocf_copy_score != null ? summary.ocf_copy_score + ' / 17' : 'Not scored') + '</td></tr>'
+        + '<tr><td>Complex Figure delayed</td><td>' + (summary.ocf_delayed_score != null ? summary.ocf_delayed_score + ' / 17' : 'Not scored') + '</td></tr>'
+        + '<tr><td>Complex Figure recognition</td><td>' + (summary.ocf_recognition_correct == null ? 'Not scored' : (summary.ocf_recognition_correct ? 'Correct' : 'Incorrect')) + '</td></tr>'
+        + '<tr><td>Number Span forward / backward</td><td>' + (summary.ns_forward_span != null ? summary.ns_forward_span : 'N/A') + ' / ' + (summary.ns_backward_span != null ? summary.ns_backward_span : 'N/A') + '</td></tr>'
         + '<tr><td>Sequencing completion time</td><td>' + fmt(summary.completion_time_sequencing_ms) + ' ms</td></tr>'
         + '<tr><td>Set-shifting completion time</td><td>' + fmt(summary.completion_time_set_shifting_ms) + ' ms</td></tr>'
         + '<tr><td>Set-shifting cost</td><td>' + fmt(summary.set_shifting_cost_ms) + ' ms</td></tr>'
@@ -319,7 +332,7 @@ function makeCompletionScreen() {
         + '</table>'
         + '<h3 style="margin-top:1.2em;color:#b8c6db">Download Data</h3>'
         + '<p style="color:#8899aa;font-size:0.85rem;margin-bottom:0.8em">'
-        + 'Data is stored only in this browser session. Download now before closing the tab.</p>'
+        + 'Scored trials are checkpointed in this browser for crash recovery. Audio remains in memory only; download every file before closing.</p>'
         + '<div style="display:flex;flex-wrap:wrap;gap:0.6em;justify-content:center">'
         + '<button class="battery-btn download" id="dl-csv">&#8595; Download Trials CSV</button>'
         + '<button class="battery-btn download" id="dl-json">&#8595; Download Full JSON</button>'
@@ -333,7 +346,7 @@ function makeCompletionScreen() {
         + '</div>'
         + '<p style="margin-top:1.6em;color:#8899aa;font-size:0.8rem">'
         + '&#9888; Close this tab only after downloading your data.<br>'
-        + 'Data is NOT automatically saved or sent anywhere.</p>'
+        + 'Scored data is locally checkpointed and is never automatically sent anywhere.</p>'
         + '</div>';
 
       var display = document.getElementById('jspsych-content') || document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
@@ -368,7 +381,7 @@ window.addEventListener('load', function() {
   checkScreenSize();
 
   /* Safety check: ensure all task builders are available */
-  var required = ['buildOSRImmediateTimeline', 'buildOSRDelayedTimeline', 'buildAnimalFluencyTimeline', 'buildVisualSequencingTimeline', 'buildObjectLocationTimeline', 'buildSpatialPointingTimeline', 'buildNumberSpanTimeline'];
+  var required = ['buildOSRImmediateTimeline', 'buildOSRDelayedTimeline', 'buildAnimalFluencyTimeline', 'buildOriginalVisualNamingTimeline', 'buildOCFImmediateTimeline', 'buildOCFDelayedTimeline', 'buildVisualSequencingTimeline', 'buildObjectLocationTimeline', 'buildSpatialPointingTimeline', 'buildNumberSpanTimeline'];
   for (var ri = 0; ri < required.length; ri++) {
     if (typeof window[required[ri]] !== 'function') {
       var target = document.getElementById('jspsych-target');
@@ -428,6 +441,30 @@ window.addEventListener('load', function() {
     }
   };
 
+  var ovnTimeline = {
+    timeline: [makeBreakScreen('Original Visual Naming')].concat(buildOriginalVisualNamingTimeline()),
+    conditional_function: function() {
+      var c = window._batteryChoice;
+      return c === 'full' || c === 'ovn';
+    }
+  };
+
+  var ocfImmediateTimeline = {
+    timeline: [makeBreakScreen('Original Complex Figure — copy')].concat(buildOCFImmediateTimeline()),
+    conditional_function: function() {
+      var c = window._batteryChoice;
+      return c === 'full' || c === 'ocf';
+    }
+  };
+
+  var ocfDelayedTimeline = {
+    timeline: [makeBreakScreen('Original Complex Figure — delayed recall')].concat(buildOCFDelayedTimeline()),
+    conditional_function: function() {
+      var c = window._batteryChoice;
+      return c === 'full' || c === 'ocf';
+    }
+  };
+
   var olmTimeline = {
     timeline: [makeBreakScreen('Object-Location Memory Task')].concat(buildObjectLocationTimeline()),
     conditional_function: function() {
@@ -461,17 +498,20 @@ window.addEventListener('load', function() {
   var timeline = welcomeTrials.concat([
     taskMenu,
     osrImmediateTimeline,
+    ocfImmediateTimeline,
     setP15,
     vsTimeline,
     setP35,
     osrDelayedTimeline,
     setP50,
     asfTimeline,
+    ovnTimeline,
     olmTimeline,
     setP70,
     spTimeline,
     setP90,
     nsTimeline,
+    ocfDelayedTimeline,
     makeCompletionScreen()
   ]);
 
