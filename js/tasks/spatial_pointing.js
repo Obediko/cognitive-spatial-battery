@@ -30,7 +30,7 @@ const SP_LANDMARKS = [
 ];
 
 /* ── Arena constants ─────────────────────────────────────── */
-const SP_ARENA_R    = 240;  // radius of circular arena in px
+const SP_ARENA_R    = 300;  // radius of circular arena in px
 const SP_ARENA_SIZE = SP_ARENA_R * 2 + 20; // canvas bounding box
 const SP_LM_R       = 0.72; // landmark radius as fraction of arena radius
 
@@ -87,18 +87,18 @@ function spDrawArena(ctx, cx, cy, landmarks, startPos, showLandmarks, chosenAngl
   if (showLandmarks) {
     landmarks.forEach(lm => {
       /* Dot */
-      ctx.beginPath(); ctx.arc(lm.x, lm.y, 18, 0, 2 * Math.PI);
+      ctx.beginPath(); ctx.arc(lm.x, lm.y, 34, 0, 2 * Math.PI);
       ctx.fillStyle = lm.color; ctx.fill();
       ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
 
       /* Emoji */
-      ctx.font = '14px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '30px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(lm.emoji, lm.x, lm.y);
 
       /* Label */
-      const labelX = cx + (lm.x - cx) * 1.18;
+      const labelX = cx + (lm.x - cx) * 1.14;
       const labelY = cy + (lm.y - cy) * 1.18;
-      ctx.font = 'bold 11px Segoe UI,Arial,sans-serif';
+      ctx.font = 'bold 16px Segoe UI,Arial,sans-serif';
       ctx.fillStyle = '#cdd9e5'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(lm.label, labelX, labelY);
     });
@@ -106,10 +106,10 @@ function spDrawArena(ctx, cx, cy, landmarks, startPos, showLandmarks, chosenAngl
 
   /* Start position marker */
   if (startPos) {
-    ctx.beginPath(); ctx.arc(startPos.x, startPos.y, 9, 0, 2 * Math.PI);
+    ctx.beginPath(); ctx.arc(startPos.x, startPos.y, 14, 0, 2 * Math.PI);
     ctx.fillStyle = '#a8d8ea'; ctx.fill();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.font = 'bold 9px Segoe UI,Arial,sans-serif';
+    ctx.font = 'bold 12px Segoe UI,Arial,sans-serif';
     ctx.fillStyle = '#0d1b2a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('S', startPos.x, startPos.y);
   }
