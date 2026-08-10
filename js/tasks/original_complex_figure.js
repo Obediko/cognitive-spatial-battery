@@ -465,14 +465,37 @@
       func: function(done) {
         var display = displayElement();
         var timer = null;
+        if (!window.OCFState.copyCompletedAt) {
+          display.innerHTML = '<div class="osr-card"><span class="osr-kicker">Delayed figure recall</span>'
+            + '<h2>Copy timestamp unavailable</h2>'
+            + '<p class="osr-error">The retention interval cannot be verified. Delayed recall must not be scored as protocol-valid.</p>'
+            + '<button class="battery-btn primary" id="ocf-delay-unavailable">Continue and mark unavailable</button></div>';
+          document.getElementById('ocf-delay-unavailable').onclick = function() {
+            window.BatteryData.addTrials({
+              task_name: 'original_complex_figure',
+              task_version: OCF_VERSION,
+              phase: 'delay_gate',
+              delay_duration_ms: null,
+              delay_out_of_window: true,
+              delay_failure_reason: 'copy_timestamp_missing'
+            });
+            window.OCFState.delayedIncomplete = true;
+            done();
+          };
+          return;
+        }
+
         function render() {
-          var elapsed = window.OCFState.copyCompletedAt ? Date.now() - window.OCFState.copyCompletedAt : 0;
+          var elapsed = Date.now() - window.OCFState.copyCompletedAt;
           var ready = elapsed >= DELAY_MIN_MS;
           var late = elapsed > DELAY_MAX_MS;
+          var remaining = Math.max(0, DELAY_MIN_MS - elapsed);
           display.innerHTML = '<div class="osr-card"><span class="osr-kicker">Delayed figure recall</span>'
-            + '<h2>' + (ready ? 'Ready for delayed drawing' : 'Delay interval in progress') + '</h2>'
+            + '<h2>' + (ready ? 'Ready for delayed drawing' : 'Retention interval in progress') + '</h2>'
             + '<p>Elapsed time: <strong>' + (elapsed / 60000).toFixed(1) + ' minutes</strong></p>'
-            + (late ? '<p class="osr-error">The planned 10–15 minute window has been exceeded.</p>' : '')
+            + (!ready ? '<p>This task requires at least 10 minutes between copy and delayed recall. Time remaining: <strong>'
+              + Math.ceil(remaining / 1000) + ' seconds</strong>.</p>' : '')
+            + (late ? '<p class="osr-error">The planned 10–15 minute window has been exceeded; the deviation will be recorded.</p>' : '')
             + '<button class="battery-btn primary" id="ocf-delay-ready" ' + (ready ? '' : 'disabled') + '>Begin delayed recall</button></div>';
           var button = document.getElementById('ocf-delay-ready');
           button.onclick = function() {
