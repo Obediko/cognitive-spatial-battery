@@ -66,8 +66,74 @@
     };
   }
 
+  function suggestElements(strokes) {
+    strokes = (Array.isArray(strokes) ? strokes : []).filter(function(stroke) {
+      return Array.isArray(stroke) && stroke.length >= 2;
+    });
+    var metrics = strokes.map(function(stroke) {
+      var xs = stroke.map(function(point) { return point.x; });
+      var ys = stroke.map(function(point) { return point.y; });
+      var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+      var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+      var width = maxX - minX, height = maxY - minY;
+      var first = stroke[0], last = stroke[stroke.length - 1];
+      var closeDistance = Math.hypot(last.x - first.x, last.y - first.y);
+      var length = 0;
+      for (var i = 1; i < stroke.length; i += 1) {
+        length += Math.hypot(stroke[i].x - stroke[i - 1].x, stroke[i].y - stroke[i - 1].y);
+      }
+      return {
+        minX: minX, maxX: maxX, minY: minY, maxY: maxY,
+        width: width, height: height, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2,
+        closed: closeDistance < Math.max(0.05, Math.min(width, height) * 0.45),
+        length: length
+      };
+    });
+    function any(predicate) { return metrics.some(predicate); }
+    function count(predicate) { return metrics.filter(predicate).length; }
+    var frame = any(function(m) { return m.width > 0.45 && m.height > 0.40 && m.length > 1.1; });
+    var centralLong = count(function(m) {
+      return m.width > 0.30 && m.height > 0.28 && m.cx > 0.28 && m.cx < 0.72 && m.cy > 0.28 && m.cy < 0.72;
+    });
+    var circle = any(function(m) {
+      var ratio = m.height ? m.width / m.height : 0;
+      return m.closed && ratio > 0.55 && ratio < 1.55 && m.width < 0.28 && m.cx < 0.50 && m.cy < 0.52;
+    });
+    var diamond = any(function(m) {
+      var ratio = m.height ? m.width / m.height : 0;
+      return m.closed && ratio > 0.45 && ratio < 1.8 && m.width < 0.30 && m.cx > 0.50 && m.cy > 0.45;
+    });
+    var suggestions = {
+      frame: { accuracy: frame, placement: frame && any(function(m) { return m.cx > 0.35 && m.cx < 0.65; }) },
+      diagonals: { accuracy: centralLong >= 2, placement: centralLong >= 2 },
+      circle: { accuracy: circle, placement: circle },
+      diamond: { accuracy: diamond, placement: diamond },
+      left_arc: {
+        accuracy: any(function(m) { return m.cx < 0.30 && m.height > 0.12; }),
+        placement: any(function(m) { return m.cx < 0.30 && m.cy > 0.30 && m.cy < 0.75; })
+      },
+      top_flag: {
+        accuracy: any(function(m) { return m.cy < 0.30 && m.height > 0.08; }),
+        placement: any(function(m) { return m.cy < 0.30 && m.cx > 0.28 && m.cx < 0.62; })
+      },
+      bottom_step: {
+        accuracy: any(function(m) { return m.cy > 0.68 && m.width > 0.08; }),
+        placement: any(function(m) { return m.cy > 0.68 && m.cx > 0.30 && m.cx < 0.65; })
+      },
+      right_fork: {
+        accuracy: count(function(m) { return m.cx > 0.70 && m.width > 0.05; }) >= 2,
+        placement: any(function(m) { return m.cx > 0.72 && m.cy > 0.30 && m.cy < 0.70; })
+      }
+    };
+    return elements.map(function(element) {
+      var value = suggestions[element[0]] || { accuracy: false, placement: false };
+      return { element_id: element[0], accuracy: value.accuracy, placement: value.placement };
+    });
+  }
+
   window.OCFScoring = {
     scoreElements: scoreElements,
+    suggestElements: suggestElements,
     elementCount: elements.length,
     maximum: 17
   };
@@ -229,6 +295,9 @@
           cancelAnimationFrame(raf);
           window.removeEventListener('pointerup', endPointer);
           var duration = Date.now() - startedAt;
+          strokes = strokes.map(function(stroke) {
+            return window.BatteryReliability.decimateStroke(stroke, 0.0025, 1200);
+          });
           if (phase === 'copy') {
             window.OCFState.copyStrokes = strokes;
             window.OCFState.copyCompletedAt = Date.now();
