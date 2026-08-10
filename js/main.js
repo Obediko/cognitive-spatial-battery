@@ -346,7 +346,7 @@ function makeCompletionScreen() {
         + '</table>'
         + '<h3 style="margin-top:1.2em;color:#b8c6db">Download Data</h3>'
         + '<p style="color:#8899aa;font-size:0.85rem;margin-bottom:0.8em">'
-        + 'Scored trials are checkpointed in this browser for crash recovery. Audio remains in memory only; download every file before closing.</p>'
+        + 'Scored trials and locally recorded audio are retained in this browser for same-device crash recovery. Download all study files before clearing site data or leaving this browser profile.</p>'
         + '<div style="display:flex;flex-wrap:wrap;gap:0.6em;justify-content:center">'
         + '<button class="battery-btn download" id="dl-csv">&#8595; Download Trials CSV</button>'
         + '<button class="battery-btn download" id="dl-json">&#8595; Download Full JSON</button>'
