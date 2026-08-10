@@ -11,6 +11,7 @@
   var RESPONSE_LIMIT_MS = 20000;
   window.OVN_DEFER_EXAMINER_REVIEW = window.OVN_DEFER_EXAMINER_REVIEW !== false;
   window.OVNState = window.OVNState || { itemAudio: [], itemAudioUrls: [], deferredResponses: [] };
+  var ovnImagePreloads = {};
 
   var drawings = {
     cup: '<path d="M70 58h80v62c0 25-18 40-40 40s-40-15-40-40z"/><path d="M150 76h18c30 0 30 44 0 44h-18"/><path d="M58 166h106"/>',
@@ -104,6 +105,14 @@
       : source;
   }
 
+  function ovnPreloadStimulus(item) {
+    if (!item || ovnImagePreloads[item.art]) return;
+    var preload = new Image();
+    preload.decoding = 'async';
+    preload.src = ovnDeliveryPath(item.art);
+    ovnImagePreloads[item.art] = preload;
+  }
+
   function ovnStimulusMarkup(item) {
     var path = ovnDeliveryPath(item.art);
     return '<div class="ovn-stimulus-frame" data-ovn-art="' + item.art + '">'
@@ -145,7 +154,7 @@
       }
       image.addEventListener('load', loaded, { once: true });
       image.addEventListener('error', function() { finish(showFallback('load_failed')); }, { once: true });
-      var timer = setTimeout(function() { finish(showFallback('load_timeout')); }, 10000);
+      var timer = setTimeout(function() { finish(showFallback('load_timeout')); }, 6000);
       if (image.complete) {
         if (image.naturalWidth > 0) loaded();
         else finish(showFallback('load_failed'));
@@ -154,11 +163,7 @@
 
     ready.then(function() {
       var next = items[items.findIndex(function(candidate) { return candidate.art === item.art; }) + 1];
-      if (next) {
-        var preload = new Image();
-        preload.decoding = 'async';
-        preload.src = ovnDeliveryPath(next.art);
-      }
+      if (next) ovnPreloadStimulus(next);
     });
     return ready;
   }
@@ -628,7 +633,11 @@
           + '<h2>Name each object</h2><p>Say one name clearly for each object, then continue to the next item.</p>'
           + '<p class="osr-fineprint">This deferred protocol measures uncued naming only; no semantic or phonemic cues are administered.</p></div>',
         choices: ['Begin'],
-        data: { task_name: 'original_visual_naming', phase: 'instructions', protocol_mode: 'deferred_uncued', task_version: OVN_VERSION }
+        data: { task_name: 'original_visual_naming', phase: 'instructions', protocol_mode: 'deferred_uncued', task_version: OVN_VERSION },
+        on_load: function() {
+          ovnPreloadStimulus(items[0]);
+          ovnPreloadStimulus(items[1]);
+        }
       },
       ovnDeferredAdministrationTrial(),
       {
