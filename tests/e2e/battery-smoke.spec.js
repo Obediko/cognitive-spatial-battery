@@ -23,3 +23,13 @@ test('battery loads all eight task choices without browser errors', async ({ pag
   ]) await expect(page.getByRole('button', { name: label })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+
+test('desktop workspace uses the available screen width', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const width = await page.locator('.jspsych-content-wrapper').evaluate((element) => element.getBoundingClientRect().width);
+  expect(width).toBeGreaterThan(1300);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
+});
