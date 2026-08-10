@@ -926,9 +926,15 @@ code { background: #0d1b2a; padding: 0.15em 0.4em; border-radius: 3px; font-size
 
 /* Deferred review and enlarged spatial stimuli */
 #sp-arena {
-  width: min(620px, 92vw);
-  height: auto;
-  max-height: min(70vh, 620px);
+  --sp-arena-size: min(500px, 88vw, 68vh);
+  display: block;
+  width: var(--sp-arena-size);
+  height: var(--sp-arena-size);
+  max-width: 100%;
+  max-height: none;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: #ffffff;
 }
 .ovn-stimulus-object {
   display: block;
@@ -949,6 +955,6 @@ code { background: #0d1b2a; padding: 0.15em 0.4em; border-radius: 3px; font-size
   min-height: min(580px, 68vh);
 }
 @media (max-width: 700px) {
-  #sp-arena { width: min(94vw, 620px); max-height: 62vh; }
+  #sp-arena { --sp-arena-size: min(500px, 92vw, 60vh); }
   .ovn-stimulus-object { height: min(360px, 48vh); }
 }
