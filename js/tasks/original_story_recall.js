@@ -626,6 +626,8 @@
           + '</div></div>';
 
         var asrOutcome = { attempted: false, succeeded: false, model: null };
+        var asrMatchEvidence = [];
+        var scoringActive = true;
 
         function updateTotals() {
           document.getElementById('osr-vb-total').textContent =
@@ -647,16 +649,23 @@
           window.OSRTranscription.transcribeBlob(audioBlob, function(fraction) {
             asrStatus.textContent = 'Downloading speech recognition model… ' + Math.round(fraction) + '%';
           }).then(function(transcript) {
-            document.getElementById('osr-transcript').value = transcript;
-            var matches = window.OSRTranscriptionScoring.matchVerbatimUnits(transcript, OSR_VERBATIM_UNITS);
+            var transcriptBox = document.getElementById('osr-transcript');
+            if (!scoringActive || !transcriptBox) return;
+            transcriptBox.value = transcript;
+            asrMatchEvidence = window.OSRTranscriptionScoring.matchVerbatimUnitEvidence(transcript, OSR_VERBATIM_UNITS);
+            var matches = asrMatchEvidence.map(function(evidence) { return evidence.matched; });
             Array.prototype.forEach.call(document.querySelectorAll('.osr-vb'), function(box) {
               var index = Number(box.getAttribute('data-index'));
               box.checked = !!matches[index];
+              if (asrMatchEvidence[index] && asrMatchEvidence[index].matched) {
+                box.parentNode.title = 'ASR evidence: ' + asrMatchEvidence[index].excerpt;
+              }
             });
             updateTotals();
             asrOutcome.succeeded = true;
             asrStatus.textContent = 'Transcribed automatically — review the transcript and every checkbox before saving.';
           }).catch(function(error) {
+            if (!scoringActive) return;
             asrStatus.innerHTML = '<span class="osr-error">Automatic transcription unavailable ('
               + osrEscape(error && error.message ? error.message : 'unknown error')
               + '). Score manually from the audio above.</span>';
@@ -668,6 +677,7 @@
         }
 
         document.getElementById('osr-save-score').addEventListener('click', function() {
+          scoringActive = false;
           var vb = Array.prototype.map.call(document.querySelectorAll('.osr-vb'), function(box) { return box.checked; });
           var pp = Array.prototype.map.call(document.querySelectorAll('.osr-pp'), function(box) { return box.checked; });
           var transcript = document.getElementById('osr-transcript').value.trim();
@@ -684,6 +694,7 @@
             trial.transcript_source = asrOutcome.succeeded ? 'automatic_asr_examiner_reviewed' : 'examiner_manual';
             trial.asr_attempted = asrOutcome.attempted;
             trial.asr_model = asrOutcome.model;
+            trial.asr_match_evidence = asrMatchEvidence.length ? JSON.stringify(asrMatchEvidence) : null;
             trial.intrusions_and_notes = intrusions || null;
             trial.review_status = 'examiner_verified';
             trial.scored_at = getTimestamp();
@@ -691,6 +702,7 @@
           done();
         });
         document.getElementById('osr-defer-score').addEventListener('click', function() {
+          scoringActive = false;
           done({ review_status: 'deferred', condition: condition });
         });
       }
