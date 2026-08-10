@@ -61,11 +61,23 @@ function checkpointBatterySession() {
       participantId: window.BatteryData.participantId,
       sessionStart: window.BatteryData.sessionStart,
       trials: window.BatteryData.trials,
-      taskSummaries: window.BatteryData.taskSummaries
+      taskSummaries: window.BatteryData.taskSummaries,
+      taskState: {
+        ocfCopyCompletedAt: window.OCFState ? window.OCFState.copyCompletedAt : null
+      }
     }));
     return true;
   } catch (error) {
     console.warn('Battery recovery checkpoint could not be saved:', error);
+    window.BatteryData.recoveryCheckpointFailed = true;
+    var existing = document.getElementById('battery-recovery-warning');
+    if (!existing && document.body) {
+      var warning = document.createElement('div');
+      warning.id = 'battery-recovery-warning';
+      warning.style.cssText = 'position:fixed;right:1rem;bottom:1rem;z-index:10000;background:#7f1d1d;color:#fff;padding:.7rem 1rem;border-radius:8px;max-width:360px;font-size:.82rem;';
+      warning.textContent = 'Automatic crash recovery could not be saved. Export data before closing or reloading this tab.';
+      document.body.appendChild(warning);
+    }
     return false;
   }
 }
@@ -82,6 +94,18 @@ function restoreBatteryCheckpoint(participantId) {
     window.BatteryData.sessionStart = saved.sessionStart;
     window.BatteryData.trials = saved.trials;
     window.BatteryData.taskSummaries = saved.taskSummaries || {};
+    if (window.OCFState) {
+      window.OCFState.copyCompletedAt = saved.taskState && saved.taskState.ocfCopyCompletedAt
+        ? saved.taskState.ocfCopyCompletedAt : null;
+      ['copy', 'delayed'].forEach(function(phase) {
+        var row = saved.trials.slice().reverse().find(function(item) {
+          return item.task_name === 'original_complex_figure' && item.phase === phase + '_drawing';
+        });
+        if (row && row.stroke_data) {
+          try { window.OCFState[phase + 'Strokes'] = JSON.parse(row.stroke_data); } catch (error) { console.warn(error); }
+        }
+      });
+    }
     return true;
   } catch (error) {
     console.warn('Battery recovery checkpoint could not be restored:', error);
