@@ -262,8 +262,10 @@ window.BatteryReliability = (function() {
       + 'box-shadow:0 0 0 2px #fff;pointer-events:none;z-index:20;display:none;';
     if (parent && getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
     if (parent) parent.appendChild(cursor);
-    var x = canvas.width / 2;
-    var y = canvas.height / 2;
+    var logicalWidth = options.width || canvas.width || canvas.getBoundingClientRect().width;
+    var logicalHeight = options.height || canvas.height || canvas.getBoundingClientRect().height;
+    var x = logicalWidth / 2;
+    var y = logicalHeight / 2;
     var lastTime = 0;
     var previousPressed = false;
     var stopped = false;
@@ -283,12 +285,12 @@ window.BatteryReliability = (function() {
           - ((pad.buttons[14] && pad.buttons[14].pressed) ? 1 : 0);
         ay += ((pad.buttons[13] && pad.buttons[13].pressed) ? 1 : 0)
           - ((pad.buttons[12] && pad.buttons[12].pressed) ? 1 : 0);
-        x = Math.max(0, Math.min(canvas.width, x + ax * dt * (options.speed || 0.45)));
-        y = Math.max(0, Math.min(canvas.height, y + ay * dt * (options.speed || 0.45)));
+        x = Math.max(0, Math.min(logicalWidth, x + ax * dt * (options.speed || 0.45)));
+        y = Math.max(0, Math.min(logicalHeight, y + ay * dt * (options.speed || 0.45)));
         var rect = canvas.getBoundingClientRect();
         cursor.style.display = 'block';
-        cursor.style.left = (x / canvas.width * rect.width) + 'px';
-        cursor.style.top = (y / canvas.height * rect.height) + 'px';
+        cursor.style.left = (x / logicalWidth * rect.width) + 'px';
+        cursor.style.top = (y / logicalHeight * rect.height) + 'px';
         var pressed = !!(pad.buttons[0] && pad.buttons[0].pressed);
         if (pressed && !previousPressed && typeof onSelect === 'function') {
           window.BatteryInput.current = 'gamepad';
