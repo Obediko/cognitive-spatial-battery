@@ -8,7 +8,7 @@ vm.createContext(context);
 vm.runInContext(source, context);
 const scoring = context.window.OCFScoring;
 assert.strictEqual(scoring.elementCount, 8);
-assert.strictEqual(scoring.maximum, 17);
+assert.strictEqual(scoring.maximum, 17);\nconst suggestions = scoring.suggestElements([\n  [{x:0.2,y:0.2},{x:0.8,y:0.2},{x:0.8,y:0.8},{x:0.2,y:0.8},{x:0.2,y:0.2}],\n  [{x:0.2,y:0.2},{x:0.8,y:0.8}],\n  [{x:0.8,y:0.2},{x:0.2,y:0.8}]\n]);\nassert.strictEqual(suggestions.length, 8);\nassert.ok(suggestions.every(row => typeof row.accuracy === 'boolean' && typeof row.placement === 'boolean'));
 const perfect = Array.from({length:8}, (_,i)=>({element_id:String(i),accuracy:true,placement:true}));
 assert.strictEqual(scoring.scoreElements(perfect,true,false).total, 17);
 const oneMissing = perfect.map((r,i)=>i===0?{element_id:'0',accuracy:false,placement:true}:r);
