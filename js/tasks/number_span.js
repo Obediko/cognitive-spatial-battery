@@ -275,7 +275,7 @@
             + (direction === 'forward' ? 'Forward span' : 'Backward span') + ' · length ' + length
             + ' · trial ' + trialIndex + '</span>'
             + '<h2>Examiner: enter participant\'s response</h2>'
-            + '<p class="osr-fineprint">Enter the digits exactly as spoken, in the order the participant said them (digits only).</p>'
+            + '<p class="osr-fineprint">Enter your answer using digits only, in the order requested.</p>'
             + '<input type="text" id="ns-response-input" inputmode="numeric" pattern="[0-9]*" '
             + 'style="font-size:1.4rem;letter-spacing:0.15em;text-align:center;width:100%;max-width:320px;padding:0.5em;margin:0.6em 0" '
             + 'placeholder="Digits only" autocomplete="off">'
@@ -299,7 +299,7 @@
               trial_index: trialIndex,
               presented_sequence: sequence.join(''),
               expected_response: expected,
-              examiner_response: response,
+              participant_response: response,
               correct: correct,
               audio_standardized: window.NSState.audioStandardized,
               playback_onsets: window.NSState.playbackOnsets.splice(0)
