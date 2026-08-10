@@ -8,14 +8,18 @@
       "path": "assets/audio/osr/*.wav",
       "creator_method": "synthetic TTS (Kokoro; repository generation record)",
       "licence_review": "pending_release_signoff",
-      "validation": "pending_acoustic_and_listener_QA"
+      "validation": "pending_acoustic_and_listener_QA",
+      "researcher_supplied": true,
+      "researcher_approval": "approved_by_repository_owner_for_pilot"
     },
     {
       "group": "number_span_audio",
       "path": "assets/audio/digits/*.wav",
       "creator_method": "synthetic TTS (Kokoro; repository generation record)",
       "licence_review": "pending_release_signoff",
-      "validation": "pending_acoustic_and_listener_QA"
+      "validation": "pending_acoustic_and_listener_QA",
+      "researcher_supplied": true,
+      "researcher_approval": "approved_by_repository_owner_for_pilot"
     },
     {
       "group": "ovn_drawings",
@@ -38,5 +42,15 @@
       "licence_review": "blocked_pending_per_file_ledger",
       "validation": "pending_visual_and_cultural_review"
     }
-  ]
+  ],
+  "researcher_attestation": {
+    "recorded_on": "2026-08-10",
+    "statement": "Repository owner states that they supplied and reviewed the Number Span and Story Recall audio files.",
+    "scope": "researcher provenance and approval for the current pilot",
+    "does_not_establish": [
+      "independent listener agreement",
+      "acoustic normalization",
+      "cross-device equivalence"
+    ]
+  }
 }
