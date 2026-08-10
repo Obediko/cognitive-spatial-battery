@@ -345,6 +345,86 @@ window.BatteryReliability = (function() {
   };
 })();
 
+/* ── Recoverable large artifacts (audio) ───────────────────── */
+window.BatteryArtifactStore = (function() {
+  var DB_NAME = 'cognitive-spatial-battery-artifacts-v1';
+  var STORE_NAME = 'artifacts';
+
+  function open() {
+    if (!window.indexedDB) return Promise.reject(new Error('IndexedDB unavailable'));
+    return window.BatteryReliability.withTimeout(new Promise(function(resolve, reject) {
+      var request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = function() {
+        if (!request.result.objectStoreNames.contains(STORE_NAME)) {
+          request.result.createObjectStore(STORE_NAME);
+        }
+      };
+      request.onsuccess = function() { resolve(request.result); };
+      request.onerror = function() { reject(request.error || new Error('IndexedDB open failed')); };
+    }), 5000, 'Artifact storage');
+  }
+
+  function transaction(mode, action) {
+    return open().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction(STORE_NAME, mode);
+        var store = tx.objectStore(STORE_NAME);
+        var request = action(store);
+        request.onsuccess = function() { resolve(request.result); };
+        request.onerror = function() { reject(request.error || new Error('Artifact operation failed')); };
+        tx.oncomplete = function() { db.close(); };
+        tx.onabort = function() { db.close(); };
+      });
+    });
+  }
+
+  function put(key, blob) {
+    if (!key || !blob) return Promise.resolve(false);
+    return transaction('readwrite', function(store) {
+      return store.put({ blob: blob, savedAt: Date.now(), mimeType: blob.type || null }, key);
+    }).then(function() { return true; }).catch(function(error) {
+      console.warn('Artifact could not be saved:', error);
+      return false;
+    });
+  }
+
+  function get(key) {
+    return transaction('readonly', function(store) { return store.get(key); })
+      .catch(function() { return null; });
+  }
+
+  return { put: put, get: get };
+})();
+
+function batteryArtifactKey(participantId, task, slot) {
+  return 'battery/' + String(participantId || 'unknown') + '/' + task + '/' + slot;
+}
+
+function restoreBatteryArtifacts(participantId) {
+  if (!participantId || !window.BatteryArtifactStore) return Promise.resolve(false);
+  var jobs = [
+    ['osr', 'immediate'], ['osr', 'delayed'], ['asf', 'main']
+  ];
+  for (var i = 0; i < 32; i += 1) jobs.push(['ovn', String(i)]);
+  return Promise.all(jobs.map(function(job) {
+    return window.BatteryArtifactStore.get(batteryArtifactKey(participantId, job[0], job[1]))
+      .then(function(record) {
+        if (!record || !record.blob) return;
+        if (job[0] === 'osr' && window.OSRState) {
+          window.OSRState.audio[job[1]] = record.blob;
+          window.OSRState.audioUrls[job[1]] = URL.createObjectURL(record.blob);
+        } else if (job[0] === 'asf' && window.ASFState) {
+          window.ASFState.audio = record.blob;
+          window.ASFState.audioUrl = URL.createObjectURL(record.blob);
+        } else if (job[0] === 'ovn' && window.OVNState) {
+          var index = Number(job[1]);
+          window.OVNState.itemAudio[index] = record.blob;
+          window.OVNState.itemAudioUrls[index] = URL.createObjectURL(record.blob);
+        }
+      });
+  })).then(function() { return true; });
+}
+
 /* ── Global in-session data store ─────────────────────────── */
 window.BatteryData = {
   participantId: '',
