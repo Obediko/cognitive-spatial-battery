@@ -99,8 +99,61 @@
 
   function ovnStimulusMarkup(item) {
     var path = 'assets/images/visual-naming/' + item.art + '.png';
-    return '<object class="ovn-stimulus-object" data="' + path + '" type="image/png" '
-      + 'aria-label="Object naming stimulus: ' + item.id + '">' + ovnSvg(item) + '</object>';
+    return '<div class="ovn-stimulus-frame" data-ovn-art="' + item.art + '">'
+      + '<img class="ovn-stimulus-image" src="' + path + '" alt="Object naming stimulus" decoding="async">'
+      + '<div class="ovn-stimulus-fallback" hidden>' + ovnSvg(item) + '</div>'
+      + '<p class="ovn-stimulus-status osr-status" aria-live="polite">Preparing image…</p></div>';
+  }
+
+  function ovnPrepareStimulus(item, container) {
+    container = container || document;
+    var frame = container.querySelector('.ovn-stimulus-frame[data-ovn-art="' + item.art + '"]');
+    var image = frame && frame.querySelector('.ovn-stimulus-image');
+    var fallback = frame && frame.querySelector('.ovn-stimulus-fallback');
+    var status = frame && frame.querySelector('.ovn-stimulus-status');
+    var requestedAt = Date.now();
+    if (!image) return Promise.resolve({ loadMs: 0, fallback: true, reason: 'image_element_missing' });
+
+    function showFallback(reason) {
+      image.hidden = true;
+      if (fallback) fallback.hidden = false;
+      if (status) status.textContent = 'Photograph unavailable; standardized line-drawing fallback shown.';
+      return { loadMs: Date.now() - requestedAt, fallback: true, reason: reason };
+    }
+
+    var ready = new Promise(function(resolve) {
+      var settled = false;
+      function finish(value) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(value);
+      }
+      function loaded() {
+        var decoded = typeof image.decode === 'function' ? image.decode() : Promise.resolve();
+        decoded.then(function() {
+          if (status) status.textContent = '';
+          finish({ loadMs: Date.now() - requestedAt, fallback: false, reason: null });
+        }).catch(function() { finish(showFallback('decode_failed')); });
+      }
+      image.addEventListener('load', loaded, { once: true });
+      image.addEventListener('error', function() { finish(showFallback('load_failed')); }, { once: true });
+      var timer = setTimeout(function() { finish(showFallback('load_timeout')); }, 10000);
+      if (image.complete) {
+        if (image.naturalWidth > 0) loaded();
+        else finish(showFallback('load_failed'));
+      }
+    });
+
+    ready.then(function() {
+      var next = items[items.findIndex(function(candidate) { return candidate.art === item.art; }) + 1];
+      if (next) {
+        var preload = new Image();
+        preload.decoding = 'async';
+        preload.src = 'assets/images/visual-naming/' + next.art + '.png';
+      }
+    });
+    return ready;
   }
 
   function ovnNormalise(value) {
