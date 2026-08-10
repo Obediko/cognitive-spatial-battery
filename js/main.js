@@ -17,32 +17,42 @@ function escapeErrorText(value) {
     .replace(/'/g, '&#39;');
 }
 
+function showRecoverableRuntimeError(title, message, detail) {
+  var existing = document.getElementById('battery-runtime-error');
+  if (existing) existing.remove();
+  var panel = document.createElement('div');
+  panel.id = 'battery-runtime-error';
+  panel.style.cssText = 'position:fixed;left:1rem;right:1rem;bottom:1rem;z-index:10001;'
+    + 'max-height:45vh;overflow:auto;background:#3f1720;color:#fff;border:2px solid #ef4444;'
+    + 'border-radius:10px;padding:1rem;font-family:Segoe UI,Arial,sans-serif;box-shadow:0 8px 30px #0008;';
+  panel.innerHTML = '<strong>' + escapeErrorText(title) + '</strong>'
+    + '<p style="margin:.45rem 0">' + escapeErrorText(message) + '</p>'
+    + (detail ? '<pre style="white-space:pre-wrap;font-size:.75rem;color:#fecaca">' + escapeErrorText(detail) + '</pre>' : '')
+    + '<p style="font-size:.82rem">The current screen has been preserved. Export recovery data before reloading if the task cannot continue.</p>'
+    + '<button class="battery-btn" id="runtime-export">Export recovery JSON</button>'
+    + '<button class="battery-btn" id="runtime-dismiss">Dismiss</button>';
+  document.body.appendChild(panel);
+  document.getElementById('runtime-export').onclick = function() {
+    try { exportAllJSON(); } catch (error) { console.error(error); }
+  };
+  document.getElementById('runtime-dismiss').onclick = function() { panel.remove(); };
+}
+
 window.addEventListener('error', function(ev) {
-  var t = document.getElementById('jspsych-target');
-  if (t) {
-    t.innerHTML = '<div style="max-width:800px;padding:2rem;color:#ffcccc;font-family:monospace">'
-      + '<h2 style="color:#ff6b6b">JavaScript Error</h2>'
-      + '<p><strong>Message:</strong> ' + escapeErrorText(ev.message || 'unknown') + '</p>'
-      + '<p><strong>File:</strong> ' + escapeErrorText(ev.filename || 'unknown') + '</p>'
-      + '<p><strong>Line:</strong> ' + (ev.lineno || '?') + ':' + (ev.colno || '?') + '</p>'
-      + '<p style="color:#aaa;font-size:0.85rem">Open the browser console (F12) for full details.</p>'
-      + '</div>';
-  }
+  showRecoverableRuntimeError(
+    'JavaScript error',
+    ev.message || 'unknown error',
+    (ev.filename || 'unknown file') + ':' + (ev.lineno || '?') + ':' + (ev.colno || '?')
+  );
 });
 
 window.addEventListener('unhandledrejection', function(ev) {
   var reason = ev.reason || {};
-  var msg = reason.message || String(reason || 'unknown');
-  var stack = reason.stack || '';
-  var t = document.getElementById('jspsych-target');
-  if (t) {
-    t.innerHTML = '<div style="max-width:800px;padding:2rem;color:#ffcccc;font-family:monospace">'
-      + '<h2 style="color:#ff6b6b">JavaScript Error</h2>'
-      + '<p><strong>Message:</strong> ' + escapeErrorText(msg) + '</p>'
-      + (stack ? '<pre style="white-space:pre-wrap;color:#aaa;font-size:0.78rem">' + escapeErrorText(stack) + '</pre>' : '')
-      + '<p style="color:#aaa;font-size:0.85rem">Open the browser console (F12) for full details.</p>'
-      + '</div>';
-  }
+  showRecoverableRuntimeError(
+    'Background operation failed',
+    reason.message || String(reason || 'unknown error'),
+    reason.stack || ''
+  );
 });
 
 /* ---- Progress bar ---- */
