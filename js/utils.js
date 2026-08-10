@@ -30,6 +30,109 @@ window.TIMING = {
   sp_study_ms:      window.PILOT_MODE ?  4000 : 10000,
 };
 
+/* ── Input modality and crash recovery ─────────────────────── */
+window.BatteryInput = { current: 'unknown', gamepadConnected: false };
+
+if (typeof window.addEventListener === 'function') {
+  window.addEventListener('pointerdown', function(event) {
+    window.BatteryInput.current = event.pointerType === 'touch' ? 'touch' : 'pointer';
+  }, true);
+  window.addEventListener('keydown', function() {
+    window.BatteryInput.current = 'keyboard';
+  }, true);
+  window.addEventListener('gamepadconnected', function() {
+    window.BatteryInput.gamepadConnected = true;
+    window.BatteryInput.current = 'gamepad';
+  });
+  window.addEventListener('gamepaddisconnected', function() {
+    window.BatteryInput.gamepadConnected = false;
+  });
+}
+
+function batteryRecoveryKey(participantId) {
+  return 'csb-recovery-v1:' + encodeURIComponent(String(participantId || ''));
+}
+
+function checkpointBatterySession() {
+  if (!window.BatteryData.participantId || !window.localStorage) return false;
+  try {
+    window.localStorage.setItem(batteryRecoveryKey(window.BatteryData.participantId), JSON.stringify({
+      saved_at: getTimestamp(),
+      participantId: window.BatteryData.participantId,
+      sessionStart: window.BatteryData.sessionStart,
+      trials: window.BatteryData.trials,
+      taskSummaries: window.BatteryData.taskSummaries
+    }));
+    return true;
+  } catch (error) {
+    console.warn('Battery recovery checkpoint could not be saved:', error);
+    return false;
+  }
+}
+
+function restoreBatteryCheckpoint(participantId) {
+  if (!window.localStorage) return false;
+  try {
+    var raw = window.localStorage.getItem(batteryRecoveryKey(participantId));
+    if (!raw) return false;
+    var saved = JSON.parse(raw);
+    if (!saved || saved.participantId !== participantId || !Array.isArray(saved.trials)) return false;
+    if (!window.confirm('A saved session for this participant ID was found. Restore its scored trials and summaries?')) return false;
+    window.BatteryData.participantId = saved.participantId;
+    window.BatteryData.sessionStart = saved.sessionStart;
+    window.BatteryData.trials = saved.trials;
+    window.BatteryData.taskSummaries = saved.taskSummaries || {};
+    return true;
+  } catch (error) {
+    console.warn('Battery recovery checkpoint could not be restored:', error);
+    return false;
+  }
+}
+
+function clearBatteryCheckpoint() {
+  if (!window.localStorage || !window.BatteryData.participantId) return;
+  window.localStorage.removeItem(batteryRecoveryKey(window.BatteryData.participantId));
+}
+
+// Standard controller navigation for buttons and form controls. The complex
+// figure task owns its drawing cursor, so global navigation pauses there.
+(function startGamepadNavigation() {
+  if (!window.requestAnimationFrame || !navigator.getGamepads) return;
+  var previous = {};
+  var lastMove = 0;
+  function pressOnce(key, pressed, action) {
+    if (pressed && !previous[key]) action();
+    previous[key] = pressed;
+  }
+  function loop(now) {
+    var pads = navigator.getGamepads();
+    var pad = pads && Array.prototype.find.call(pads, function(p) { return p; });
+    if (pad && !document.getElementById('ocf-canvas')) {
+      var controls = Array.prototype.slice.call(document.querySelectorAll(
+        'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]'
+      )).filter(function(el) { return el.offsetParent !== null; });
+      var current = controls.indexOf(document.activeElement);
+      var axis = pad.axes && pad.axes.length > 1 ? pad.axes[1] : 0;
+      var up = axis < -0.55 || (pad.buttons[12] && pad.buttons[12].pressed);
+      var down = axis > 0.55 || (pad.buttons[13] && pad.buttons[13].pressed);
+      if ((up || down) && now - lastMove > 220 && controls.length) {
+        current = current < 0 ? 0 : (current + (down ? 1 : -1) + controls.length) % controls.length;
+        controls[current].focus();
+        window.BatteryInput.current = 'gamepad';
+        lastMove = now;
+      }
+      pressOnce('activate', !!(pad.buttons[0] && pad.buttons[0].pressed), function() {
+        if (document.activeElement && typeof document.activeElement.click === 'function') {
+          document.activeElement.click();
+          window.BatteryInput.current = 'gamepad';
+        }
+      });
+    }
+    window.requestAnimationFrame(loop);
+  }
+  window.requestAnimationFrame(loop);
+})();
+
 /* ── Global in-session data store ─────────────────────────── */
 window.BatteryData = {
   participantId: '',
@@ -50,12 +153,16 @@ window.BatteryData = {
       r.screen_width_px     = win.screenWidth;
       r.screen_height_px    = win.screenHeight;
       r.device_pixel_ratio  = win.devicePixelRatio;
+      r.input_modality      = r.input_modality || window.BatteryInput.current;
+      r.gamepad_connected   = window.BatteryInput.gamepadConnected;
       this.trials.push(r);
     });
+    checkpointBatterySession();
   },
 
   setTaskSummary(taskName, obj) {
     this.taskSummaries[taskName] = obj;
+    checkpointBatterySession();
   }
 };
 
@@ -121,6 +228,8 @@ function buildSummary() {
   const asf = bd.taskSummaries['animal_semantic_fluency'] || {};
   const vs = bd.taskSummaries['visual_sequencing_set_shifting'] || {};
   const ns = bd.taskSummaries['number_span'] || {};
+  const ovn = bd.taskSummaries['original_visual_naming'] || {};
+  const ocf = bd.taskSummaries['original_complex_figure'] || {};
 
   /* Object-Location Memory - main trials only */
   const olmTrials  = bd.trials.filter(r => r.task_name === 'object_location_memory' && r.trial_type === 'main');
@@ -176,6 +285,20 @@ function buildSummary() {
     asf_task_version: asf.asf_task_version ?? null,
     asf_dictionary_version: asf.asf_dictionary_version ?? null,
 
+    /* Original Visual Naming */
+    ovn_total_with_semantic: ovn.ovn_total_with_semantic ?? null,
+    ovn_total_uncued: ovn.ovn_total_uncued ?? null,
+    ovn_items_administered: ovn.ovn_items_administered ?? null,
+    ovn_review_status: ovn.ovn_review_status ?? null,
+    ovn_task_version: ovn.ovn_task_version ?? null,
+
+    /* Original Complex Figure */
+    ocf_copy_score: ocf.ocf_copy_score ?? null,
+    ocf_delayed_score: ocf.ocf_delayed_score ?? null,
+    ocf_recognition_correct: ocf.ocf_recognition_correct ?? null,
+    ocf_delay_duration_ms: ocf.ocf_delay_duration_ms ?? null,
+    ocf_task_version: ocf.ocf_task_version ?? null,
+
     /* Visual Sequencing / Set-Shifting */
     completion_time_sequencing_ms:   vs.completion_time_sequencing_ms  ?? null,
     completion_time_set_shifting_ms: vs.completion_time_set_shifting_ms ?? null,
@@ -205,6 +328,7 @@ function buildSummary() {
     ns_backward_correct_trials: ns.ns_backward_correct_trials ?? null,
     ns_audio_standardized: ns.ns_audio_standardized ?? null,
     ns_task_version: ns.ns_task_version ?? null,
+    ns_sequence_version: ns.ns_sequence_version ?? null,
 
     /* Browser/display info */
     window_width_px:    window.innerWidth,
