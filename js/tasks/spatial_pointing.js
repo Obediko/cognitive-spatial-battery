@@ -219,7 +219,7 @@ function buildSPTrial(trialNum, targetLandmark, startPosObj, practiceOrMain, sho
 
       const hint = document.createElement('div');
       hint.id = 'sp-hint';
-      hint.textContent = 'Click anywhere on the arena to indicate the direction. Confirm with the button.';
+      hint.textContent = 'Click or use the joystick and primary button to set a direction, then confirm.';
 
       const confirmBtn = document.createElement('button');
       confirmBtn.id = 'sp-confirm-btn';
@@ -241,27 +241,39 @@ function buildSPTrial(trialNum, targetLandmark, startPosObj, practiceOrMain, sho
       let chosenAngle = null;
       const startTime = performance.now();
 
-      canvas.addEventListener('mousemove', (e) => {
+      function canvasPoint(event) {
         const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-        /* Only update preview if inside arena circle */
-        if (euclideanDistance(mx, my, cx, cy) <= SP_ARENA_R + 20) {
-          const previewAngle = angleBetween(sp.x, sp.y, mx, my);
+        return {
+          x: (event.clientX - rect.left) * canvas.width / rect.width,
+          y: (event.clientY - rect.top) * canvas.height / rect.height
+        };
+      }
+
+      function selectPoint(mx, my) {
+        if (euclideanDistance(mx, my, cx, cy) > SP_ARENA_R + 30) return;
+        chosenAngle = angleBetween(sp.x, sp.y, mx, my);
+        spDrawArena(ctx, cx, cy, window._spLandmarks, sp, false, chosenAngle);
+        confirmBtn.disabled = false;
+        hint.textContent = 'Direction set. Confirm to proceed, or select again to change.';
+      }
+
+      canvas.addEventListener('mousemove', (e) => {
+        const point = canvasPoint(e);
+        if (euclideanDistance(point.x, point.y, cx, cy) <= SP_ARENA_R + 20) {
+          const previewAngle = angleBetween(sp.x, sp.y, point.x, point.y);
           spDrawArena(ctx, cx, cy, window._spLandmarks, sp, false, previewAngle);
         }
       });
 
       canvas.addEventListener('click', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-        if (euclideanDistance(mx, my, cx, cy) > SP_ARENA_R + 30) return; /* outside arena */
-        chosenAngle = angleBetween(sp.x, sp.y, mx, my);
-        spDrawArena(ctx, cx, cy, window._spLandmarks, sp, false, chosenAngle);
-        confirmBtn.disabled = false;
-        hint.textContent = 'Direction set. Click "Confirm Direction" to proceed, or click again to change.';
+        const point = canvasPoint(e);
+        selectPoint(point.x, point.y);
       });
+      const destroyGamepadPointer = window.BatteryReliability.installGamepadPointer(
+        canvas,
+        function(x, y) { selectPoint(x, y); },
+        { width: canvas.width, height: canvas.height, speed: 0.45 }
+      );
 
       confirmBtn.addEventListener('click', () => {
         if (chosenAngle === null) return;
@@ -304,8 +316,9 @@ function buildSPTrial(trialNum, targetLandmark, startPosObj, practiceOrMain, sho
           ctx.setLineDash([]);
           hint.innerHTML = '<span style="color:#66bb6a">Correct direction shown in green.</span> &nbsp; Your response in yellow. &nbsp; Error: <strong>' + absErr.toFixed(1) + '&deg;</strong>';
           confirmBtn.disabled = true;
-          setTimeout(() => { display.innerHTML = ''; done(); }, 2000);
+          setTimeout(() => { destroyGamepadPointer(); display.innerHTML = ''; done(); }, 2000);
         } else {
+          destroyGamepadPointer();
           display.innerHTML = '';
           done();
         }
