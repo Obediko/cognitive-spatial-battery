@@ -388,6 +388,7 @@
         var timer = null;
         var finished = false;
         var captured = [];
+        var stimulusLoad = null;
 
         window.OVNState.itemAudio = [];
         window.OVNState.itemAudioUrls = [];
@@ -417,6 +418,9 @@
             item_order: index + 1,
             provisional_difficulty: item.provisionalDifficulty,
             response_time_ms: duration,
+            stimulus_load_ms: stimulusLoad ? stimulusLoad.loadMs : null,
+            stimulus_fallback_used: stimulusLoad ? stimulusLoad.fallback : null,
+            stimulus_load_failure_reason: stimulusLoad ? stimulusLoad.reason : null,
             response_audio_mime_type: blob ? blob.type : null,
             review_status: 'pending'
           });
@@ -427,13 +431,13 @@
 
         function endItem() {
           if (timer) clearInterval(timer);
+          timer = null;
           var next = document.getElementById('ovn-deferred-next');
           if (next) next.disabled = true;
           if (recorder && recorder.state !== 'inactive') {
-            recorder.onstop = function() {
-              saveClipAndAdvance(new Blob(chunks, { type: recorder.mimeType || 'audio/webm' }));
-            };
-            recorder.stop();
+            window.BatteryReliability.stopRecorder(recorder, chunks, 3000).then(function(result) {
+              saveClipAndAdvance(result && result.blob ? result.blob : null);
+            });
           } else {
             saveClipAndAdvance(null);
           }
@@ -441,34 +445,47 @@
 
         function showItem() {
           var item = items[index];
+          var itemIndex = index;
           chunks = [];
-          itemStartedAt = Date.now();
+          recorder = null;
+          stimulusLoad = null;
+          itemStartedAt = 0;
           display.innerHTML = '<div class="ovn-shell ovn-participant"><div class="ovn-progress">Item ' + (index + 1)
-            + ' of ' + items.length + '<span>Speak one answer clearly</span></div>'
+            + ' of ' + items.length + '<span id="ovn-response-prompt">Please wait for the image</span></div>'
             + '<div class="ovn-picture-card">' + ovnStimulusMarkup(item)
-            + '<div class="ovn-clock"><strong id="ovn-time">20</strong><span>seconds</span></div></div>'
-            + '<button class="battery-btn primary" id="ovn-deferred-next">Answer given — next item</button>'
-            + '<p class="osr-fineprint">Your response is recorded locally for review after the battery.</p></div>';
-          if (stream && typeof MediaRecorder !== 'undefined') {
-            try {
-              recorder = new MediaRecorder(stream);
-              recorder.ondataavailable = function(event) { if (event.data && event.data.size) chunks.push(event.data); };
-              recorder.start();
-            } catch (error) {
-              recorder = null;
+            + '<div class="ovn-clock"><strong id="ovn-time">20</strong><span>seconds after image appears</span></div></div>'
+            + '<button class="battery-btn primary" id="ovn-deferred-next" disabled>Answer given — next item</button>'
+            + '<p class="osr-fineprint">The response clock and recording start only after the stimulus is visible.</p></div>';
+
+          var nextButton = document.getElementById('ovn-deferred-next');
+          nextButton.onclick = endItem;
+          ovnPrepareStimulus(item, display).then(function(loadInfo) {
+            if (finished || itemIndex !== index || !document.getElementById('ovn-deferred-next')) return;
+            stimulusLoad = loadInfo;
+            itemStartedAt = Date.now();
+            var prompt = document.getElementById('ovn-response-prompt');
+            if (prompt) prompt.textContent = 'Speak one answer clearly';
+            nextButton.disabled = false;
+            if (stream && typeof MediaRecorder !== 'undefined') {
+              try {
+                recorder = new MediaRecorder(stream);
+                recorder.ondataavailable = function(event) { if (event.data && event.data.size) chunks.push(event.data); };
+                recorder.start();
+              } catch (error) {
+                recorder = null;
+              }
             }
-          }
-          document.getElementById('ovn-deferred-next').onclick = endItem;
-          timer = setInterval(function() {
-            var remaining = Math.max(0, RESPONSE_LIMIT_MS - (Date.now() - itemStartedAt));
-            var time = document.getElementById('ovn-time');
-            if (time) time.textContent = Math.ceil(remaining / 1000);
-            if (remaining <= 0) endItem();
-          }, 100);
+            timer = setInterval(function() {
+              var remaining = Math.max(0, RESPONSE_LIMIT_MS - (Date.now() - itemStartedAt));
+              var time = document.getElementById('ovn-time');
+              if (time) time.textContent = Math.ceil(remaining / 1000);
+              if (remaining <= 0) endItem();
+            }, 100);
+          });
         }
 
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && typeof MediaRecorder !== 'undefined') {
-          navigator.mediaDevices.getUserMedia({ audio: true }).then(function(activeStream) {
+        if (typeof MediaRecorder !== 'undefined') {
+          window.BatteryReliability.requestMicrophone(12000).then(function(activeStream) {
             stream = activeStream;
             showItem();
           }).catch(function() {
