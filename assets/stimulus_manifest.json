@@ -1,0 +1,42 @@
+{
+  "manifest_version": "1.0.0",
+  "status": "pilot_only",
+  "statement": "No NACC, Craft Story, MINT, Benson Figure, or Trail Making Test stimuli are included.",
+  "stimuli": [
+    {
+      "group": "osr_audio",
+      "path": "assets/audio/osr/*.wav",
+      "creator_method": "synthetic TTS (Kokoro; repository generation record)",
+      "licence_review": "pending_release_signoff",
+      "validation": "pending_acoustic_and_listener_QA"
+    },
+    {
+      "group": "number_span_audio",
+      "path": "assets/audio/digits/*.wav",
+      "creator_method": "synthetic TTS (Kokoro; repository generation record)",
+      "licence_review": "pending_release_signoff",
+      "validation": "pending_acoustic_and_listener_QA"
+    },
+    {
+      "group": "ovn_drawings",
+      "path": "embedded SVG in js/tasks/original_visual_naming.js",
+      "creator_method": "original programmatic line drawings",
+      "licence_review": "project_original",
+      "validation": "pending_name_agreement_and_recognizability"
+    },
+    {
+      "group": "ocf_figure",
+      "path": "embedded SVG in js/tasks/original_complex_figure.js",
+      "creator_method": "original programmatic abstract figure and foils",
+      "licence_review": "project_original",
+      "validation": "pending_element_and_foil_validation"
+    },
+    {
+      "group": "olm_objects",
+      "path": "assets/images/objects/*",
+      "creator_method": "mixed project assets; inspect individual files",
+      "licence_review": "blocked_pending_per_file_ledger",
+      "validation": "pending_visual_and_cultural_review"
+    }
+  ]
+}
