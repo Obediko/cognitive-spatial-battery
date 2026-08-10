@@ -142,6 +142,7 @@
   window.OVNScoring = {
     scoreSummary: scoreSummary,
     nextFailureRun: nextFailureRun,
+    transcriptMatches: ovnTranscriptMatches,
     itemCount: items.length
   };
 
