@@ -491,6 +491,10 @@
               window.OSRState.audio[condition] = blob;
               if (window.OSRState.audioUrls[condition]) URL.revokeObjectURL(window.OSRState.audioUrls[condition]);
               window.OSRState.audioUrls[condition] = URL.createObjectURL(blob);
+              window.BatteryArtifactStore.put(
+                batteryArtifactKey(window.BatteryData.participantId, 'osr', condition),
+                blob
+              );
               stream.getTracks().forEach(function(track) { track.stop(); });
               var endMs = Date.now();
               var neutralUsed = document.getElementById('osr-neutral-prompt').checked;
