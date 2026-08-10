@@ -27,5 +27,5 @@ lower-frequency concepts, so errors may partly reflect object familiarity rather
 Licensing
 ---------
 For Wikimedia Commons items, consult the exact source URL in source_manifest.csv for attribution terms.
-For BOSS items, verify the BOSS reuse/redistribution conditions before public redistribution or embedding
-in a publicly accessible application.
+For BOSS items, CC BY-SA 3.0 is reported by secondary stimulus catalogues linked to the former author site.
+Retain attribution and seek an archived author-site licence statement or rightsholder confirmation for primary clearance.
