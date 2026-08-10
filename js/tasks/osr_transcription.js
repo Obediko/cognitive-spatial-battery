@@ -19,7 +19,7 @@
 'use strict';
 
 (function() {
-  var TRANSFORMERS_JS_CDN_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3/dist/transformers.min.js';
+  var TRANSFORMERS_JS_CDN_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js';
   var ASR_MODEL_ID = 'Xenova/whisper-small.en';
   var ASR_TARGET_SAMPLE_RATE = 16000;
 
@@ -102,23 +102,67 @@
       .trim();
   }
 
-  // A verbatim unit's second field lists acceptable surface forms
-  // separated by '/', e.g. "took / take / taking". Matches if any listed
-  // form (as a normalized substring, allowing internal spaces) appears in
-  // the normalized transcript.
-  function unitMatches(transcriptNormalized, unitAlternatesField) {
-    var alternates = String(unitAlternatesField).split('/').map(function(s) { return normalizeForMatching(s); }).filter(Boolean);
-    return alternates.some(function(alt) {
-      return alt && transcriptNormalized.indexOf(alt) !== -1;
+  // Match complete adjacent tokens, never substrings. This prevents false
+  // positives such as "she" matching "he" or "training" matching "train".
+  function tokenise(text) {
+    var normalized = normalizeForMatching(text);
+    return normalized ? normalized.split(' ') : [];
+  }
+
+  function findPhrase(haystackTokens, phraseTokens) {
+    if (!phraseTokens.length || phraseTokens.length > haystackTokens.length) return -1;
+    for (var i = 0; i <= haystackTokens.length - phraseTokens.length; i += 1) {
+      var matched = true;
+      for (var j = 0; j < phraseTokens.length; j += 1) {
+        if (haystackTokens[i + j] !== phraseTokens[j]) {
+          matched = false;
+          break;
+        }
+      }
+      if (matched) return i;
+    }
+    return -1;
+  }
+
+  function expandOptionalPlural(value) {
+    var text = String(value || '');
+    if (text.indexOf('(s)') === -1) return [text];
+    return [text.replace(/\(s\)/g, ''), text.replace(/\(s\)/g, 's')];
+  }
+
+  function unitEvidence(transcriptTokens, unitAlternatesField) {
+    var fields = String(unitAlternatesField).split('/');
+    for (var i = 0; i < fields.length; i += 1) {
+      var expanded = expandOptionalPlural(fields[i]);
+      for (var j = 0; j < expanded.length; j += 1) {
+        var phraseTokens = tokenise(expanded[j]);
+        var start = findPhrase(transcriptTokens, phraseTokens);
+        if (start !== -1) {
+          var excerptStart = Math.max(0, start - 3);
+          var excerptEnd = Math.min(transcriptTokens.length, start + phraseTokens.length + 3);
+          return {
+            matched: true,
+            alternate: phraseTokens.join(' '),
+            start_token: start,
+            excerpt: transcriptTokens.slice(excerptStart, excerptEnd).join(' ')
+          };
+        }
+      }
+    }
+    return { matched: false, alternate: null, start_token: null, excerpt: null };
+  }
+
+  // Returns evidence objects so automatic suggestions remain auditable.
+  function matchVerbatimUnitEvidence(transcript, verbatimUnits) {
+    var transcriptTokens = tokenise(transcript);
+    return verbatimUnits.map(function(unit) {
+      return unitEvidence(transcriptTokens, unit[1]);
     });
   }
 
-  // Returns an array of booleans, one per verbatim unit, indicating
-  // whether that unit's acceptable form was found in the transcript.
   function matchVerbatimUnits(transcript, verbatimUnits) {
-    var normalized = normalizeForMatching(transcript);
-    return verbatimUnits.map(function(unit) {
-      return unitMatches(normalized, unit[1]);
+    return matchVerbatimUnitEvidence(transcript, verbatimUnits).map(function(result) {
+      return result.matched;
     });
   }
 
@@ -131,6 +175,7 @@
   // Pure text logic only - no DOM/Audio/network dependencies.
   window.OSRTranscriptionScoring = {
     normalizeForMatching: normalizeForMatching,
-    matchVerbatimUnits: matchVerbatimUnits
+    matchVerbatimUnits: matchVerbatimUnits,
+    matchVerbatimUnitEvidence: matchVerbatimUnitEvidence
   };
 })();
