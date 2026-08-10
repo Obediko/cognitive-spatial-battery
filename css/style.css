@@ -37,13 +37,28 @@ html, body {
 }
 
 .jspsych-content-wrapper {
-  width: 100% !important;
-  max-width: 920px !important;
-  padding: 1rem !important;
+  width: min(96vw, 1440px) !important;
+  max-width: none !important;
+  padding: clamp(0.75rem, 1.8vw, 1.75rem) !important;
 }
 
 .jspsych-content {
+  width: 100% !important;
+  max-width: none !important;
   color: #e0e0e0 !important;
+}
+
+/* Older screens were constrained by many inline max-width declarations.
+   Widen those top-level panels while retaining readable inner text measures. */
+#jspsych-target .jspsych-content > div[style*="max-width"] {
+  width: min(100%, 1180px) !important;
+  max-width: 1180px !important;
+}
+
+#jspsych-target .info-box,
+#jspsych-target .warning-box {
+  width: 100%;
+  max-width: none;
 }
 
 /* ---- Typography ---- */
@@ -857,3 +872,53 @@ code { background: #0d1b2a; padding: 0.15em 0.4em; border-radius: 3px; font-size
 .ocf-foil-svg{width:100%;max-height:220px}.ocf-foil span{display:block;font-weight:700}
 @media(max-width:820px){.ocf-workspace,.ocf-score-layout{grid-template-columns:1fr}.ocf-model-card,.ocf-canvas-wrap,.ocf-replay-card{min-height:320px}.ocf-score-row{grid-template-columns:1fr 1fr}.ocf-score-row>div{grid-column:1/-1}}
 @media(max-width:560px){.ocf-heading{flex-direction:column}.ocf-foil-grid{grid-template-columns:1fr}.ocf-toolbar .battery-btn{flex:1 1 45%}}
+
+
+/* ============================================================
+   WIDE-SCREEN LAYOUT
+   ============================================================ */
+.osr-card {
+  width: min(1100px, 94vw);
+}
+.osr-review {
+  width: min(1360px, 96vw);
+}
+#completion-screen {
+  width: min(1180px, 96vw);
+  max-width: none;
+}
+.asf-review,
+.ovn-shell,
+.ocf-shell,
+.ocf-score-shell,
+.ocf-recognition {
+  width: min(1360px, 96vw);
+}
+.ovn-layout {
+  grid-template-columns: minmax(420px, 1.2fr) minmax(390px, 0.8fr);
+}
+.ocf-workspace,
+.ocf-score-layout {
+  grid-template-columns: minmax(420px, 1fr) minmax(520px, 1.35fr);
+}
+
+@media (min-width: 1200px) {
+  html, body { font-size: 17px; }
+  .summary-table { font-size: 0.94rem; }
+  .osr-score-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 820px) {
+  .jspsych-content-wrapper {
+    width: 100vw !important;
+    padding: 0.65rem !important;
+  }
+  #jspsych-target .jspsych-content > div[style*="max-width"] {
+    width: 100% !important;
+  }
+  .ovn-layout,
+  .ocf-workspace,
+  .ocf-score-layout {
+    grid-template-columns: 1fr;
+  }
+}
