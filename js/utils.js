@@ -204,7 +204,7 @@ window.BatteryReliability = (function() {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
-        recorder.onstop = previousStop || null;
+        recorder.onstop = timedOut ? null : (previousStop || null);
         resolve({
           blob: chunks && chunks.length ? new Blob(chunks, { type: mime }) : null,
           timedOut: !!timedOut
