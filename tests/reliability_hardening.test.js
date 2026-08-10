@@ -23,6 +23,9 @@ assert.ok(utils.includes('function decimateStroke(stroke, minimumDistance, maxim
 assert.ok(utils.includes('function installGamepadPointer(canvas, onSelect, options)'));
 assert.ok(utils.includes('battery-recovery-warning'));
 assert.ok(utils.includes('ocfCopyCompletedAt'));
+assert.ok(utils.includes('window.BatteryArtifactStore'));
+assert.ok(utils.includes("['osr', 'immediate'], ['osr', 'delayed'], ['asf', 'main']"));
+assert.ok(utils.includes("jobs.push(['ovn', String(i)])"));
 
 assert.ok(asr.includes('MODEL_TIMEOUT_MS = 120000'));
 assert.ok(asr.includes('INFERENCE_TIMEOUT_MS = 90000'));
@@ -34,6 +37,7 @@ assert.ok(osr.includes('stopRecorder(recorder, chunks, 3000)'));
 assert.ok(osr.includes("new Error('playback timed out')"));
 assert.ok(asf.includes('requestMicrophone(12000)'));
 assert.ok(asf.includes('stopRecorder(recorder, chunks, 3000)'));
+assert.ok(asf.includes("batteryArtifactKey(window.BatteryData.participantId, 'asf', 'main')"));
 
 assert.ok(ovn.includes('<img class="ovn-stimulus-image"'));
 assert.ok(ovn.includes("typeof image.decode === 'function'"));
@@ -41,6 +45,7 @@ assert.ok(ovn.includes("'/.netlify/images?url='"));
 assert.ok(ovn.includes('stimulus_load_ms'));
 assert.ok(ovn.includes('response clock and recording start only after the stimulus is visible'));
 assert.ok(ovn.includes('revokeObjectUrl(window.OVNState.itemAudioUrls[index])'));
+assert.ok(ovn.includes("batteryArtifactKey(window.BatteryData.participantId, 'ovn', String(index))"));
 
 assert.ok(ocf.includes('function suggestElements(strokes)'));
 assert.ok(ocf.includes('ocf-rule-aid-0.1-unvalidated'));
