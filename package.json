@@ -2,7 +2,7 @@
   "name": "cognitive-spatial-battery",
   "private": true,
   "scripts": {
-    "test:unit": "node tests/animal_semantic_fluency.test.js && node tests/osr_transcription.test.js && node tests/number_span.test.js && node tests/original_visual_naming.test.js && node tests/original_complex_figure.test.js && node tests/eti_core_eight_scores.test.js",
+    "test:unit": "node tests/animal_semantic_fluency.test.js && node tests/osr_transcription.test.js && node tests/number_span.test.js && node tests/original_visual_naming.test.js && node tests/original_complex_figure.test.js && node tests/eti_core_eight_scores.test.js && node tests/deferred_review_integration.test.js",
     "test:e2e": "playwright test"
   },
   "devDependencies": {
