@@ -60,12 +60,20 @@
   // on playback error), giving callers a single place to hook onstart/onend.
   function osrPlayLoadedAudio(el, onStart) {
     return new Promise(function(resolve, reject) {
-      el.addEventListener('ended', function() { resolve(); }, { once: true });
-      el.addEventListener('error', function() { reject(new Error('playback error')); }, { once: true });
+      var settled = false;
+      var timer = setTimeout(function() { finish(new Error('playback timed out')); }, 120000);
+      function finish(error) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (error) reject(error); else resolve();
+      }
+      el.addEventListener('ended', function() { finish(null); }, { once: true });
+      el.addEventListener('error', function() { finish(new Error('playback error')); }, { once: true });
       if (typeof onStart === 'function') el.addEventListener('play', onStart, { once: true });
       var playPromise = el.play();
       if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(function(error) { reject(error); });
+        playPromise.catch(function(error) { finish(error); });
       }
     });
   }
@@ -237,7 +245,7 @@
             button.onclick = function() { done({ microphone_available: false }); };
             return;
           }
-          navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+          window.BatteryReliability.requestMicrophone(12000).then(function(stream) {
             stream.getTracks().forEach(function(track) { track.stop(); });
             status.innerHTML = '<span class="osr-success">Microphone is ready.</span>';
             setTimeout(function() { done({ microphone_available: true }); }, 600);
@@ -467,7 +475,7 @@
             stopButton.onclick = function() { finishWithoutAudio('MediaRecorder unavailable'); };
             return;
           }
-          navigator.mediaDevices.getUserMedia({ audio: true }).then(function(activeStream) {
+          window.BatteryReliability.requestMicrophone(12000).then(function(activeStream) {
             stream = activeStream;
             var preferred = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
             var mime = preferred.find(function(type) {
@@ -528,7 +536,12 @@
         stopButton.addEventListener('click', function() {
           if (recorder && recorder.state !== 'inactive') {
             stopButton.disabled = true;
-            recorder.stop();
+            window.BatteryReliability.stopRecorder(recorder, chunks, 3000).then(function(result) {
+              if (result && result.timedOut) {
+                if (stream) stream.getTracks().forEach(function(track) { track.stop(); });
+                finishWithoutAudio('MediaRecorder stop timed out');
+              }
+            });
           }
         });
       }
