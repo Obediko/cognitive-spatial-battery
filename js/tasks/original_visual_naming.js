@@ -92,7 +92,7 @@
     };
   });
 
-  function ovnStimulusMarkup(item) {
+  function ovnSvg(item) {
     return '<svg class="ovn-stimulus" viewBox="0 0 240 200" role="img" aria-label="Black line drawing of an object">'
       + '<g class="ovn-line">' + drawings[item.art] + '</g></svg>';
   }
