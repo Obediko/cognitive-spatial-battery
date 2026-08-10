@@ -8,7 +8,7 @@
       "path": "assets/audio/osr/*.wav",
       "creator_method": "synthetic TTS (Kokoro; repository generation record)",
       "licence_review": "pending_release_signoff",
-      "validation": "pending_acoustic_and_listener_QA",
+      "validation": "automated_acoustic_QA_passed_and_researcher_listening_review_reported_complete",
       "researcher_supplied": true,
       "researcher_approval": "approved_by_repository_owner_for_pilot"
     },
@@ -17,7 +17,7 @@
       "path": "assets/audio/digits/*.wav",
       "creator_method": "synthetic TTS (Kokoro; repository generation record)",
       "licence_review": "pending_release_signoff",
-      "validation": "pending_acoustic_and_listener_QA",
+      "validation": "automated_acoustic_QA_passed_and_researcher_listening_review_reported_complete",
       "researcher_supplied": true,
       "researcher_approval": "approved_by_repository_owner_for_pilot"
     },
@@ -51,6 +51,25 @@
       "independent listener agreement",
       "acoustic normalization",
       "cross-device equivalence"
-    ]
+    ],
+    "listening_review": "reported_complete_for_story_recall_and_number_span"
+  },
+  "acoustic_qa": {
+    "checked_on": "2026-08-10",
+    "status": "passed",
+    "method": "scripts/audio_qa.py",
+    "github_actions_run": 24,
+    "artifact_id": 9055037763,
+    "files_analyzed": 17,
+    "criteria": [
+      "mono 48 kHz 16-bit PCM",
+      "zero exact clipped samples",
+      "at least 1 dB peak headroom",
+      "absolute DC offset <= 0.5%",
+      "leading and trailing silence <= 300 ms",
+      "digit duration < 950 ms",
+      "digit RMS spread <= 3 dB"
+    ],
+    "limitation": "File QA and researcher listening do not establish cross-device playback equivalence."
   }
 }

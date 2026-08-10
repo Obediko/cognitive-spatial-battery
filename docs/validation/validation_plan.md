@@ -7,8 +7,8 @@ Status: **software-integrated, empirically unvalidated**. Passing CI proves code
 | Gate | Minimum evidence | Current status |
 |---|---|---|
 | Rights and provenance | Per-file creator/source, licence, permitted use, immutable hash | Blocked pending OLM image ledger completion |
-| Audio file QA | Format, channel, sample rate, peak/clipping, leading/trailing silence, duration, loudness report | Pending |
-| Audio listening validation | Independent listeners; pronunciation/intelligibility acceptance criteria defined before testing | Pending |
+| Audio file QA | Format, channel, sample rate, peak/clipping, leading/trailing silence, duration, loudness report | **Passed** — automated PCM QA, Actions run 24, artifact 9055037763 |
+| Audio listening validation | Independent listeners; pronunciation/intelligibility acceptance criteria defined before testing | **Researcher listening review reported complete**; independent-listener agreement not assessed |
 | OSR scoring | Dual independent scoring, adjudication, unit-level agreement and total-score ICC | Pending |
 | ASF scoring | Dual coding, duplicate/rule-violation agreement, adjudication guide | Pending |
 | OVN stimuli/norms | Name agreement, visual recognizability, cultural/language review, difficulty ordering | Pending |
@@ -34,3 +34,10 @@ Status: **software-integrated, empirically unvalidated**. Passing CI proves code
 ## Change control
 
 Any change to story wording, acceptable alternatives, drawings, cues, figure geometry, digit sequences, audio, timing, stopping rules, scoring, supported devices, or dependencies requires a new version and targeted revalidation. Never describe a merely generated or successfully loaded audio file as validated.
+
+
+## Completed acoustic checks — 2026-08-10
+
+GitHub Actions run 24 analyzed all 17 repository WAV files with `scripts/audio_qa.py` and passed the predefined automated criteria: mono 48 kHz 16-bit PCM, no exact clipped samples, at least 1 dB peak headroom, DC offset within 0.5%, edge silence no longer than 300 ms, digit clips shorter than the one-second onset interval, and digit RMS spread no greater than 3 dB. The complete JSON report is archived as Actions artifact `9055037763`.
+
+The repository owner additionally reports completing a listening review of the Story Recall and Number Span files. This closes the project's researcher listening check. It does not test output differences between physical devices, browsers, headphones, or speakers; those remain under the separate device/input-equivalence gate.
