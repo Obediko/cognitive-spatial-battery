@@ -415,6 +415,12 @@
           var duration = Date.now() - itemStartedAt;
           window.OVNState.itemAudio[index] = blob || null;
           window.OVNState.itemAudioUrls[index] = blob ? URL.createObjectURL(blob) : null;
+          if (blob) {
+            window.BatteryArtifactStore.put(
+              batteryArtifactKey(window.BatteryData.participantId, 'ovn', String(index)),
+              blob
+            );
+          }
           captured.push({
             task_name: 'original_visual_naming',
             phase: 'deferred_uncued_item',
