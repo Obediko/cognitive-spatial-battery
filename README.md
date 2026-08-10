@@ -36,7 +36,7 @@ Use a current Chromium, Firefox, or Safari browser on a laptop or sufficiently l
 
 - Collect only a pseudonymous participant ID. Never enter names, email addresses, dates of birth, student numbers, or other direct identifiers.
 - Trial data and summaries are checkpointed in browser `localStorage` for crash recovery and are never automatically uploaded by this application.
-- Recorded OSR/ASF audio remains in memory and must be downloaded before the tab closes; it is not included in local recovery.
+- Recorded OSR/ASF/OVN audio is kept locally in same-origin browser storage for crash recovery and is never automatically uploaded. Download it before clearing site data, changing browser/profile, or leaving the study device.
 - The page makes network requests for jsPsych from unpkg and, when automatic OSR transcription is used, a pinned Transformers.js bundle plus a Whisper model. Recorded audio is processed locally and is not sent to those services.
 - For an offline or higher-assurance deployment, vendor and integrity-check all dependencies and model files before participant use.
 - Never commit real participant data to this repository.
@@ -60,7 +60,7 @@ The completion screen exports:
 - summary JSON;
 - separate OSR immediate/delayed and ASF response audio when recorded.
 
-Completion shows scores from all eight tasks. Checkpoint recovery restores scored trials and summaries after re-entering the same pseudonymous ID. It does not restore audio or resume inside a partially completed trial.
+Completion shows scores from all eight tasks. Checkpoint recovery restores scored trials, summaries, and locally retained OSR/ASF/OVN audio after re-entering the same pseudonymous ID on the same browser profile and site origin. It does not resume inside a partially completed trial.
 
 ## Tests
 
