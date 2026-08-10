@@ -54,6 +54,8 @@ assert.ok(ovn.includes("batteryArtifactKey(window.BatteryData.participantId, 'ov
 assert.ok(ovn.includes('Transcribe this recording'));
 assert.ok(ovn.includes('Whisper is optional and will not start automatically.'));
 assert.ok(!ovn.includes("status.textContent = 'Transcribing locally with Whisper…';"));
+assert.ok(ovn.includes('ovnPreloadStimulus(items[0])'));
+assert.ok(ovn.includes("finish(showFallback('load_timeout')); }, 6000"));
 
 assert.ok(ocf.includes('function suggestElements(strokes)'));
 assert.ok(ocf.includes('ocf-rule-aid-0.1-unvalidated'));
