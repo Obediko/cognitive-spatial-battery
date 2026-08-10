@@ -138,6 +138,10 @@ function makeWelcomeTrials() {
         ? data.response.participant_id.trim() : 'UNKNOWN';
       window.BatteryData.participantId = pid;
       if (!restoreBatteryCheckpoint(pid)) window.BatteryData.sessionStart = getTimestamp();
+      window._artifactRestorePromise = restoreBatteryArtifacts(pid).catch(function(error) {
+        console.warn('Audio artifact recovery failed:', error);
+        return false;
+      });
       checkpointBatterySession();
     }
   };
