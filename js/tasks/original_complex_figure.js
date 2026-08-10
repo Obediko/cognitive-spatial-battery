@@ -6,7 +6,7 @@
 'use strict';
 
 (function() {
-  var OCF_VERSION = '0.1.0-pilot';
+  var OCF_VERSION = '0.2.0-pilot';
   var OCF_STIMULUS_VERSION = 'ocf17-0.1';
   var COPY_LIMIT_MS = 4 * 60 * 1000;
   var DELAY_MIN_MS = window.PILOT_MODE ? 10000 : 10 * 60 * 1000;
@@ -136,19 +136,57 @@
           });
         }
 
-        canvas.addEventListener('pointerdown', function(event) {
-          canvas.setPointerCapture(event.pointerId);
+        var activePointerId = null;
+
+        function beginPointer(event) {
+          if (finished || activePointerId !== null) return;
+          event.preventDefault();
+          activePointerId = event.pointerId;
           current = [pointFromEvent(event)];
           strokes.push(current);
-        });
-        canvas.addEventListener('pointermove', function(event) {
-          if (!current) return;
-          current.push(pointFromEvent(event));
+          try { canvas.setPointerCapture(event.pointerId); } catch (captureError) { /* capture is optional */ }
           redraw();
-        });
-        function endPointer() { current = null; }
+        }
+
+        function movePointer(event) {
+          if (finished || current === null || event.pointerId !== activePointerId) return;
+          if (event.pointerType === 'mouse' && event.buttons === 0) {
+            endPointer(event);
+            return;
+          }
+          event.preventDefault();
+          var samples = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [event];
+          samples.forEach(function(sample) {
+            current.push(pointFromEvent(sample));
+          });
+          redraw();
+        }
+
+        function endPointer(event) {
+          if (activePointerId === null || (event && event.pointerId !== activePointerId)) return;
+          if (event) event.preventDefault();
+          try {
+            if (canvas.hasPointerCapture && canvas.hasPointerCapture(activePointerId)) {
+              canvas.releasePointerCapture(activePointerId);
+            }
+          } catch (captureError) { /* already released */ }
+          current = null;
+          activePointerId = null;
+          redraw();
+        }
+
+        canvas.addEventListener('pointerdown', beginPointer);
+        canvas.addEventListener('pointermove', movePointer);
         canvas.addEventListener('pointerup', endPointer);
         canvas.addEventListener('pointercancel', endPointer);
+        canvas.addEventListener('lostpointercapture', function(event) {
+          if (event.pointerId === activePointerId) {
+            current = null;
+            activePointerId = null;
+            redraw();
+          }
+        });
+        window.addEventListener('pointerup', endPointer);
 
         function gamepadLoop(timestamp) {
           var pads = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -221,6 +259,7 @@
           if (window.confirm('Clear the entire drawing and start again?')) {
             strokes = [];
             current = null;
+            activePointerId = null;
             redraw();
           }
         };
@@ -412,8 +451,7 @@
         data: { task_name: 'original_complex_figure', phase: 'instructions', task_version: OCF_VERSION }
       },
       drawingTrial('copy', true),
-      memoryWarningTrial(),
-      scoringTrial('copy')
+      memoryWarningTrial()
     ];
   }
 
@@ -421,16 +459,14 @@
     return [
       delayGateTrial(),
       drawingTrial('delayed', false),
-      scoringTrial('delayed'),
       recognitionTrial(),
       {
         type: jsPsychHtmlButtonResponse,
         stimulus: function() {
           var s = window.BatteryData.taskSummaries.original_complex_figure || {};
-          return '<div class="osr-card"><h2>Complex Figure complete</h2>'
-            + '<p>Copy score: <strong>' + (s.ocf_copy_score == null ? 'N/A' : s.ocf_copy_score + ' / 17') + '</strong></p>'
-            + '<p>Delayed score: <strong>' + (s.ocf_delayed_score == null ? 'N/A' : s.ocf_delayed_score + ' / 17') + '</strong></p>'
-            + '<p class="osr-fineprint">Experimental pilot scores; not Benson scores.</p></div>';
+          return '<div class="osr-card"><h2>Complex Figure responses captured</h2>'
+            + '<p>The copy, delayed drawing and recognition response have been saved.</p>'
+            + '<p class="osr-fineprint">Drawing scores will be reviewed after participant testing.</p></div>';
         },
         choices: ['Continue battery'],
         data: { task_name: 'original_complex_figure', phase: 'end', task_version: OCF_VERSION }
@@ -438,6 +474,21 @@
     ];
   }
 
+  function buildOCFReviewTimeline() {
+    return [
+      {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: '<div class="osr-card"><span class="osr-kicker">Examiner review</span>'
+          + '<h2>Complex Figure scoring</h2><p>Score the saved copy and delayed drawing. The participant is no longer required.</p></div>',
+        choices: ['Begin figure review'],
+        data: { task_name: 'original_complex_figure', phase: 'review_intro', task_version: OCF_VERSION }
+      },
+      scoringTrial('copy'),
+      scoringTrial('delayed')
+    ];
+  }
+
   window.buildOCFImmediateTimeline = buildOCFImmediateTimeline;
   window.buildOCFDelayedTimeline = buildOCFDelayedTimeline;
+  window.buildOCFReviewTimeline = buildOCFReviewTimeline;
 })();
