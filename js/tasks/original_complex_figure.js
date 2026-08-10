@@ -227,6 +227,7 @@
           finished = true;
           clearInterval(timer);
           cancelAnimationFrame(raf);
+          window.removeEventListener('pointerup', endPointer);
           var duration = Date.now() - startedAt;
           if (phase === 'copy') {
             window.OCFState.copyStrokes = strokes;
