@@ -545,6 +545,8 @@
             asr_model: window.OSRTranscription ? window.OSRTranscription.modelId : null,
             review_status: outcome === 'uncertain' ? 'provisional' : 'examiner_verified'
           });
+          window.BatteryReliability.revokeObjectUrl(window.OVNState.itemAudioUrls[index]);
+          window.OVNState.itemAudioUrls[index] = null;
           index += 1;
           if (index >= items.length) finishReview();
           else showReview();
@@ -568,6 +570,7 @@
           document.getElementById('ovn-review-correct').onclick = function() { save('uncued_correct'); };
           document.getElementById('ovn-review-incorrect').onclick = function() { save('incorrect'); };
           document.getElementById('ovn-review-uncertain').onclick = function() { save('uncertain'); };
+          ovnPrepareStimulus(item, display);
 
           var status = document.getElementById('ovn-review-asr');
           if (blob && window.OSRTranscription && typeof window.OSRTranscription.transcribeBlob === 'function') {
