@@ -97,10 +97,70 @@
       + '<g class="ovn-line">' + drawings[item.art] + '</g></svg>';
   }
 
+  function ovnDeliveryPath(art) {
+    var source = '/assets/images/visual-naming/' + art + '.png';
+    return /\\.netlify\\.app$/i.test(window.location.hostname)
+      ? '/.netlify/images?url=' + encodeURIComponent(source) + '&w=640&q=82'
+      : source;
+  }
+
   function ovnStimulusMarkup(item) {
-    var path = 'assets/images/visual-naming/' + item.art + '.png';
-    return '<object class="ovn-stimulus-object" data="' + path + '" type="image/png" '
-      + 'aria-label="Object naming stimulus: ' + item.id + '">' + ovnSvg(item) + '</object>';
+    var path = ovnDeliveryPath(item.art);
+    return '<div class="ovn-stimulus-frame" data-ovn-art="' + item.art + '">'
+      + '<img class="ovn-stimulus-image" src="' + path + '" alt="Object naming stimulus" decoding="async" fetchpriority="high">'
+      + '<div class="ovn-stimulus-fallback" hidden>' + ovnSvg(item) + '</div>'
+      + '<p class="ovn-stimulus-status osr-status" aria-live="polite">Preparing image…</p></div>';
+  }
+
+  function ovnPrepareStimulus(item, container) {
+    container = container || document;
+    var frame = container.querySelector('.ovn-stimulus-frame[data-ovn-art="' + item.art + '"]');
+    var image = frame && frame.querySelector('.ovn-stimulus-image');
+    var fallback = frame && frame.querySelector('.ovn-stimulus-fallback');
+    var status = frame && frame.querySelector('.ovn-stimulus-status');
+    var requestedAt = Date.now();
+    if (!image) return Promise.resolve({ loadMs: 0, fallback: true, reason: 'image_element_missing' });
+
+    function showFallback(reason) {
+      image.hidden = true;
+      if (fallback) fallback.hidden = false;
+      if (status) status.textContent = 'Photograph unavailable; standardized line-drawing fallback shown.';
+      return { loadMs: Date.now() - requestedAt, fallback: true, reason: reason };
+    }
+
+    var ready = new Promise(function(resolve) {
+      var settled = false;
+      function finish(value) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(value);
+      }
+      function loaded() {
+        var decoded = typeof image.decode === 'function' ? image.decode() : Promise.resolve();
+        decoded.then(function() {
+          if (status) status.textContent = '';
+          finish({ loadMs: Date.now() - requestedAt, fallback: false, reason: null });
+        }).catch(function() { finish(showFallback('decode_failed')); });
+      }
+      image.addEventListener('load', loaded, { once: true });
+      image.addEventListener('error', function() { finish(showFallback('load_failed')); }, { once: true });
+      var timer = setTimeout(function() { finish(showFallback('load_timeout')); }, 10000);
+      if (image.complete) {
+        if (image.naturalWidth > 0) loaded();
+        else finish(showFallback('load_failed'));
+      }
+    });
+
+    ready.then(function() {
+      var next = items[items.findIndex(function(candidate) { return candidate.art === item.art; }) + 1];
+      if (next) {
+        var preload = new Image();
+        preload.decoding = 'async';
+        preload.src = ovnDeliveryPath(next.art);
+      }
+    });
+    return ready;
   }
 
   function ovnNormalise(value) {
@@ -335,6 +395,7 @@
         var timer = null;
         var finished = false;
         var captured = [];
+        var stimulusLoad = null;
 
         window.OVNState.itemAudio = [];
         window.OVNState.itemAudioUrls = [];
@@ -354,6 +415,12 @@
           var duration = Date.now() - itemStartedAt;
           window.OVNState.itemAudio[index] = blob || null;
           window.OVNState.itemAudioUrls[index] = blob ? URL.createObjectURL(blob) : null;
+          if (blob) {
+            window.BatteryArtifactStore.put(
+              batteryArtifactKey(window.BatteryData.participantId, 'ovn', String(index)),
+              blob
+            );
+          }
           captured.push({
             task_name: 'original_visual_naming',
             phase: 'deferred_uncued_item',
@@ -364,6 +431,9 @@
             item_order: index + 1,
             provisional_difficulty: item.provisionalDifficulty,
             response_time_ms: duration,
+            stimulus_load_ms: stimulusLoad ? stimulusLoad.loadMs : null,
+            stimulus_fallback_used: stimulusLoad ? stimulusLoad.fallback : null,
+            stimulus_load_failure_reason: stimulusLoad ? stimulusLoad.reason : null,
             response_audio_mime_type: blob ? blob.type : null,
             review_status: 'pending'
           });
@@ -374,13 +444,13 @@
 
         function endItem() {
           if (timer) clearInterval(timer);
+          timer = null;
           var next = document.getElementById('ovn-deferred-next');
           if (next) next.disabled = true;
           if (recorder && recorder.state !== 'inactive') {
-            recorder.onstop = function() {
-              saveClipAndAdvance(new Blob(chunks, { type: recorder.mimeType || 'audio/webm' }));
-            };
-            recorder.stop();
+            window.BatteryReliability.stopRecorder(recorder, chunks, 3000).then(function(result) {
+              saveClipAndAdvance(result && result.blob ? result.blob : null);
+            });
           } else {
             saveClipAndAdvance(null);
           }
@@ -388,34 +458,47 @@
 
         function showItem() {
           var item = items[index];
+          var itemIndex = index;
           chunks = [];
-          itemStartedAt = Date.now();
+          recorder = null;
+          stimulusLoad = null;
+          itemStartedAt = 0;
           display.innerHTML = '<div class="ovn-shell ovn-participant"><div class="ovn-progress">Item ' + (index + 1)
-            + ' of ' + items.length + '<span>Speak one answer clearly</span></div>'
+            + ' of ' + items.length + '<span id="ovn-response-prompt">Please wait for the image</span></div>'
             + '<div class="ovn-picture-card">' + ovnStimulusMarkup(item)
-            + '<div class="ovn-clock"><strong id="ovn-time">20</strong><span>seconds</span></div></div>'
-            + '<button class="battery-btn primary" id="ovn-deferred-next">Answer given — next item</button>'
-            + '<p class="osr-fineprint">Your response is recorded locally for review after the battery.</p></div>';
-          if (stream && typeof MediaRecorder !== 'undefined') {
-            try {
-              recorder = new MediaRecorder(stream);
-              recorder.ondataavailable = function(event) { if (event.data && event.data.size) chunks.push(event.data); };
-              recorder.start();
-            } catch (error) {
-              recorder = null;
+            + '<div class="ovn-clock"><strong id="ovn-time">20</strong><span>seconds after image appears</span></div></div>'
+            + '<button class="battery-btn primary" id="ovn-deferred-next" disabled>Answer given — next item</button>'
+            + '<p class="osr-fineprint">The response clock and recording start only after the stimulus is visible.</p></div>';
+
+          var nextButton = document.getElementById('ovn-deferred-next');
+          nextButton.onclick = endItem;
+          ovnPrepareStimulus(item, display).then(function(loadInfo) {
+            if (finished || itemIndex !== index || !document.getElementById('ovn-deferred-next')) return;
+            stimulusLoad = loadInfo;
+            itemStartedAt = Date.now();
+            var prompt = document.getElementById('ovn-response-prompt');
+            if (prompt) prompt.textContent = 'Speak one answer clearly';
+            nextButton.disabled = false;
+            if (stream && typeof MediaRecorder !== 'undefined') {
+              try {
+                recorder = new MediaRecorder(stream);
+                recorder.ondataavailable = function(event) { if (event.data && event.data.size) chunks.push(event.data); };
+                recorder.start();
+              } catch (error) {
+                recorder = null;
+              }
             }
-          }
-          document.getElementById('ovn-deferred-next').onclick = endItem;
-          timer = setInterval(function() {
-            var remaining = Math.max(0, RESPONSE_LIMIT_MS - (Date.now() - itemStartedAt));
-            var time = document.getElementById('ovn-time');
-            if (time) time.textContent = Math.ceil(remaining / 1000);
-            if (remaining <= 0) endItem();
-          }, 100);
+            timer = setInterval(function() {
+              var remaining = Math.max(0, RESPONSE_LIMIT_MS - (Date.now() - itemStartedAt));
+              var time = document.getElementById('ovn-time');
+              if (time) time.textContent = Math.ceil(remaining / 1000);
+              if (remaining <= 0) endItem();
+            }, 100);
+          });
         }
 
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && typeof MediaRecorder !== 'undefined') {
-          navigator.mediaDevices.getUserMedia({ audio: true }).then(function(activeStream) {
+        if (typeof MediaRecorder !== 'undefined') {
+          window.BatteryReliability.requestMicrophone(12000).then(function(activeStream) {
             stream = activeStream;
             showItem();
           }).catch(function() {
@@ -475,6 +558,8 @@
             asr_model: window.OSRTranscription ? window.OSRTranscription.modelId : null,
             review_status: outcome === 'uncertain' ? 'provisional' : 'examiner_verified'
           });
+          window.BatteryReliability.revokeObjectUrl(window.OVNState.itemAudioUrls[index]);
+          window.OVNState.itemAudioUrls[index] = null;
           index += 1;
           if (index >= items.length) finishReview();
           else showReview();
@@ -498,6 +583,7 @@
           document.getElementById('ovn-review-correct').onclick = function() { save('uncued_correct'); };
           document.getElementById('ovn-review-incorrect').onclick = function() { save('incorrect'); };
           document.getElementById('ovn-review-uncertain').onclick = function() { save('uncertain'); };
+          ovnPrepareStimulus(item, display);
 
           var status = document.getElementById('ovn-review-asr');
           if (blob && window.OSRTranscription && typeof window.OSRTranscription.transcribeBlob === 'function') {

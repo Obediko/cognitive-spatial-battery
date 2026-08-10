@@ -136,7 +136,7 @@
             button.onclick = function() { done(); };
             return;
           }
-          navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+          window.BatteryReliability.requestMicrophone(12000).then(function(stream) {
             stream.getTracks().forEach(function(track) { track.stop(); });
             status.innerHTML = '<span class="osr-success">Microphone is ready.</span>';
             setTimeout(function() { done(); }, 500);
@@ -211,6 +211,10 @@
             window.ASFState.audio = blob;
             if (window.ASFState.audioUrl) URL.revokeObjectURL(window.ASFState.audioUrl);
             window.ASFState.audioUrl = URL.createObjectURL(blob);
+            window.BatteryArtifactStore.put(
+              batteryArtifactKey(window.BatteryData.participantId, 'asf', 'main'),
+              blob
+            );
           }
           window.BatteryData.addTrials({
             task_name: 'animal_semantic_fluency',
@@ -237,12 +241,11 @@
           window.ASFState.endedEarly = !!early;
           var duration = startedAt ? Date.now() - startedAt : 0;
           if (recorder && recorder.state !== 'inactive') {
-            recorder.onstop = function() {
-              var blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+            window.BatteryReliability.stopRecorder(recorder, chunks, 3000).then(function(result) {
               if (stream) stream.getTracks().forEach(function(track) { track.stop(); });
-              addTrialAndDone(blob, duration);
-            };
-            recorder.stop();
+              if (result && result.timedOut) window.ASFState.microphoneProblem = true;
+              addTrialAndDone(result && result.blob ? result.blob : null, duration);
+            });
           } else {
             if (stream) stream.getTracks().forEach(function(track) { track.stop(); });
             addTrialAndDone(null, duration);
@@ -288,7 +291,7 @@
             startTimedPeriod();
             return;
           }
-          navigator.mediaDevices.getUserMedia({ audio: true }).then(beginWithStream).catch(function(error) {
+          window.BatteryReliability.requestMicrophone(12000).then(beginWithStream).catch(function(error) {
             window.ASFState.microphoneProblem = true;
             status.innerHTML = '<span class="osr-error">No audio recording; examiner must transcribe live.</span>';
             startTimedPeriod();

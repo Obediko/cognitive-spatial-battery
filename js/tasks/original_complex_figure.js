@@ -66,8 +66,74 @@
     };
   }
 
+  function suggestElements(strokes) {
+    strokes = (Array.isArray(strokes) ? strokes : []).filter(function(stroke) {
+      return Array.isArray(stroke) && stroke.length >= 2;
+    });
+    var metrics = strokes.map(function(stroke) {
+      var xs = stroke.map(function(point) { return point.x; });
+      var ys = stroke.map(function(point) { return point.y; });
+      var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+      var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+      var width = maxX - minX, height = maxY - minY;
+      var first = stroke[0], last = stroke[stroke.length - 1];
+      var closeDistance = Math.hypot(last.x - first.x, last.y - first.y);
+      var length = 0;
+      for (var i = 1; i < stroke.length; i += 1) {
+        length += Math.hypot(stroke[i].x - stroke[i - 1].x, stroke[i].y - stroke[i - 1].y);
+      }
+      return {
+        minX: minX, maxX: maxX, minY: minY, maxY: maxY,
+        width: width, height: height, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2,
+        closed: closeDistance < Math.max(0.05, Math.min(width, height) * 0.45),
+        length: length
+      };
+    });
+    function any(predicate) { return metrics.some(predicate); }
+    function count(predicate) { return metrics.filter(predicate).length; }
+    var frame = any(function(m) { return m.width > 0.45 && m.height > 0.40 && m.length > 1.1; });
+    var centralLong = count(function(m) {
+      return m.width > 0.30 && m.height > 0.28 && m.cx > 0.28 && m.cx < 0.72 && m.cy > 0.28 && m.cy < 0.72;
+    });
+    var circle = any(function(m) {
+      var ratio = m.height ? m.width / m.height : 0;
+      return m.closed && ratio > 0.55 && ratio < 1.55 && m.width < 0.28 && m.cx < 0.50 && m.cy < 0.52;
+    });
+    var diamond = any(function(m) {
+      var ratio = m.height ? m.width / m.height : 0;
+      return m.closed && ratio > 0.45 && ratio < 1.8 && m.width < 0.30 && m.cx > 0.50 && m.cy > 0.45;
+    });
+    var suggestions = {
+      frame: { accuracy: frame, placement: frame && any(function(m) { return m.cx > 0.35 && m.cx < 0.65; }) },
+      diagonals: { accuracy: centralLong >= 2, placement: centralLong >= 2 },
+      circle: { accuracy: circle, placement: circle },
+      diamond: { accuracy: diamond, placement: diamond },
+      left_arc: {
+        accuracy: any(function(m) { return m.cx < 0.30 && m.height > 0.12; }),
+        placement: any(function(m) { return m.cx < 0.30 && m.cy > 0.30 && m.cy < 0.75; })
+      },
+      top_flag: {
+        accuracy: any(function(m) { return m.cy < 0.30 && m.height > 0.08; }),
+        placement: any(function(m) { return m.cy < 0.30 && m.cx > 0.28 && m.cx < 0.62; })
+      },
+      bottom_step: {
+        accuracy: any(function(m) { return m.cy > 0.68 && m.width > 0.08; }),
+        placement: any(function(m) { return m.cy > 0.68 && m.cx > 0.30 && m.cx < 0.65; })
+      },
+      right_fork: {
+        accuracy: count(function(m) { return m.cx > 0.70 && m.width > 0.05; }) >= 2,
+        placement: any(function(m) { return m.cx > 0.72 && m.cy > 0.30 && m.cy < 0.70; })
+      }
+    };
+    return elements.map(function(element) {
+      var value = suggestions[element[0]] || { accuracy: false, placement: false };
+      return { element_id: element[0], accuracy: value.accuracy, placement: value.placement };
+    });
+  }
+
   window.OCFScoring = {
     scoreElements: scoreElements,
+    suggestElements: suggestElements,
     elementCount: elements.length,
     maximum: 17
   };
@@ -229,6 +295,9 @@
           cancelAnimationFrame(raf);
           window.removeEventListener('pointerup', endPointer);
           var duration = Date.now() - startedAt;
+          strokes = strokes.map(function(stroke) {
+            return window.BatteryReliability.decimateStroke(stroke, 0.0025, 1200);
+          });
           if (phase === 'copy') {
             window.OCFState.copyStrokes = strokes;
             window.OCFState.copyCompletedAt = Date.now();
@@ -308,6 +377,8 @@
           + '<h2>' + (phase === 'copy' ? 'Copy' : 'Delayed recall') + ' scoring</h2></div>'
           + '<div class="ocf-score-layout"><div class="ocf-replay-card">' + replaySvg(strokes) + '</div>'
           + '<div class="ocf-score-panel">' + rows
+          + '<button class="battery-btn" id="ocf-suggest-score">Generate provisional computer suggestions</button>'
+          + '<p class="osr-fineprint">Experimental aid only. The examiner must inspect and confirm every box; this is not a validated automatic score.</p>'
           + '<label class="ocf-bonus"><input type="checkbox" id="ocf-bonus"> Global bonus: all elements accurate, correctly placed and proportionate</label>'
           + '<div class="ocf-live-score">Current score <strong id="ocf-total">0</strong> / 17</div>'
           + '<button class="battery-btn primary" id="ocf-save-score">Save score</button></div></div></div>';
@@ -328,6 +399,18 @@
         Array.prototype.forEach.call(document.querySelectorAll('input'), function(input) {
           input.addEventListener('change', update);
         });
+        var suggestionUsed = false;
+        var suggestionRows = null;
+        document.getElementById('ocf-suggest-score').onclick = function() {
+          suggestionRows = suggestElements(strokes);
+          suggestionRows.forEach(function(suggestion, i) {
+            var row = document.querySelectorAll('.ocf-score-row')[i];
+            row.querySelector('.ocf-accuracy').checked = suggestion.accuracy;
+            row.querySelector('.ocf-placement').checked = suggestion.placement;
+          });
+          suggestionUsed = true;
+          update();
+        };
         document.getElementById('ocf-save-score').onclick = function() {
           var rowsData = collect();
           var score = scoreElements(rowsData, document.getElementById('ocf-bonus').checked, incomplete);
@@ -341,7 +424,10 @@
             bonus: score.bonus,
             total_score: score.total,
             total_score_raw: score.rawTotal,
-            review_status: score.status
+            review_status: score.status,
+            automated_suggestion_used: suggestionUsed,
+            automated_suggestion: suggestionRows ? JSON.stringify(suggestionRows) : null,
+            automated_suggestion_version: suggestionUsed ? 'ocf-rule-aid-0.1-unvalidated' : null
           });
           var key = phase === 'copy' ? 'ocf_copy' : 'ocf_delayed';
           var previous = window.BatteryData.taskSummaries.original_complex_figure || {};
@@ -379,14 +465,37 @@
       func: function(done) {
         var display = displayElement();
         var timer = null;
+        if (!window.OCFState.copyCompletedAt) {
+          display.innerHTML = '<div class="osr-card"><span class="osr-kicker">Delayed figure recall</span>'
+            + '<h2>Copy timestamp unavailable</h2>'
+            + '<p class="osr-error">The retention interval cannot be verified. Delayed recall must not be scored as protocol-valid.</p>'
+            + '<button class="battery-btn primary" id="ocf-delay-unavailable">Continue and mark unavailable</button></div>';
+          document.getElementById('ocf-delay-unavailable').onclick = function() {
+            window.BatteryData.addTrials({
+              task_name: 'original_complex_figure',
+              task_version: OCF_VERSION,
+              phase: 'delay_gate',
+              delay_duration_ms: null,
+              delay_out_of_window: true,
+              delay_failure_reason: 'copy_timestamp_missing'
+            });
+            window.OCFState.delayedIncomplete = true;
+            done();
+          };
+          return;
+        }
+
         function render() {
-          var elapsed = window.OCFState.copyCompletedAt ? Date.now() - window.OCFState.copyCompletedAt : 0;
+          var elapsed = Date.now() - window.OCFState.copyCompletedAt;
           var ready = elapsed >= DELAY_MIN_MS;
           var late = elapsed > DELAY_MAX_MS;
+          var remaining = Math.max(0, DELAY_MIN_MS - elapsed);
           display.innerHTML = '<div class="osr-card"><span class="osr-kicker">Delayed figure recall</span>'
-            + '<h2>' + (ready ? 'Ready for delayed drawing' : 'Delay interval in progress') + '</h2>'
+            + '<h2>' + (ready ? 'Ready for delayed drawing' : 'Retention interval in progress') + '</h2>'
             + '<p>Elapsed time: <strong>' + (elapsed / 60000).toFixed(1) + ' minutes</strong></p>'
-            + (late ? '<p class="osr-error">The planned 10–15 minute window has been exceeded.</p>' : '')
+            + (!ready ? '<p>This task requires at least 10 minutes between copy and delayed recall. Time remaining: <strong>'
+              + Math.ceil(remaining / 1000) + ' seconds</strong>.</p>' : '')
+            + (late ? '<p class="osr-error">The planned 10–15 minute window has been exceeded; the deviation will be recorded.</p>' : '')
             + '<button class="battery-btn primary" id="ocf-delay-ready" ' + (ready ? '' : 'disabled') + '>Begin delayed recall</button></div>';
           var button = document.getElementById('ocf-delay-ready');
           button.onclick = function() {

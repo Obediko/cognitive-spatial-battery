@@ -54,13 +54,15 @@
   function nsLoadAsBlobUrl(src) {
     return new Promise(function(resolve, reject) {
       var settled = false;
+      var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
       var timeoutId = setTimeout(function() {
         if (settled) return;
         settled = true;
+        if (controller) controller.abort();
         reject(new Error('timeout loading ' + src));
       }, NS_AUDIO_LOAD_TIMEOUT_MS);
 
-      fetch(src).then(function(response) {
+      fetch(src, controller ? { signal: controller.signal } : undefined).then(function(response) {
         if (!response.ok) throw new Error('HTTP ' + response.status);
         return response.blob();
       }).then(function(blob) {
@@ -114,10 +116,23 @@
         resolve();
         return;
       }
+      var settled = false;
       var utterance = new SpeechSynthesisUtterance(text);
+      var timer = setTimeout(function() {
+        if (settled) return;
+        settled = true;
+        try { window.speechSynthesis.cancel(); } catch (error) { console.warn(error); }
+        resolve();
+      }, 15000);
+      function finish() {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve();
+      }
       utterance.rate = 0.9;
-      utterance.onend = function() { resolve(); };
-      utterance.onerror = function() { resolve(); };
+      utterance.onend = finish;
+      utterance.onerror = finish;
       window.speechSynthesis.speak(utterance);
     });
   }
@@ -126,7 +141,12 @@
     if (button) button.disabled = true;
     if (statusEl) statusEl.textContent = 'Playing…';
     var url = NS_INSTRUCTION_FILES[direction + 'BlobUrl'];
+    var finished = false;
+    var instructionTimer = setTimeout(function() { finish(); }, 30000);
     var finish = function() {
+      if (finished) return;
+      finished = true;
+      clearTimeout(instructionTimer);
       if (statusEl) statusEl.textContent = '';
       if (button) button.disabled = false;
     };
@@ -364,6 +384,12 @@
             .map(Number).filter(function(len) { return window.NSState.lengthPassed[direction][len]; });
           return lengths.length ? Math.max.apply(null, lengths) : 0;
         }
+        Object.keys(window.NSState.digitBlobUrls).forEach(function(key) {
+          window.BatteryReliability.revokeObjectUrl(window.NSState.digitBlobUrls[key]);
+        });
+        ['forward', 'backward'].forEach(function(direction) {
+          window.BatteryReliability.revokeObjectUrl(NS_INSTRUCTION_FILES[direction + 'BlobUrl']);
+        });
         window.BatteryData.setTaskSummary('number_span', {
           ns_forward_span: longestPassedLength('forward'),
           ns_backward_span: longestPassedLength('backward'),

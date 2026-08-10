@@ -22,15 +22,35 @@
   var TRANSFORMERS_JS_CDN_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js';
   var ASR_MODEL_ID = 'Xenova/whisper-small.en';
   var ASR_TARGET_SAMPLE_RATE = 16000;
+  var MODULE_TIMEOUT_MS = 20000;
+  var MODEL_TIMEOUT_MS = 120000;
+  var INFERENCE_TIMEOUT_MS = 90000;
 
   var transformersModulePromise = null;
   var asrPipelinePromise = null;
+  var transcriptionQueue = Promise.resolve();
+
+  function bounded(promise, timeoutMs, label) {
+    if (window.BatteryReliability) return window.BatteryReliability.withTimeout(promise, timeoutMs, label);
+    return new Promise(function(resolve, reject) {
+      var timer = setTimeout(function() { reject(new Error(label + ' timed out')); }, timeoutMs);
+      Promise.resolve(promise).then(function(value) { clearTimeout(timer); resolve(value); })
+        .catch(function(error) { clearTimeout(timer); reject(error); });
+    });
+  }
 
   // Dynamically imports transformers.js from the CDN exactly once,
   // regardless of how many times this is called.
   function loadTransformersModule() {
     if (!transformersModulePromise) {
-      transformersModulePromise = import(/* webpackIgnore: true */ TRANSFORMERS_JS_CDN_URL);
+      transformersModulePromise = bounded(
+        import(/* webpackIgnore: true */ TRANSFORMERS_JS_CDN_URL),
+        MODULE_TIMEOUT_MS,
+        'Whisper runtime download'
+      ).catch(function(error) {
+        transformersModulePromise = null;
+        throw error;
+      });
     }
     return transformersModulePromise;
   }
@@ -39,14 +59,21 @@
   // onProgress(percent) is called during the one-time model download.
   function loadAsrPipeline(onProgress) {
     if (!asrPipelinePromise) {
-      asrPipelinePromise = loadTransformersModule().then(function(transformersModule) {
-        return transformersModule.pipeline('automatic-speech-recognition', ASR_MODEL_ID, {
-          progress_callback: function(progress) {
-            if (typeof onProgress === 'function' && progress && progress.status === 'progress' && typeof progress.progress === 'number') {
-              onProgress(progress.progress);
+      asrPipelinePromise = bounded(
+        loadTransformersModule().then(function(transformersModule) {
+          return transformersModule.pipeline('automatic-speech-recognition', ASR_MODEL_ID, {
+            progress_callback: function(progress) {
+              if (typeof onProgress === 'function' && progress && progress.status === 'progress' && typeof progress.progress === 'number') {
+                onProgress(progress.progress);
+              }
             }
-          }
-        });
+          });
+        }),
+        MODEL_TIMEOUT_MS,
+        'Whisper model loading'
+      ).catch(function(error) {
+        asrPipelinePromise = null;
+        throw error;
       });
     }
     return asrPipelinePromise;
@@ -77,16 +104,25 @@
   // string. Rejects (rather than hanging) on any failure so callers can
   // fall back to fully manual scoring.
   function transcribeBlob(blob, onProgress) {
-    return Promise.all([
-      loadAsrPipeline(onProgress),
-      blobToFloat32Mono16k(blob)
-    ]).then(function(results) {
-      var asr = results[0];
-      var audioData = results[1];
-      return asr(audioData, { chunk_length_s: 30, stride_length_s: 5 });
-    }).then(function(result) {
-      return (result && result.text ? result.text : '').trim();
-    });
+    function run() {
+      return Promise.all([
+        loadAsrPipeline(onProgress),
+        bounded(blobToFloat32Mono16k(blob), 20000, 'Audio decoding')
+      ]).then(function(results) {
+        var asr = results[0];
+        var audioData = results[1];
+        return bounded(
+          asr(audioData, { chunk_length_s: 30, stride_length_s: 5 }),
+          INFERENCE_TIMEOUT_MS,
+          'Whisper transcription'
+        );
+      }).then(function(result) {
+        return (result && result.text ? result.text : '').trim();
+      });
+    }
+    var job = transcriptionQueue.then(run, run);
+    transcriptionQueue = job.catch(function() { return null; });
+    return job;
   }
 
   // --- Verbatim-unit matching -------------------------------------------

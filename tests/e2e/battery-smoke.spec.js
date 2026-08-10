@@ -63,3 +63,39 @@ test('complex figure accepts multiple separate mouse strokes', async ({ page }) 
     return row ? row.stroke_count : null;
   })).toBe(2);
 });
+
+
+test('visual naming starts its clock only after the image is available', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: () => Promise.reject(new Error('test permission denial')) }
+    });
+  });
+  let releaseImage;
+  const imageGate = new Promise((resolve) => { releaseImage = resolve; });
+  await page.route('**/assets/images/visual-naming/cup.png', async (route) => {
+    await imageGate;
+    await route.continue();
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Begin Setup' }).click();
+  await page.locator('input[type="text"]').fill('E2E_OVN_ONSET');
+  await page.getByRole('button', { name: 'Confirm ID' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('button', { name: 'Continue without fullscreen' }).click();
+  await page.getByRole('button', { name: 'Original Visual Naming only' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('button', { name: 'Begin' }).click();
+
+  const next = page.getByRole('button', { name: 'Answer given — next item' });
+  await expect(next).toBeDisabled();
+  await expect(page.locator('#ovn-time')).toHaveText('20');
+  await page.waitForTimeout(500);
+  await expect(page.locator('#ovn-time')).toHaveText('20');
+
+  releaseImage();
+  await expect(next).toBeEnabled({ timeout: 5000 });
+  await expect(page.getByText('Speak one answer clearly')).toBeVisible();
+});

@@ -61,11 +61,23 @@ function checkpointBatterySession() {
       participantId: window.BatteryData.participantId,
       sessionStart: window.BatteryData.sessionStart,
       trials: window.BatteryData.trials,
-      taskSummaries: window.BatteryData.taskSummaries
+      taskSummaries: window.BatteryData.taskSummaries,
+      taskState: {
+        ocfCopyCompletedAt: window.OCFState ? window.OCFState.copyCompletedAt : null
+      }
     }));
     return true;
   } catch (error) {
     console.warn('Battery recovery checkpoint could not be saved:', error);
+    window.BatteryData.recoveryCheckpointFailed = true;
+    var existing = document.getElementById('battery-recovery-warning');
+    if (!existing && document.body) {
+      var warning = document.createElement('div');
+      warning.id = 'battery-recovery-warning';
+      warning.style.cssText = 'position:fixed;right:1rem;bottom:1rem;z-index:10000;background:#7f1d1d;color:#fff;padding:.7rem 1rem;border-radius:8px;max-width:360px;font-size:.82rem;';
+      warning.textContent = 'Automatic crash recovery could not be saved. Export data before closing or reloading this tab.';
+      document.body.appendChild(warning);
+    }
     return false;
   }
 }
@@ -82,6 +94,18 @@ function restoreBatteryCheckpoint(participantId) {
     window.BatteryData.sessionStart = saved.sessionStart;
     window.BatteryData.trials = saved.trials;
     window.BatteryData.taskSummaries = saved.taskSummaries || {};
+    if (window.OCFState) {
+      window.OCFState.copyCompletedAt = saved.taskState && saved.taskState.ocfCopyCompletedAt
+        ? saved.taskState.ocfCopyCompletedAt : null;
+      ['copy', 'delayed'].forEach(function(phase) {
+        var row = saved.trials.slice().reverse().find(function(item) {
+          return item.task_name === 'original_complex_figure' && item.phase === phase + '_drawing';
+        });
+        if (row && row.stroke_data) {
+          try { window.OCFState[phase + 'Strokes'] = JSON.parse(row.stroke_data); } catch (error) { console.warn(error); }
+        }
+      });
+    }
     return true;
   } catch (error) {
     console.warn('Battery recovery checkpoint could not be restored:', error);
@@ -132,6 +156,274 @@ function clearBatteryCheckpoint() {
   }
   window.requestAnimationFrame(loop);
 })();
+
+/* ── Reliability helpers ───────────────────────────────────── */
+window.BatteryReliability = (function() {
+  var DEFAULT_TIMEOUT_MS = 12000;
+
+  function withTimeout(promise, timeoutMs, label) {
+    timeoutMs = timeoutMs || DEFAULT_TIMEOUT_MS;
+    return new Promise(function(resolve, reject) {
+      var settled = false;
+      var timer = setTimeout(function() {
+        if (settled) return;
+        settled = true;
+        reject(new Error((label || 'operation') + ' timed out after ' + timeoutMs + ' ms'));
+      }, timeoutMs);
+      Promise.resolve(promise).then(function(value) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(value);
+      }).catch(function(error) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(error);
+      });
+    });
+  }
+
+  function requestMicrophone(timeoutMs) {
+    timeoutMs = timeoutMs || DEFAULT_TIMEOUT_MS;
+    return new Promise(function(resolve, reject) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        reject(new Error('Microphone capture is unavailable'));
+        return;
+      }
+      var settled = false;
+      var timer = setTimeout(function() {
+        if (settled) return;
+        settled = true;
+        reject(new Error('Microphone permission timed out'));
+      }, timeoutMs);
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+        if (settled) {
+          stream.getTracks().forEach(function(track) { track.stop(); });
+          return;
+        }
+        settled = true;
+        clearTimeout(timer);
+        resolve(stream);
+      }).catch(function(error) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(error);
+      });
+    });
+  }
+
+  function stopRecorder(recorder, chunks, timeoutMs) {
+    timeoutMs = timeoutMs || 3000;
+    return new Promise(function(resolve) {
+      if (!recorder || recorder.state === 'inactive') {
+        resolve(null);
+        return;
+      }
+      var settled = false;
+      var mime = recorder.mimeType || 'audio/webm';
+      var previousStop = recorder.onstop;
+      function finish(timedOut) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        recorder.onstop = timedOut ? null : (previousStop || null);
+        resolve({
+          blob: chunks && chunks.length ? new Blob(chunks, { type: mime }) : null,
+          timedOut: !!timedOut
+        });
+      }
+      recorder.onstop = function(event) {
+        if (typeof previousStop === 'function') {
+          try { previousStop.call(recorder, event); } catch (error) { console.warn(error); }
+        }
+        finish(false);
+      };
+      var timer = setTimeout(function() { finish(true); }, timeoutMs);
+      try { recorder.stop(); } catch (error) { finish(true); }
+    });
+  }
+
+  function revokeObjectUrl(url) {
+    if (!url || typeof URL === 'undefined' || !URL.revokeObjectURL) return;
+    try { URL.revokeObjectURL(url); } catch (error) { console.warn(error); }
+  }
+
+  function decimateStroke(stroke, minimumDistance, maximumPoints) {
+    stroke = Array.isArray(stroke) ? stroke : [];
+    minimumDistance = minimumDistance || 0.0025;
+    maximumPoints = maximumPoints || 1200;
+    if (stroke.length <= 2) return stroke.slice();
+    var kept = [stroke[0]];
+    var last = stroke[0];
+    for (var i = 1; i < stroke.length - 1; i += 1) {
+      var point = stroke[i];
+      var dx = point.x - last.x;
+      var dy = point.y - last.y;
+      if (Math.sqrt(dx * dx + dy * dy) >= minimumDistance) {
+        kept.push(point);
+        last = point;
+      }
+    }
+    kept.push(stroke[stroke.length - 1]);
+    if (kept.length <= maximumPoints) return kept;
+    var stride = (kept.length - 1) / (maximumPoints - 1);
+    return Array.from({ length: maximumPoints }, function(_, index) {
+      return kept[Math.min(kept.length - 1, Math.round(index * stride))];
+    });
+  }
+
+  function installGamepadPointer(canvas, onSelect, options) {
+    options = options || {};
+    if (!canvas || !navigator.getGamepads || !window.requestAnimationFrame) return function() {};
+    var parent = canvas.parentElement;
+    var cursor = document.createElement('div');
+    cursor.className = 'battery-gamepad-pointer';
+    cursor.setAttribute('aria-hidden', 'true');
+    cursor.style.cssText = 'position:absolute;width:22px;height:22px;border:3px solid #0f172a;'
+      + 'background:#fbbf24;border-radius:50%;transform:translate(-50%,-50%);'
+      + 'box-shadow:0 0 0 2px #fff;pointer-events:none;z-index:20;display:none;';
+    if (parent && getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+    if (parent) parent.appendChild(cursor);
+    var logicalWidth = options.width || canvas.width || canvas.getBoundingClientRect().width;
+    var logicalHeight = options.height || canvas.height || canvas.getBoundingClientRect().height;
+    var x = logicalWidth / 2;
+    var y = logicalHeight / 2;
+    var lastTime = 0;
+    var previousPressed = false;
+    var stopped = false;
+    var raf = null;
+
+    function loop(now) {
+      if (stopped) return;
+      var pads = navigator.getGamepads();
+      var pad = pads && Array.prototype.find.call(pads, function(item) { return item; });
+      if (pad) {
+        var dt = Math.min(40, lastTime ? now - lastTime : 16);
+        lastTime = now;
+        var dead = 0.18;
+        var ax = Math.abs(pad.axes[0] || 0) > dead ? pad.axes[0] : 0;
+        var ay = Math.abs(pad.axes[1] || 0) > dead ? pad.axes[1] : 0;
+        ax += ((pad.buttons[15] && pad.buttons[15].pressed) ? 1 : 0)
+          - ((pad.buttons[14] && pad.buttons[14].pressed) ? 1 : 0);
+        ay += ((pad.buttons[13] && pad.buttons[13].pressed) ? 1 : 0)
+          - ((pad.buttons[12] && pad.buttons[12].pressed) ? 1 : 0);
+        x = Math.max(0, Math.min(logicalWidth, x + ax * dt * (options.speed || 0.45)));
+        y = Math.max(0, Math.min(logicalHeight, y + ay * dt * (options.speed || 0.45)));
+        var rect = canvas.getBoundingClientRect();
+        cursor.style.display = 'block';
+        cursor.style.left = (x / logicalWidth * rect.width) + 'px';
+        cursor.style.top = (y / logicalHeight * rect.height) + 'px';
+        var pressed = !!(pad.buttons[0] && pad.buttons[0].pressed);
+        if (pressed && !previousPressed && typeof onSelect === 'function') {
+          window.BatteryInput.current = 'gamepad';
+          onSelect(x, y);
+        }
+        previousPressed = pressed;
+      } else {
+        cursor.style.display = 'none';
+        previousPressed = false;
+      }
+      raf = requestAnimationFrame(loop);
+    }
+    raf = requestAnimationFrame(loop);
+    return function() {
+      stopped = true;
+      if (raf) cancelAnimationFrame(raf);
+      if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+    };
+  }
+
+  return {
+    withTimeout: withTimeout,
+    requestMicrophone: requestMicrophone,
+    stopRecorder: stopRecorder,
+    revokeObjectUrl: revokeObjectUrl,
+    decimateStroke: decimateStroke,
+    installGamepadPointer: installGamepadPointer
+  };
+})();
+
+/* ── Recoverable large artifacts (audio) ───────────────────── */
+window.BatteryArtifactStore = (function() {
+  var DB_NAME = 'cognitive-spatial-battery-artifacts-v1';
+  var STORE_NAME = 'artifacts';
+
+  function open() {
+    if (!window.indexedDB) return Promise.reject(new Error('IndexedDB unavailable'));
+    return window.BatteryReliability.withTimeout(new Promise(function(resolve, reject) {
+      var request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = function() {
+        if (!request.result.objectStoreNames.contains(STORE_NAME)) {
+          request.result.createObjectStore(STORE_NAME);
+        }
+      };
+      request.onsuccess = function() { resolve(request.result); };
+      request.onerror = function() { reject(request.error || new Error('IndexedDB open failed')); };
+    }), 5000, 'Artifact storage');
+  }
+
+  function transaction(mode, action) {
+    return open().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction(STORE_NAME, mode);
+        var store = tx.objectStore(STORE_NAME);
+        var request = action(store);
+        request.onsuccess = function() { resolve(request.result); };
+        request.onerror = function() { reject(request.error || new Error('Artifact operation failed')); };
+        tx.oncomplete = function() { db.close(); };
+        tx.onabort = function() { db.close(); };
+      });
+    });
+  }
+
+  function put(key, blob) {
+    if (!key || !blob) return Promise.resolve(false);
+    return transaction('readwrite', function(store) {
+      return store.put({ blob: blob, savedAt: Date.now(), mimeType: blob.type || null }, key);
+    }).then(function() { return true; }).catch(function(error) {
+      console.warn('Artifact could not be saved:', error);
+      return false;
+    });
+  }
+
+  function get(key) {
+    return transaction('readonly', function(store) { return store.get(key); })
+      .catch(function() { return null; });
+  }
+
+  return { put: put, get: get };
+})();
+
+function batteryArtifactKey(participantId, task, slot) {
+  return 'battery/' + String(participantId || 'unknown') + '/' + task + '/' + slot;
+}
+
+function restoreBatteryArtifacts(participantId) {
+  if (!participantId || !window.BatteryArtifactStore) return Promise.resolve(false);
+  var jobs = [
+    ['osr', 'immediate'], ['osr', 'delayed'], ['asf', 'main']
+  ];
+  for (var i = 0; i < 32; i += 1) jobs.push(['ovn', String(i)]);
+  return Promise.all(jobs.map(function(job) {
+    return window.BatteryArtifactStore.get(batteryArtifactKey(participantId, job[0], job[1]))
+      .then(function(record) {
+        if (!record || !record.blob) return;
+        if (job[0] === 'osr' && window.OSRState) {
+          window.OSRState.audio[job[1]] = record.blob;
+          window.OSRState.audioUrls[job[1]] = URL.createObjectURL(record.blob);
+        } else if (job[0] === 'asf' && window.ASFState) {
+          window.ASFState.audio = record.blob;
+          window.ASFState.audioUrl = URL.createObjectURL(record.blob);
+        } else if (job[0] === 'ovn' && window.OVNState) {
+          var index = Number(job[1]);
+          window.OVNState.itemAudio[index] = record.blob;
+          window.OVNState.itemAudioUrls[index] = URL.createObjectURL(record.blob);
+        }
+      });
+  })).then(function() { return true; });
+}
 
 /* ── Global in-session data store ─────────────────────────── */
 window.BatteryData = {
