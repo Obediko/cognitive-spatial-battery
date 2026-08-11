@@ -447,7 +447,12 @@ window.BatteryArtifactStore = (function() {
     }).then(function() {
       var match = String(key).match(/^battery\/([^/]+)\/(osr|asf|ovn)\/(.+)$/);
       if (match && window.BatteryRemoteSync) {
-        window.BatteryRemoteSync.uploadArtifact(match[1], match[2], match[3], blob);
+        var beforeUpload = typeof batteryCheckpointPayload === 'function'
+          ? window.BatteryRemoteSync.queueCheckpoint(batteryCheckpointPayload())
+          : Promise.resolve();
+        beforeUpload.then(function() {
+          window.BatteryRemoteSync.uploadArtifact(match[1], match[2], match[3], blob);
+        });
       }
       return true;
     }).catch(function(error) {
