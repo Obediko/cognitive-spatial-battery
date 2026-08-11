@@ -101,7 +101,14 @@ test('visual naming starts its clock only after the image is available', async (
 });
 
 
-test('examiner checkpoint opens separately from the participant timeline', async ({ page }) => {
+test('authenticated examiner checkpoint opens separately from the participant timeline', async ({ page }) => {
+  await page.route('**/api/admin-sessions', async route => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ sessions: [] }) });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+  });
   await page.addInitScript(() => {
     localStorage.setItem('csb-recovery-v1:ADMIN_E2E', JSON.stringify({
       saved_at: new Date().toISOString(),
@@ -118,7 +125,7 @@ test('examiner checkpoint opens separately from the participant timeline', async
   await expect(page.getByRole('heading', { name: 'Scoring portal' })).toBeVisible();
   await expect(page.getByRole('button', { name: /ADMIN_E2E/ })).toBeVisible();
   await page.getByRole('button', { name: /ADMIN_E2E/ }).click();
-  await expect(page.getByRole('heading', { name: 'Local scoring checkpoint' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Scoring checkpoint' })).toBeVisible();
   await page.getByRole('button', { name: 'Begin examiner review' }).click();
   await expect(page.getByRole('heading', { name: 'Review complete' })).toBeVisible();
 });
