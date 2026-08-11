@@ -85,6 +85,7 @@
   }
   function installRemoteCheckpoint(data) {
     var saved = data.checkpoint;
+    BatteryRemoteSync.setAdminRemoteId(data.session.remoteId);
     localStorage.setItem('csb-recovery-v1:' + encodeURIComponent(saved.participantId), JSON.stringify(saved));
     return Promise.all((data.artifactKeys || []).map(function(key) {
       return fetch('/api/admin-artifact?id=' + encodeURIComponent(data.session.remoteId) + '&key=' + encodeURIComponent(key),
@@ -96,7 +97,6 @@
           return BatteryArtifactStore.put(batteryArtifactKey(saved.participantId, parts[0], parts[1]), blob);
         });
     })).then(function() {
-      BatteryRemoteSync.setAdminRemoteId(data.session.remoteId);
       if (!loadBatteryCheckpoint(saved.participantId, { confirm: false })) throw new Error('Remote checkpoint could not be opened.');
       return restoreBatteryArtifacts(saved.participantId).then(function() { startLoadedReview(saved.sessionStatus); });
     });
