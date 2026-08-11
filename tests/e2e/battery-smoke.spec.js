@@ -99,3 +99,26 @@ test('visual naming starts its clock only after the image is available', async (
   await expect(next).toBeEnabled({ timeout: 5000 });
   await expect(page.getByText('Speak one answer clearly')).toBeVisible();
 });
+
+
+test('examiner checkpoint opens separately from the participant timeline', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('csb-recovery-v1:ADMIN_E2E', JSON.stringify({
+      saved_at: new Date().toISOString(),
+      participantId: 'ADMIN_E2E',
+      sessionStart: new Date().toISOString(),
+      trials: [],
+      taskSummaries: {},
+      batteryChoice: 'full',
+      sessionStatus: 'participant_complete',
+      taskState: { ocfCopyCompletedAt: null }
+    }));
+  });
+  await page.goto('/admin.html');
+  await expect(page.getByRole('heading', { name: 'Scoring portal' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /ADMIN_E2E/ })).toBeVisible();
+  await page.getByRole('button', { name: /ADMIN_E2E/ }).click();
+  await expect(page.getByRole('heading', { name: 'Local scoring checkpoint' })).toBeVisible();
+  await page.getByRole('button', { name: 'Begin examiner review' }).click();
+  await expect(page.getByRole('heading', { name: 'Review complete' })).toBeVisible();
+});
