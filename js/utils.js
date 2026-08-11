@@ -53,21 +53,27 @@ function batteryRecoveryKey(participantId) {
   return 'csb-recovery-v1:' + encodeURIComponent(String(participantId || ''));
 }
 
+function batteryCheckpointPayload() {
+  return {
+    saved_at: getTimestamp(),
+    participantId: window.BatteryData.participantId,
+    sessionStart: window.BatteryData.sessionStart,
+    trials: window.BatteryData.trials,
+    taskSummaries: window.BatteryData.taskSummaries,
+    batteryChoice: window.BatteryData.batteryChoice || null,
+    sessionStatus: window.BatteryData.sessionStatus || 'in_progress',
+    taskState: {
+      ocfCopyCompletedAt: window.OCFState ? window.OCFState.copyCompletedAt : null
+    }
+  };
+}
+
 function checkpointBatterySession() {
   if (!window.BatteryData.participantId || !window.localStorage) return false;
   try {
-    window.localStorage.setItem(batteryRecoveryKey(window.BatteryData.participantId), JSON.stringify({
-      saved_at: getTimestamp(),
-      participantId: window.BatteryData.participantId,
-      sessionStart: window.BatteryData.sessionStart,
-      trials: window.BatteryData.trials,
-      taskSummaries: window.BatteryData.taskSummaries,
-      batteryChoice: window.BatteryData.batteryChoice || null,
-      sessionStatus: window.BatteryData.sessionStatus || 'in_progress',
-      taskState: {
-        ocfCopyCompletedAt: window.OCFState ? window.OCFState.copyCompletedAt : null
-      }
-    }));
+    var payload = batteryCheckpointPayload();
+    window.localStorage.setItem(batteryRecoveryKey(window.BatteryData.participantId), JSON.stringify(payload));
+    if (window.BatteryRemoteSync) window.BatteryRemoteSync.queueCheckpoint(payload);
     return true;
   } catch (error) {
     console.warn('Battery recovery checkpoint could not be saved:', error);
@@ -438,7 +444,13 @@ window.BatteryArtifactStore = (function() {
     if (!key || !blob) return Promise.resolve(false);
     return transaction('readwrite', function(store) {
       return store.put({ blob: blob, savedAt: Date.now(), mimeType: blob.type || null }, key);
-    }).then(function() { return true; }).catch(function(error) {
+    }).then(function() {
+      var match = String(key).match(/^battery\/([^/]+)\/(osr|asf|ovn)\/(.+)$/);
+      if (match && window.BatteryRemoteSync) {
+        window.BatteryRemoteSync.uploadArtifact(match[1], match[2], match[3], blob);
+      }
+      return true;
+    }).catch(function(error) {
       console.warn('Artifact could not be saved:', error);
       return false;
     });
