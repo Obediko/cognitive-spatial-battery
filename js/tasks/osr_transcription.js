@@ -19,16 +19,16 @@
 'use strict';
 
 (function() {
-  var TRANSFORMERS_JS_CDN_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js';
   var ASR_MODEL_ID = 'Xenova/whisper-small.en';
   var ASR_TARGET_SAMPLE_RATE = 16000;
-  var MODULE_TIMEOUT_MS = 20000;
   var MODEL_TIMEOUT_MS = 120000;
   var INFERENCE_TIMEOUT_MS = 90000;
+  var WORKER_RESPONSE_TIMEOUT_MS = MODEL_TIMEOUT_MS + INFERENCE_TIMEOUT_MS + 30000;
 
-  var transformersModulePromise = null;
-  var asrPipelinePromise = null;
   var transcriptionQueue = Promise.resolve();
+  var transcriptionWorker = null;
+  var transcriptionJobs = {};
+  var nextJobId = 1;
 
   function bounded(promise, timeoutMs, label) {
     if (window.BatteryReliability) return window.BatteryReliability.withTimeout(promise, timeoutMs, label);
@@ -39,51 +39,63 @@
     });
   }
 
-  // Dynamically imports transformers.js from the CDN exactly once,
-  // regardless of how many times this is called.
-  function loadTransformersModule() {
-    if (!transformersModulePromise) {
-      transformersModulePromise = bounded(
-        import(/* webpackIgnore: true */ TRANSFORMERS_JS_CDN_URL),
-        MODULE_TIMEOUT_MS,
-        'Whisper runtime download'
-      ).catch(function(error) {
-        transformersModulePromise = null;
-        throw error;
-      });
-    }
-    return transformersModulePromise;
+  function rejectAllWorkerJobs(error) {
+    Object.keys(transcriptionJobs).forEach(function(jobId) {
+      var job = transcriptionJobs[jobId];
+      clearTimeout(job.timer);
+      job.reject(error);
+      delete transcriptionJobs[jobId];
+    });
   }
 
-  // Lazily builds (and caches) the automatic-speech-recognition pipeline.
-  // onProgress(percent) is called during the one-time model download.
-  function loadAsrPipeline(onProgress) {
-    if (!asrPipelinePromise) {
-      asrPipelinePromise = bounded(
-        loadTransformersModule().then(function(transformersModule) {
-          return transformersModule.pipeline('automatic-speech-recognition', ASR_MODEL_ID, {
-            progress_callback: function(progress) {
-              if (typeof onProgress === 'function' && progress && progress.status === 'progress' && typeof progress.progress === 'number') {
-                onProgress(progress.progress);
-              }
-            }
-          });
-        }),
-        MODEL_TIMEOUT_MS,
-        'Whisper model loading'
-      ).catch(function(error) {
-        asrPipelinePromise = null;
-        throw error;
-      });
+  function resetTranscriptionWorker(error) {
+    if (transcriptionWorker) {
+      transcriptionWorker.terminate();
+      transcriptionWorker = null;
     }
-    return asrPipelinePromise;
+    if (error) rejectAllWorkerJobs(error);
   }
 
-  // Decodes an audio Blob (webm/ogg/whatever MediaRecorder produced) into a
-  // mono Float32Array resampled to 16kHz, which is what Whisper expects.
+  function transcriptionWorkerUrl() {
+    if (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) {
+      return new URL('osr_transcription_worker.js', document.currentScript.src).href;
+    }
+    return '/js/tasks/osr_transcription_worker.js';
+  }
+
+  function getTranscriptionWorker() {
+    if (transcriptionWorker) return transcriptionWorker;
+    if (typeof Worker === 'undefined') {
+      throw new Error('Background transcription is not supported in this browser; enter the transcript manually.');
+    }
+    transcriptionWorker = new Worker(transcriptionWorkerUrl());
+    transcriptionWorker.onmessage = function(event) {
+      var message = event.data || {};
+      var job = transcriptionJobs[message.jobId];
+      if (!job) return;
+      if (message.type === 'progress') {
+        if (typeof job.onProgress === 'function') job.onProgress(message.progress);
+        return;
+      }
+      clearTimeout(job.timer);
+      delete transcriptionJobs[message.jobId];
+      if (message.type === 'result') job.resolve(message.transcript || '');
+      else job.reject(new Error(message.message || 'Background transcription failed'));
+    };
+    transcriptionWorker.onerror = function(event) {
+      var message = event && event.message ? event.message : 'Background transcription worker failed';
+      resetTranscriptionWorker(new Error(message));
+    };
+    return transcriptionWorker;
+  }
+
+  // Audio decoding and resampling use browser media APIs. The expensive
+  // Whisper/ONNX inference is transferred to a worker so the page remains
+  // responsive and the worker can be terminated if it exceeds the deadline.
   function blobToFloat32Mono16k(blob) {
     return blob.arrayBuffer().then(function(arrayBuffer) {
       var AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) throw new Error('Audio decoding is not supported in this browser');
       var decodingContext = new AudioContextCtor();
       return decodingContext.decodeAudioData(arrayBuffer.slice(0)).then(function(decoded) {
         decodingContext.close();
@@ -95,30 +107,44 @@
         source.start(0);
         return offlineCtx.startRendering();
       }).then(function(rendered) {
-        return rendered.getChannelData(0);
+        return new Float32Array(rendered.getChannelData(0));
       });
     });
   }
 
-  // Transcribes a recorded response Blob. Resolves with the transcript
-  // string. Rejects (rather than hanging) on any failure so callers can
-  // fall back to fully manual scoring.
+  function transcribeInWorker(audioData, onProgress) {
+    return new Promise(function(resolve, reject) {
+      var worker;
+      try {
+        worker = getTranscriptionWorker();
+      } catch (error) {
+        reject(error);
+        return;
+      }
+      var jobId = String(nextJobId++);
+      var timer = setTimeout(function() {
+        resetTranscriptionWorker(new Error('Background Whisper transcription timed out and was stopped'));
+      }, WORKER_RESPONSE_TIMEOUT_MS);
+      transcriptionJobs[jobId] = {
+        resolve: resolve,
+        reject: reject,
+        onProgress: onProgress,
+        timer: timer
+      };
+      worker.postMessage({
+        type: 'transcribe',
+        jobId: jobId,
+        audioData: audioData
+      }, [audioData.buffer]);
+    });
+  }
+
   function transcribeBlob(blob, onProgress) {
     function run() {
-      return Promise.all([
-        loadAsrPipeline(onProgress),
-        bounded(blobToFloat32Mono16k(blob), 20000, 'Audio decoding')
-      ]).then(function(results) {
-        var asr = results[0];
-        var audioData = results[1];
-        return bounded(
-          asr(audioData, { chunk_length_s: 30, stride_length_s: 5 }),
-          INFERENCE_TIMEOUT_MS,
-          'Whisper transcription'
-        );
-      }).then(function(result) {
-        return (result && result.text ? result.text : '').trim();
-      });
+      return bounded(blobToFloat32Mono16k(blob), 20000, 'Audio decoding')
+        .then(function(audioData) {
+          return transcribeInWorker(audioData, onProgress);
+        });
     }
     var job = transcriptionQueue.then(run, run);
     transcriptionQueue = job.catch(function() { return null; });

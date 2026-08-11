@@ -6,6 +6,7 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 
 const main = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
+const admin = fs.readFileSync(path.join(root, 'js/admin.js'), 'utf8');
 const osr = fs.readFileSync(path.join(root, 'js/tasks/original_story_recall.js'), 'utf8');
 const asf = fs.readFileSync(path.join(root, 'js/tasks/animal_semantic_fluency.js'), 'utf8');
 const ovn = fs.readFileSync(path.join(root, 'js/tasks/original_visual_naming.js'), 'utf8');
@@ -20,11 +21,20 @@ const css = fs.readFileSync(path.join(root, 'css/style.css'), 'utf8');
   'buildOCFReviewTimeline'
 ].forEach((builder) => assert.ok(main.includes("'" + builder + "'"), builder + ' must be load-checked'));
 
-const handoff = main.indexOf('examinerHandoffTimeline,');
-assert.ok(handoff > 0);
-['osrReviewTimeline,','asfReviewTimeline,','ovnReviewTimeline,','ocfReviewTimeline,'].forEach((node) => {
-  assert.ok(main.indexOf(node, handoff) > handoff, node + ' must run after examiner handoff');
-});
+const participantStart = main.indexOf('var timeline = welcomeTrials.concat');
+const participantEnd = main.indexOf(']);', participantStart);
+const participantTimeline = main.slice(participantStart, participantEnd);
+assert.ok(!participantTimeline.includes('examinerHandoffTimeline'));
+assert.ok(!participantTimeline.includes('osrReviewTimeline'));
+assert.ok(!participantTimeline.includes('asfReviewTimeline'));
+assert.ok(!participantTimeline.includes('ovnReviewTimeline'));
+assert.ok(!participantTimeline.includes('ocfReviewTimeline'));
+[
+  'buildOSRReviewTimeline()',
+  'buildAnimalFluencyReviewTimeline()',
+  'buildOriginalVisualNamingReviewTimeline()',
+  'buildOCFReviewTimeline()'
+].forEach((builder) => assert.ok(admin.includes(builder), builder + ' must run only from admin.js'));
 
 assert.ok(osr.includes('function buildOSRReviewTimeline()'));
 assert.ok(asf.includes('function buildAnimalFluencyReviewTimeline()'));

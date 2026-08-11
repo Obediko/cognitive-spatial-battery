@@ -11,6 +11,7 @@
   var RESPONSE_LIMIT_MS = 20000;
   window.OVN_DEFER_EXAMINER_REVIEW = window.OVN_DEFER_EXAMINER_REVIEW !== false;
   window.OVNState = window.OVNState || { itemAudio: [], itemAudioUrls: [], deferredResponses: [] };
+  var ovnImagePreloads = {};
 
   var drawings = {
     cup: '<path d="M70 58h80v62c0 25-18 40-40 40s-40-15-40-40z"/><path d="M150 76h18c30 0 30 44 0 44h-18"/><path d="M58 166h106"/>',
@@ -104,6 +105,14 @@
       : source;
   }
 
+  function ovnPreloadStimulus(item) {
+    if (!item || ovnImagePreloads[item.art]) return;
+    var preload = new Image();
+    preload.decoding = 'async';
+    preload.src = ovnDeliveryPath(item.art);
+    ovnImagePreloads[item.art] = preload;
+  }
+
   function ovnStimulusMarkup(item) {
     var path = ovnDeliveryPath(item.art);
     return '<div class="ovn-stimulus-frame" data-ovn-art="' + item.art + '">'
@@ -145,7 +154,7 @@
       }
       image.addEventListener('load', loaded, { once: true });
       image.addEventListener('error', function() { finish(showFallback('load_failed')); }, { once: true });
-      var timer = setTimeout(function() { finish(showFallback('load_timeout')); }, 10000);
+      var timer = setTimeout(function() { finish(showFallback('load_timeout')); }, 6000);
       if (image.complete) {
         if (image.naturalWidth > 0) loaded();
         else finish(showFallback('load_failed'));
@@ -154,11 +163,7 @@
 
     ready.then(function() {
       var next = items[items.findIndex(function(candidate) { return candidate.art === item.art; }) + 1];
-      if (next) {
-        var preload = new Image();
-        preload.decoding = 'async';
-        preload.src = ovnDeliveryPath(next.art);
-      }
+      if (next) ovnPreloadStimulus(next);
     });
     return ready;
   }
@@ -575,8 +580,10 @@
             + '<div class="ovn-layout"><div class="ovn-picture-card">' + ovnStimulusMarkup(item) + '</div>'
             + '<div class="ovn-examiner"><span class="osr-kicker">Examiner review</span>'
             + (audioUrl ? '<audio controls autoplay class="osr-audio-review" src="' + audioUrl + '"></audio>' : '<p class="osr-error">No item audio captured.</p>')
-            + '<label>Whisper transcript<input id="ovn-review-transcript" autocomplete="off"></label>'
-            + '<p id="ovn-review-asr" class="osr-status" aria-live="polite"></p>'
+            + '<label>Transcript<input id="ovn-review-transcript" autocomplete="off" placeholder="Enter manually or request a local Whisper suggestion"></label>'
+            + (blob && window.OSRTranscription
+              ? '<button class="battery-btn" id="ovn-review-transcribe">Transcribe this recording</button>' : '')
+            + '<p id="ovn-review-asr" class="osr-status" aria-live="polite">Whisper is optional and will not start automatically.</p>'
             + '<div class="ovn-actions"><button class="battery-btn primary" id="ovn-review-correct">Correct</button>'
             + '<button class="battery-btn" id="ovn-review-incorrect">Incorrect</button>'
             + '<button class="battery-btn" id="ovn-review-uncertain">Uncertain</button></div></div></div></div>';
@@ -586,20 +593,29 @@
           ovnPrepareStimulus(item, display);
 
           var status = document.getElementById('ovn-review-asr');
-          if (blob && window.OSRTranscription && typeof window.OSRTranscription.transcribeBlob === 'function') {
-            status.textContent = 'Transcribing locally with Whisper…';
-            window.OSRTranscription.transcribeBlob(blob, function(progress) {
-              if (token === reviewToken && status) status.textContent = 'Loading Whisper… ' + Math.round(progress) + '%';
-            }).then(function(transcript) {
-              if (token !== reviewToken || !document.getElementById('ovn-review-transcript')) return;
-              document.getElementById('ovn-review-transcript').value = transcript;
-              var suggested = ovnTranscriptMatches(item, transcript);
-              status.textContent = suggested
-                ? 'Whisper exact-name suggestion: correct. Examiner must verify the recording.'
-                : 'No exact accepted-name match. Check the recording before deciding.';
-            }).catch(function(error) {
-              if (token === reviewToken) status.textContent = 'Whisper unavailable: ' + (error && error.message ? error.message : 'unknown error');
-            });
+          var transcribeButton = document.getElementById('ovn-review-transcribe');
+          if (transcribeButton && blob && typeof window.OSRTranscription.transcribeBlob === 'function') {
+            transcribeButton.onclick = function() {
+              transcribeButton.disabled = true;
+              status.textContent = 'Transcribing in the background. The page remains usable…';
+              window.OSRTranscription.transcribeBlob(blob, function(progress) {
+                if (token === reviewToken && status) status.textContent = 'Loading Whisper in the background… ' + Math.round(progress) + '%';
+              }).then(function(transcript) {
+                if (token !== reviewToken || !document.getElementById('ovn-review-transcript')) return;
+                document.getElementById('ovn-review-transcript').value = transcript;
+                var suggested = ovnTranscriptMatches(item, transcript);
+                status.textContent = suggested
+                  ? 'Whisper exact-name suggestion: correct. Examiner must verify the recording.'
+                  : 'No exact accepted-name match. Check the recording before deciding.';
+                transcribeButton.disabled = false;
+                transcribeButton.textContent = 'Transcribe again';
+              }).catch(function(error) {
+                if (token !== reviewToken) return;
+                status.textContent = 'Whisper unavailable: ' + (error && error.message ? error.message : 'unknown error')
+                  + '. Enter the transcript manually or score from the recording.';
+                transcribeButton.disabled = false;
+              });
+            };
           }
         }
 
@@ -617,7 +633,11 @@
           + '<h2>Name each object</h2><p>Say one name clearly for each object, then continue to the next item.</p>'
           + '<p class="osr-fineprint">This deferred protocol measures uncued naming only; no semantic or phonemic cues are administered.</p></div>',
         choices: ['Begin'],
-        data: { task_name: 'original_visual_naming', phase: 'instructions', protocol_mode: 'deferred_uncued', task_version: OVN_VERSION }
+        data: { task_name: 'original_visual_naming', phase: 'instructions', protocol_mode: 'deferred_uncued', task_version: OVN_VERSION },
+        on_load: function() {
+          ovnPreloadStimulus(items[0]);
+          ovnPreloadStimulus(items[1]);
+        }
       },
       ovnDeferredAdministrationTrial(),
       {

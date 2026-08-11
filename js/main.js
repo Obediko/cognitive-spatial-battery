@@ -256,6 +256,9 @@ function makeTaskMenu(jsPsych) {
 
       function finish(choice) {
         window._batteryChoice = choice;
+        window.BatteryData.batteryChoice = choice;
+        window.BatteryData.sessionStatus = 'in_progress';
+        checkpointBatterySession();
         jsPsych.finishTrial({ battery_choice: choice });
       }
 
@@ -305,83 +308,35 @@ function makeCompletionScreen() {
   return {
     type: jsPsychCallFunction,
     async: true,
-    func: function(done) {
-      var summary = buildSummary();
+    func: function() {
       var pid = window.BatteryData.participantId || 'unknown';
+      window.BatteryData.batteryChoice = window._batteryChoice || window.BatteryData.batteryChoice;
+      window.BatteryData.sessionStatus = 'participant_complete';
+      checkpointBatterySession();
 
-      function fmt(v, dec) {
-        dec = dec === undefined ? 1 : dec;
-        if (v === null || v === undefined || (typeof v === 'number' && isNaN(v))) return 'N/A';
-        return Number(v).toFixed(dec);
+      var display = document.getElementById('jspsych-content') ||
+        document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
+      if (display) {
+        display.innerHTML = '<div id="completion-screen" class="osr-card">'
+          + '<span class="osr-kicker">Participant session complete</span>'
+          + '<h2>&#10003; Thank you</h2>'
+          + '<p>All participant tasks are finished.</p>'
+          + '<div class="info-box"><p>Your responses have been saved locally under session <strong>'
+          + String(pid).replace(/[&<>"']/g, '') + '</strong>.</p>'
+          + '<p>Scoring will be completed separately by the examiner and will not interrupt this session.</p></div>'
+          + '<p class="osr-fineprint">Research staff: use <strong>admin.html</strong> on this same browser and site to open the examiner checkpoint.</p>'
+          + '<button class="battery-btn download" id="participant-backup-json">Research staff: download backup JSON</button>'
+          + '<p id="participant-backup-status" class="osr-status" aria-live="polite"></p></div>';
       }
-
-      var durMin = summary.total_battery_duration_ms != null
-        ? (summary.total_battery_duration_ms / 60000).toFixed(1) + ' min' : 'N/A';
-
-      var html = '<div id="completion-screen">'
-        + '<h2 style="color:#a8d8ea">&#10003; Battery Complete</h2>'
-        + '<p style="color:#cdd9e5">Participant ID: <strong>' + pid + '</strong></p>'
-        + '<p style="color:#8899aa;font-size:0.85rem">Session duration: ' + durMin + '</p>'
-        + '<h3 style="margin-top:1.2em;color:#b8c6db">Summary</h3>'
-        + '<table class="summary-table">'
-        + '<tr><th>Measure</th><th>Value</th></tr>'
-        + '<tr><td>OSR immediate verbatim</td><td>' + (summary.osr_immediate_verbatim != null ? summary.osr_immediate_verbatim + ' / 44' : 'Not scored') + '</td></tr>'
-        + '<tr><td>OSR delayed verbatim</td><td>' + (summary.osr_delayed_verbatim != null ? summary.osr_delayed_verbatim + ' / 44' : 'Not scored') + '</td></tr>'
-        + '<tr><td>OSR delay</td><td>' + (summary.osr_delay_duration_ms != null ? fmt(summary.osr_delay_duration_ms / 60000, 1) + ' min' : 'N/A') + '</td></tr>'
-        + '<tr><td>Animal Naming valid unique</td><td>' + (summary.asf_total_valid_unique != null ? summary.asf_total_valid_unique : 'Not scored') + '</td></tr>'
-        + '<tr><td>Original Visual Naming (with semantic cue)</td><td>' + (summary.ovn_total_with_semantic != null ? summary.ovn_total_with_semantic : 'Not scored') + '</td></tr>'
-        + '<tr><td>Complex Figure copy</td><td>' + (summary.ocf_copy_score != null ? summary.ocf_copy_score + ' / 17' : 'Not scored') + '</td></tr>'
-        + '<tr><td>Complex Figure delayed</td><td>' + (summary.ocf_delayed_score != null ? summary.ocf_delayed_score + ' / 17' : 'Not scored') + '</td></tr>'
-        + '<tr><td>Complex Figure recognition</td><td>' + (summary.ocf_recognition_correct == null ? 'Not scored' : (summary.ocf_recognition_correct ? 'Correct' : 'Incorrect')) + '</td></tr>'
-        + '<tr><td>Number Span forward / backward</td><td>' + (summary.ns_forward_span != null ? summary.ns_forward_span : 'N/A') + ' / ' + (summary.ns_backward_span != null ? summary.ns_backward_span : 'N/A') + '</td></tr>'
-        + '<tr><td>Sequencing completion time</td><td>' + fmt(summary.completion_time_sequencing_ms) + ' ms</td></tr>'
-        + '<tr><td>Set-shifting completion time</td><td>' + fmt(summary.completion_time_set_shifting_ms) + ' ms</td></tr>'
-        + '<tr><td>Set-shifting cost</td><td>' + fmt(summary.set_shifting_cost_ms) + ' ms</td></tr>'
-        + '<tr><td>Sequencing errors</td><td>' + (summary.errors_sequencing !== null && summary.errors_sequencing !== undefined ? summary.errors_sequencing : 'N/A') + '</td></tr>'
-        + '<tr><td>Set-shifting errors</td><td>' + (summary.errors_set_shifting !== null && summary.errors_set_shifting !== undefined ? summary.errors_set_shifting : 'N/A') + '</td></tr>'
-        + '<tr><td>OLM mean error</td><td>' + fmt(summary.olm_mean_euclidean_error_px) + ' px</td></tr>'
-        + '<tr><td>OLM median error</td><td>' + fmt(summary.olm_median_euclidean_error_px) + ' px</td></tr>'
-        + '<tr><td>Pointing mean abs. error</td><td>' + fmt(summary.sp_mean_absolute_angular_error_deg) + '&deg;</td></tr>'
-        + '<tr><td>Pointing signed bias</td><td>' + fmt(summary.sp_signed_bias_deg) + '&deg;</td></tr>'
-        + '</table>'
-        + '<h3 style="margin-top:1.2em;color:#b8c6db">Download Data</h3>'
-        + '<p style="color:#8899aa;font-size:0.85rem;margin-bottom:0.8em">'
-        + 'Scored trials are checkpointed in this browser for crash recovery. Audio remains in memory only; download every file before closing.</p>'
-        + '<div style="display:flex;flex-wrap:wrap;gap:0.6em;justify-content:center">'
-        + '<button class="battery-btn download" id="dl-csv">&#8595; Download Trials CSV</button>'
-        + '<button class="battery-btn download" id="dl-json">&#8595; Download Full JSON</button>'
-        + '<button class="battery-btn download" id="dl-summary">&#8595; Download Summary JSON</button>'
-        + ((window.OSRState && window.OSRState.audio && window.OSRState.audio.immediate)
-          ? '<button class="battery-btn download" id="dl-osr-immediate">&#8595; Download OSR Immediate Audio</button>' : '')
-        + ((window.OSRState && window.OSRState.audio && window.OSRState.audio.delayed)
-          ? '<button class="battery-btn download" id="dl-osr-delayed">&#8595; Download OSR Delayed Audio</button>' : '')
-        + ((window.ASFState && window.ASFState.audio)
-          ? '<button class="battery-btn download" id="dl-asf-audio">&#8595; Download Animal Naming Audio</button>' : '')
-        + '</div>'
-        + '<p style="margin-top:1.6em;color:#8899aa;font-size:0.8rem">'
-        + '&#9888; Close this tab only after downloading your data.<br>'
-        + 'Scored data is locally checkpointed and is never automatically sent anywhere.</p>'
-        + '</div>';
-
-      var display = document.getElementById('jspsych-content') || document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
-      if (display) display.innerHTML = html;
-
-      var dlCSV = document.getElementById('dl-csv');
-      var dlJSON = document.getElementById('dl-json');
-      var dlSum  = document.getElementById('dl-summary');
-      var dlOSRI = document.getElementById('dl-osr-immediate');
-      var dlOSRD = document.getElementById('dl-osr-delayed');
-      var dlASF  = document.getElementById('dl-asf-audio');
-      if (dlCSV)  dlCSV.addEventListener('click',  exportAllCSV);
-      if (dlJSON) dlJSON.addEventListener('click', exportAllJSON);
-      if (dlSum)  dlSum.addEventListener('click',  exportSummaryJSON);
-      if (dlOSRI) dlOSRI.addEventListener('click', function() { downloadOSRAudio('immediate'); });
-      if (dlOSRD) dlOSRD.addEventListener('click', function() { downloadOSRAudio('delayed'); });
-      if (dlASF)  dlASF.addEventListener('click', downloadASFAudio);
-
+      var backup = document.getElementById('participant-backup-json');
+      if (backup) backup.addEventListener('click', function() {
+        exportAllJSON();
+        var status = document.getElementById('participant-backup-status');
+        if (status) status.textContent = 'Backup download started.';
+      });
       injectProgressBar();
       setProgress(100);
-      /* do NOT call done() - keep this screen open */
+      /* Keep the completion screen open. Examiner review runs from admin.html. */
     }
   };
 }
@@ -573,11 +528,6 @@ window.addEventListener('load', function() {
     spTimeline,
     setP90,
     nsTimeline,
-    examinerHandoffTimeline,
-    osrReviewTimeline,
-    asfReviewTimeline,
-    ovnReviewTimeline,
-    ocfReviewTimeline,
     makeCompletionScreen()
   ]);
 

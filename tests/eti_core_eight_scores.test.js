@@ -7,6 +7,7 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const main = fs.readFileSync(path.join(root, 'js', 'main.js'), 'utf8');
+const admin = fs.readFileSync(path.join(root, 'js', 'admin.js'), 'utf8');
 const utils = fs.readFileSync(path.join(root, 'js', 'utils.js'), 'utf8');
 
 const modules = [
@@ -47,6 +48,10 @@ modules.forEach((file) => {
   'sp_mean_absolute_angular_error_deg'
 ].forEach((score) => assert.ok(utils.includes(score), score + ' must be exported in the summary'));
 
-assert.ok(main.includes('Original Visual Naming (with semantic cue)'));
-assert.ok(main.includes('Number Span forward / backward'));
+assert.ok(!main.includes('Original Visual Naming (with semantic cue)'), 'participant completion must not display examiner scoring');
+assert.ok(admin.includes('Visual Naming uncued'));
+assert.ok(admin.includes('Number Span forward / backward'));
+assert.ok(admin.includes('Sequencing / set-shifting time'));
+assert.ok(admin.includes('Object-Location Memory mean error'));
+assert.ok(admin.includes('Spatial Pointing mean absolute error'));
 console.log('eti_core_eight_scores.test.js: all assertions passed');

@@ -8,8 +8,11 @@ function read(path) {
 }
 
 const main = read('js/main.js');
+const admin = read('js/admin.js');
+const adminHtml = read('admin.html');
 const utils = read('js/utils.js');
 const asr = read('js/tasks/osr_transcription.js');
+const asrWorker = read('js/tasks/osr_transcription_worker.js');
 const osr = read('js/tasks/original_story_recall.js');
 const asf = read('js/tasks/animal_semantic_fluency.js');
 const ovn = read('js/tasks/original_visual_naming.js');
@@ -26,11 +29,18 @@ assert.ok(utils.includes('ocfCopyCompletedAt'));
 assert.ok(utils.includes('window.BatteryArtifactStore'));
 assert.ok(utils.includes("['osr', 'immediate'], ['osr', 'delayed'], ['asf', 'main']"));
 assert.ok(utils.includes("jobs.push(['ovn', String(i)])"));
+assert.ok(utils.includes('function loadBatteryCheckpoint(participantId, options)'));
+assert.ok(utils.includes('function listBatteryCheckpoints()'));
+assert.ok(utils.includes("sessionStatus: window.BatteryData.sessionStatus || 'in_progress'"));
 
 assert.ok(asr.includes('MODEL_TIMEOUT_MS = 120000'));
 assert.ok(asr.includes('INFERENCE_TIMEOUT_MS = 90000'));
 assert.ok(asr.includes('transcriptionQueue.then(run, run)'));
-assert.ok(asr.includes('asrPipelinePromise = null'));
+assert.ok(asr.includes("new Worker(transcriptionWorkerUrl())"));
+assert.ok(asr.includes('transcriptionWorker.terminate()'));
+assert.ok(asr.includes('worker.postMessage({'));
+assert.ok(asrWorker.includes("pipeline('automatic-speech-recognition'"));
+assert.ok(asrWorker.includes("self.postMessage({ type: 'progress'"));
 
 assert.ok(osr.includes('requestMicrophone(12000)'));
 assert.ok(osr.includes('stopRecorder(recorder, chunks, 3000)'));
@@ -46,6 +56,11 @@ assert.ok(ovn.includes('stimulus_load_ms'));
 assert.ok(ovn.includes('response clock and recording start only after the stimulus is visible'));
 assert.ok(ovn.includes('revokeObjectUrl(window.OVNState.itemAudioUrls[index])'));
 assert.ok(ovn.includes("batteryArtifactKey(window.BatteryData.participantId, 'ovn', String(index))"));
+assert.ok(ovn.includes('Transcribe this recording'));
+assert.ok(ovn.includes('Whisper is optional and will not start automatically.'));
+assert.ok(!ovn.includes("status.textContent = 'Transcribing locally with Whisper…';"));
+assert.ok(ovn.includes('ovnPreloadStimulus(items[0])'));
+assert.ok(ovn.includes("finish(showFallback('load_timeout')); }, 6000"));
 
 assert.ok(ocf.includes('function suggestElements(strokes)'));
 assert.ok(ocf.includes('ocf-rule-aid-0.1-unvalidated'));
@@ -56,6 +71,22 @@ const timelineStart = main.indexOf('var timeline = welcomeTrials.concat');
 const participantTimeline = main.slice(timelineStart);
 assert.ok(participantTimeline.indexOf('ocfDelayedTimeline') < participantTimeline.indexOf('asfTimeline'));
 assert.ok(main.includes('showRecoverableRuntimeError'));
+const participantArrayEnd = participantTimeline.indexOf(']);');
+const participantArray = participantTimeline.slice(0, participantArrayEnd);
+assert.ok(participantArray.includes('nsTimeline'));
+assert.ok(participantArray.includes('makeCompletionScreen()'));
+assert.ok(!participantArray.includes('examinerHandoffTimeline'));
+assert.ok(!participantArray.includes('osrReviewTimeline'));
+assert.ok(!participantArray.includes('asfReviewTimeline'));
+assert.ok(!participantArray.includes('ovnReviewTimeline'));
+assert.ok(!participantArray.includes('ocfReviewTimeline'));
+assert.ok(main.includes("sessionStatus = 'participant_complete'"));
+assert.ok(adminHtml.includes('js/admin.js'));
+assert.ok(admin.includes('buildOSRReviewTimeline()'));
+assert.ok(admin.includes('buildAnimalFluencyReviewTimeline()'));
+assert.ok(admin.includes('buildOriginalVisualNamingReviewTimeline()'));
+assert.ok(admin.includes('buildOCFReviewTimeline()'));
+assert.ok(admin.includes("sessionStatus = 'examiner_review_complete'"));
 
 assert.ok(olm.includes('installGamepadPointer'));
 assert.ok(olm.includes('(e.clientX - rect.left) * cW / rect.width'));
