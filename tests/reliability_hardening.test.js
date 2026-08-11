@@ -8,6 +8,8 @@ function read(path) {
 }
 
 const main = read('js/main.js');
+const admin = read('js/admin.js');
+const adminHtml = read('admin.html');
 const utils = read('js/utils.js');
 const asr = read('js/tasks/osr_transcription.js');
 const asrWorker = read('js/tasks/osr_transcription_worker.js');
@@ -27,6 +29,9 @@ assert.ok(utils.includes('ocfCopyCompletedAt'));
 assert.ok(utils.includes('window.BatteryArtifactStore'));
 assert.ok(utils.includes("['osr', 'immediate'], ['osr', 'delayed'], ['asf', 'main']"));
 assert.ok(utils.includes("jobs.push(['ovn', String(i)])"));
+assert.ok(utils.includes('function loadBatteryCheckpoint(participantId, options)'));
+assert.ok(utils.includes('function listBatteryCheckpoints()'));
+assert.ok(utils.includes("sessionStatus: window.BatteryData.sessionStatus || 'in_progress'"));
 
 assert.ok(asr.includes('MODEL_TIMEOUT_MS = 120000'));
 assert.ok(asr.includes('INFERENCE_TIMEOUT_MS = 90000'));
@@ -66,12 +71,22 @@ const timelineStart = main.indexOf('var timeline = welcomeTrials.concat');
 const participantTimeline = main.slice(timelineStart);
 assert.ok(participantTimeline.indexOf('ocfDelayedTimeline') < participantTimeline.indexOf('asfTimeline'));
 assert.ok(main.includes('showRecoverableRuntimeError'));
-const handoffIndex = participantTimeline.indexOf('examinerHandoffTimeline');
-assert.ok(participantTimeline.indexOf('nsTimeline') < handoffIndex);
-assert.ok(participantTimeline.indexOf('osrReviewTimeline') > handoffIndex);
-assert.ok(participantTimeline.indexOf('asfReviewTimeline') > handoffIndex);
-assert.ok(participantTimeline.indexOf('ovnReviewTimeline') > handoffIndex);
-assert.ok(participantTimeline.indexOf('ocfReviewTimeline') > handoffIndex);
+const participantArrayEnd = participantTimeline.indexOf(']);');
+const participantArray = participantTimeline.slice(0, participantArrayEnd);
+assert.ok(participantArray.includes('nsTimeline'));
+assert.ok(participantArray.includes('makeCompletionScreen()'));
+assert.ok(!participantArray.includes('examinerHandoffTimeline'));
+assert.ok(!participantArray.includes('osrReviewTimeline'));
+assert.ok(!participantArray.includes('asfReviewTimeline'));
+assert.ok(!participantArray.includes('ovnReviewTimeline'));
+assert.ok(!participantArray.includes('ocfReviewTimeline'));
+assert.ok(main.includes("sessionStatus = 'participant_complete'"));
+assert.ok(adminHtml.includes('js/admin.js'));
+assert.ok(admin.includes('buildOSRReviewTimeline()'));
+assert.ok(admin.includes('buildAnimalFluencyReviewTimeline()'));
+assert.ok(admin.includes('buildOriginalVisualNamingReviewTimeline()'));
+assert.ok(admin.includes('buildOCFReviewTimeline()'));
+assert.ok(admin.includes("sessionStatus = 'examiner_review_complete'"));
 
 assert.ok(olm.includes('installGamepadPointer'));
 assert.ok(olm.includes('(e.clientX - rect.left) * cW / rect.width'));
