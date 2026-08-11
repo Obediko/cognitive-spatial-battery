@@ -45,7 +45,13 @@
         + '<tr><td>Animal Fluency</td><td>' + summaryValue(summary.asf_total_valid_unique) + '</td></tr>'
         + '<tr><td>Visual Naming uncued</td><td>' + summaryValue(summary.ovn_total_uncued) + '</td></tr>'
         + '<tr><td>Complex Figure copy</td><td>' + summaryValue(summary.ocf_copy_score, ' / 17') + '</td></tr>'
-        + '<tr><td>Complex Figure delayed</td><td>' + summaryValue(summary.ocf_delayed_score, ' / 17') + '</td></tr></table>'
+        + '<tr><td>Complex Figure delayed</td><td>' + summaryValue(summary.ocf_delayed_score, ' / 17') + '</td></tr>'
+        + '<tr><td>Number Span forward / backward</td><td>' + summaryValue(summary.ns_forward_span)
+        + ' / ' + summaryValue(summary.ns_backward_span) + '</td></tr>'
+        + '<tr><td>Sequencing / set-shifting time</td><td>' + summaryValue(summary.completion_time_sequencing_ms, ' ms')
+        + ' / ' + summaryValue(summary.completion_time_set_shifting_ms, ' ms') + '</td></tr>'
+        + '<tr><td>Object-Location Memory mean error</td><td>' + summaryValue(summary.olm_mean_euclidean_error_px, ' px') + '</td></tr>'
+        + '<tr><td>Spatial Pointing mean absolute error</td><td>' + summaryValue(summary.sp_mean_absolute_angular_error_deg, '°') + '</td></tr></table>'
         + '<div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin-top:1rem;">'
         + '<button class="battery-btn download" id="admin-export-csv">Download trials CSV</button>'
         + '<button class="battery-btn download" id="admin-export-json">Download full JSON</button>'
