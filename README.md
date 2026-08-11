@@ -41,6 +41,14 @@ Use a current Chromium, Firefox, or Safari browser on a laptop or sufficiently l
 - For an offline or higher-assurance deployment, vendor and integrity-check all dependencies and model files before participant use.
 - Never commit real participant data to this repository.
 
+## Examiner scoring checkpoint
+
+Participant administration ends immediately after the last selected task. Story Recall, Animal Fluency, Visual Naming and Complex Figure review run separately from `admin.html`.
+
+The current checkpoint is deliberately local-only: the examiner must open `admin.html` from the same deployed origin, browser profile and device that administered the session. It enumerates locally checkpointed participant IDs and restores local audio/drawings before launching the relevant review timelines. It is not an authenticated remote portal.
+
+Do not expose `admin.html` as if it were secure authentication. A remote scoring deployment requires approved consent language, a retention/deletion policy, authenticated examiner accounts, private object storage, least-privilege access rules, audit logs and an institutional data-protection/ethics review.
+
 ## Standardized stimulus audio
 
 Story prompts, story playback, digit instructions, and digits use repository WAV files generated with a synthetic voice. A successful file load is recorded separately from scientific validation. The current files are **pilot-only** until intelligibility, pronunciation, duration, clipping, silence, loudness, and listener-equivalence checks pass. Browser speech synthesis is an emergency fallback and marks the session non-standardized.
@@ -60,7 +68,7 @@ The completion screen exports:
 - summary JSON;
 - separate OSR immediate/delayed and ASF response audio when recorded.
 
-Completion shows scores from all eight tasks. Checkpoint recovery restores scored trials, summaries, and locally retained OSR/ASF/OVN audio after re-entering the same pseudonymous ID on the same browser profile and site origin. It does not resume inside a partially completed trial.
+Participant completion does not display or run examiner scoring. The separate local examiner checkpoint restores trials, summaries, drawings and locally retained OSR/ASF/OVN audio using the same pseudonymous ID on the same browser profile and site origin. It does not resume inside a partially completed trial.
 
 ## Tests
 
@@ -76,7 +84,8 @@ CI checks JavaScript syntax, all task scoring tests, eight-task integration/expo
 ## Repository map
 
 - `index.html` — application entry point and pinned browser dependencies
-- `js/main.js` — battery orchestration and completion
+- `js/main.js` — participant-only battery orchestration and completion
+- `admin.html` / `js/admin.js` — separate same-origin examiner scoring checkpoint
 - `js/utils.js` — data, recovery, export, summary, and controller navigation
 - `js/tasks/` — eight task modules and local transcription support
 - `docs/eti-core/` — task-specific specifications
