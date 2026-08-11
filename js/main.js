@@ -323,10 +323,20 @@ function makeCompletionScreen() {
           + '<p>All participant tasks are finished.</p>'
           + '<div class="info-box"><p>Your responses have been saved locally under session <strong>'
           + String(pid).replace(/[&<>"']/g, '') + '</strong>.</p>'
+          + '<p id="participant-sync-status">Secure cross-device synchronization is continuing in the background…</p>'
           + '<p>Scoring will be completed separately by the examiner and will not interrupt this session.</p></div>'
-          + '<p class="osr-fineprint">Research staff: use <strong>admin.html</strong> on this same browser and site to open the examiner checkpoint.</p>'
+          + '<p class="osr-fineprint">Research staff: use <strong>admin.html</strong> from an authorized device to open the examiner checkpoint.</p>'
           + '<button class="battery-btn download" id="participant-backup-json">Research staff: download backup JSON</button>'
           + '<p id="participant-backup-status" class="osr-status" aria-live="polite"></p></div>';
+      }
+      if (window.BatteryRemoteSync) {
+        window.BatteryRemoteSync.flush().then(function() {
+          var syncStatus = document.getElementById('participant-sync-status');
+          if (!syncStatus) return;
+          syncStatus.textContent = window.BatteryRemoteSync.getStatus() === 'synced'
+            ? 'Secure cross-device synchronization finished.'
+            : 'The local recovery copy is safe, but remote synchronization is pending. Keep this page open and contact research staff.';
+        });
       }
       var backup = document.getElementById('participant-backup-json');
       if (backup) backup.addEventListener('click', function() {
