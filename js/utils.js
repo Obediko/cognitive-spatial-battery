@@ -62,6 +62,8 @@ function checkpointBatterySession() {
       sessionStart: window.BatteryData.sessionStart,
       trials: window.BatteryData.trials,
       taskSummaries: window.BatteryData.taskSummaries,
+      batteryChoice: window.BatteryData.batteryChoice || null,
+      sessionStatus: window.BatteryData.sessionStatus || 'in_progress',
       taskState: {
         ocfCopyCompletedAt: window.OCFState ? window.OCFState.copyCompletedAt : null
       }
@@ -82,18 +84,24 @@ function checkpointBatterySession() {
   }
 }
 
-function restoreBatteryCheckpoint(participantId) {
+function loadBatteryCheckpoint(participantId, options) {
+  options = options || {};
   if (!window.localStorage) return false;
   try {
     var raw = window.localStorage.getItem(batteryRecoveryKey(participantId));
     if (!raw) return false;
     var saved = JSON.parse(raw);
     if (!saved || saved.participantId !== participantId || !Array.isArray(saved.trials)) return false;
-    if (!window.confirm('A saved session for this participant ID was found. Restore its scored trials and summaries?')) return false;
+    if (options.confirm !== false &&
+        !window.confirm('A saved session for this participant ID was found. Restore its trials, summaries and local recordings?')) {
+      return false;
+    }
     window.BatteryData.participantId = saved.participantId;
     window.BatteryData.sessionStart = saved.sessionStart;
     window.BatteryData.trials = saved.trials;
     window.BatteryData.taskSummaries = saved.taskSummaries || {};
+    window.BatteryData.batteryChoice = saved.batteryChoice || null;
+    window.BatteryData.sessionStatus = saved.sessionStatus || 'in_progress';
     if (window.OCFState) {
       window.OCFState.copyCompletedAt = saved.taskState && saved.taskState.ocfCopyCompletedAt
         ? saved.taskState.ocfCopyCompletedAt : null;
@@ -104,6 +112,24 @@ function restoreBatteryCheckpoint(participantId) {
         if (row && row.stroke_data) {
           try { window.OCFState[phase + 'Strokes'] = JSON.parse(row.stroke_data); } catch (error) { console.warn(error); }
         }
+        if (row) window.OCFState[phase + 'Incomplete'] = !!row.incomplete;
+      });
+    }
+    var asfRow = saved.trials.slice().reverse().find(function(item) {
+      return item.task_name === 'animal_semantic_fluency' && item.phase === 'category_generation';
+    });
+    if (asfRow && window.ASFState) {
+      window.ASFState.promptUsed = !!asfRow.prompt_used;
+      window.ASFState.endedEarly = !!asfRow.ended_early;
+      window.ASFState.microphoneProblem = !!asfRow.microphone_problem;
+    }
+    var osrRows = saved.trials.filter(function(item) {
+      return item.task_name === 'original_story_recall' && item.phase === 'free_recall';
+    });
+    if (window.OSRState) {
+      osrRows.forEach(function(row) {
+        if (row.condition) window.OSRState.neutralPromptUsed[row.condition] = !!row.neutral_prompt_used;
+        if (row.microphone_problem) window.OSRState.protocolFlags.microphone_problem = true;
       });
     }
     return true;
@@ -111,6 +137,36 @@ function restoreBatteryCheckpoint(participantId) {
     console.warn('Battery recovery checkpoint could not be restored:', error);
     return false;
   }
+}
+
+function restoreBatteryCheckpoint(participantId) {
+  return loadBatteryCheckpoint(participantId, { confirm: true });
+}
+
+function listBatteryCheckpoints() {
+  if (!window.localStorage) return [];
+  var sessions = [];
+  for (var i = 0; i < window.localStorage.length; i += 1) {
+    var key = window.localStorage.key(i);
+    if (!key || key.indexOf('csb-recovery-v1:') !== 0) continue;
+    try {
+      var saved = JSON.parse(window.localStorage.getItem(key));
+      if (!saved || !saved.participantId || !Array.isArray(saved.trials)) continue;
+      sessions.push({
+        participantId: saved.participantId,
+        savedAt: saved.saved_at || null,
+        sessionStart: saved.sessionStart || null,
+        sessionStatus: saved.sessionStatus || 'in_progress',
+        batteryChoice: saved.batteryChoice || null,
+        trialCount: saved.trials.length
+      });
+    } catch (error) {
+      console.warn('Ignoring unreadable battery checkpoint:', key);
+    }
+  }
+  return sessions.sort(function(a, b) {
+    return String(b.savedAt || '').localeCompare(String(a.savedAt || ''));
+  });
 }
 
 function clearBatteryCheckpoint() {
@@ -431,6 +487,8 @@ window.BatteryData = {
   sessionStart: null,
   trials: [],
   taskSummaries: {},
+  batteryChoice: null,
+  sessionStatus: 'in_progress',
 
   /* Push one or more row objects. Auto-stamps participant_id, timestamp, window. */
   addTrials(rows) {
