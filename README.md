@@ -2,24 +2,28 @@
 
 Browser-based research prototype for baseline cognitive and spatial characterization. It uses original stimuli and task designs; it does **not** reproduce licensed NACC forms, MINT drawings, the Benson figure, Craft Story text, or Trail Making Test materials.
 
-## Current battery: eight tasks
+## ETI-aligned architecture
 
-| # | Task | Primary pilot score |
-|---|---|---|
-| 1 | Original Story Recall (OSR-44) | Immediate and delayed examiner-verified verbatim units |
-| 2 | Animal Semantic Fluency (ASF-60) | Valid unique animal names in 60 seconds |
-| 3 | Original Visual Naming (OVN-32) | Examiner-verified naming total |
-| 4 | Original Complex Figure (OCF-17) | Copy, delayed recall, and recognition |
-| 5 | Number Span (ONS Form A) | Forward and backward span |
-| 6 | Visual Sequencing and Set-Shifting | Completion times, errors, cost, ratio |
-| 7 | Object-Location Memory | Spatial placement error |
-| 8 | 2D Spatial Pointing | Absolute angular error and signed bias |
+ETI uses eight component scores produced by five test families—not eight separately administered tasks:
+
+| ETI-ready analogue field | Original measure |
+|---|---|
+| `CRAFTVRS_ANALOGUE` | Story immediate verbatim, 0–44 |
+| `CRAFTDVR_ANALOGUE` | Story delayed verbatim, 0–44 |
+| `ANIMALS_ANALOGUE` | Valid unique animals in 60 seconds |
+| `MINTTOTS_ANALOGUE` | Original visual naming total, 0–32 |
+| `UDSBENTC_ANALOGUE` | Original complex-figure copy, 0–17 |
+| `UDSBENTD_ANALOGUE` | Original complex-figure delayed recall, 0–17 |
+| `DIGFORCT_ANALOGUE` | Number Span forward correct trials, 0–14 |
+| `DIGBACCT_ANALOGUE` | Number Span backward correct trials, 0–14 |
+
+Visual Sequencing/Set-Shifting is retained as a Trail A/B conceptual comparator and runs last. Object-Location Memory and Spatial Pointing are optional additional spatial outcomes. None of those three modules is an ETI input.
 
 All scores are experimental pilot scores. They are not NACC scores and are not norm-equivalent to the source instruments whose principles motivated the designs.
 
 ## Research status
 
-This repository is suitable for software testing and supervised piloting only. It is **not cleared for inferential data collection** until the gates in [the validation plan](docs/validation/validation_plan.md) are signed off. In particular, synthetic speech, original naming drawings, the complex figure, device/input equivalence, scoring reliability, accessibility, and timing still require empirical validation.
+This repository is suitable for software testing and supervised piloting only. It is **not cleared for inferential data collection** until the gates in [the validation plan](docs/validation/validation_plan.md) are signed off. German is an explicitly unvalidated parallel pilot form; its generated story/digit speech must be replaced by frozen reviewed recordings before research use.
 
 ## Running locally
 
@@ -35,8 +39,7 @@ Use a current Chromium, Firefox, or Safari browser on a laptop or sufficiently l
 ## Privacy and networking
 
 - Collect only a pseudonymous participant ID. Never enter names, email addresses, dates of birth, student numbers, or other direct identifiers.
-- Trial data and summaries are checkpointed in browser `localStorage` for crash recovery and are never automatically uploaded by this application.
-- Recorded OSR/ASF/OVN audio is kept locally in same-origin browser storage for crash recovery and is never automatically uploaded. Download it before clearing site data, changing browser/profile, or leaving the study device.
+- Trial data, drawings and audio are retained locally for recovery and, when the Netlify synchronization deployment is configured, synchronized to private Netlify Blobs for approved cross-device examiner access.
 - The page makes network requests for jsPsych from unpkg and, when automatic OSR transcription is used, a pinned Transformers.js bundle plus a Whisper model. Recorded audio is processed locally and is not sent to those services.
 - For an offline or higher-assurance deployment, vendor and integrity-check all dependencies and model files before participant use.
 - Never commit real participant data to this repository.
@@ -45,9 +48,7 @@ Use a current Chromium, Firefox, or Safari browser on a laptop or sufficiently l
 
 Participant administration ends immediately after the last selected task. Story Recall, Animal Fluency, Visual Naming and Complex Figure review run separately from `admin.html`.
 
-The current checkpoint is deliberately local-only: the examiner must open `admin.html` from the same deployed origin, browser profile and device that administered the session. It enumerates locally checkpointed participant IDs and restores local audio/drawings before launching the relevant review timelines. It is not an authenticated remote portal.
-
-Do not expose `admin.html` as if it were secure authentication. A remote scoring deployment requires approved consent language, a retention/deletion policy, authenticated examiner accounts, private object storage, least-privilege access rules, audit logs and an institutional data-protection/ethics review.
+The examiner portal uses password-authenticated, HTTP-only sessions when the Netlify secrets described in [remote sync setup](docs/remote-sync-setup.md) are configured. Local recovery remains available. Deployment still requires approved consent, retention/deletion rules and institutional data-protection/ethics review.
 
 ## Standardized stimulus audio
 
@@ -79,7 +80,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-CI checks JavaScript syntax, all task scoring tests, eight-task integration/export coverage, and a Chromium task-menu smoke test.
+CI checks JavaScript syntax, task scoring, the eight-input ETI analogue contract, bilingual metadata, Trail termination/structure, synchronization security and a Chromium smoke test.
 
 ## Repository map
 

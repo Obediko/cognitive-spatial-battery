@@ -11,6 +11,7 @@
   var NS_ONSET_INTERVAL_MS = 1000; // nominal onset spacing; actual onsets are recorded
   var NS_AUDIO_LOAD_TIMEOUT_MS = 8000;
   var NS_POST_SEQUENCE_BUFFER_MS = 600; // extra pause after the last digit before responding
+  var NS_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
 
   var NS_FORWARD_MIN_LENGTH = 3;
   var NS_FORWARD_MAX_LENGTH = 9;
@@ -29,7 +30,7 @@
 
   window.NSState = {
     version: NS_VERSION,
-    audioStandardized: true, // flipped to false the first time any file fails to load/play
+    audioStandardized: !NS_IS_GERMAN, // German recordings are not yet validated or bundled
     digitBlobUrls: {},       // digit -> object URL (preloaded once)
     playbackOnsets: [],     // planned and observed audio starts for timing QA
     discontinued: { forward: false, backward: false },
@@ -84,6 +85,7 @@
   // affected digit(s)/instruction(s) and NSState.audioStandardized is set to
   // false so the session can be flagged for review.
   function nsPreloadAudio() {
+    if (NS_IS_GERMAN) return Promise.resolve();
     var jobs = [];
     for (var d = 0; d <= 9; d++) {
       (function(digit) {
@@ -118,6 +120,7 @@
       }
       var settled = false;
       var utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = NS_IS_GERMAN ? 'de-DE' : 'en-GB';
       var timer = setTimeout(function() {
         if (settled) return;
         settled = true;
@@ -155,17 +158,25 @@
       el.addEventListener('ended', finish, { once: true });
       el.addEventListener('error', function() {
         if (statusEl) statusEl.textContent = 'Standardized audio unavailable, using fallback voice…';
-        nsSpeakFallback(direction === 'forward'
-          ? 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in the same order.'
-          : 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in reverse order.'
+        nsSpeakFallback(NS_IS_GERMAN
+          ? (direction === 'forward'
+            ? 'Sie hören eine Ziffernfolge. Wiederholen Sie die Ziffern anschließend in derselben Reihenfolge.'
+            : 'Sie hören eine Ziffernfolge. Wiederholen Sie die Ziffern anschließend in umgekehrter Reihenfolge.')
+          : (direction === 'forward'
+            ? 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in the same order.'
+            : 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in reverse order.')
         ).then(finish);
       }, { once: true });
       el.play().catch(function() { finish(); });
     } else {
       if (statusEl) statusEl.textContent = 'Standardized audio unavailable, using fallback voice…';
-      nsSpeakFallback(direction === 'forward'
-        ? 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in the same order.'
-        : 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in reverse order.'
+      nsSpeakFallback(NS_IS_GERMAN
+        ? (direction === 'forward'
+          ? 'Sie hören eine Ziffernfolge. Wiederholen Sie die Ziffern anschließend in derselben Reihenfolge.'
+          : 'Sie hören eine Ziffernfolge. Wiederholen Sie die Ziffern anschließend in umgekehrter Reihenfolge.')
+        : (direction === 'forward'
+          ? 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in the same order.'
+          : 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in reverse order.')
       ).then(finish);
     }
   }
@@ -174,9 +185,10 @@
     return {
       type: jsPsychHtmlButtonResponse,
       stimulus: '<div class="osr-card"><span class="osr-kicker">ETI Core · Working memory</span>'
-        + '<h2>' + (direction === 'forward' ? 'Number Span — Forward' : 'Number Span — Backward') + '</h2>'
-        + '<p>You will hear a series of digits, one at a time. When the sequence ends, repeat the digits '
-        + (direction === 'forward' ? 'in the same order.' : 'in reverse order.') + '</p>'
+        + '<h2>' + (NS_IS_GERMAN ? (direction === 'forward' ? 'Zahlenspanne — vorwärts' : 'Zahlenspanne — rückwärts') : (direction === 'forward' ? 'Number Span — Forward' : 'Number Span — Backward')) + '</h2>'
+        + '<p>' + (NS_IS_GERMAN
+          ? ('Sie hören einzelne Ziffern. Wiederholen Sie die Ziffern anschließend ' + (direction === 'forward' ? 'in derselben Reihenfolge.' : 'in umgekehrter Reihenfolge.'))
+          : ('You will hear a series of digits, one at a time. When the sequence ends, repeat the digits ' + (direction === 'forward' ? 'in the same order.' : 'in reverse order.'))) + '</p>'
         + '<button class="battery-btn" id="ns-replay-instructions" type="button">Replay instructions audio</button>'
         + '<p id="ns-instruction-status" class="osr-status" aria-live="polite"></p></div>',
       choices: ['Continue'],

@@ -7,6 +7,32 @@
    ============================================================ */
 'use strict';
 
+function batteryText(key) {
+  return window.BatteryLanguage ? window.BatteryLanguage.text(key) : key;
+}
+
+function makeLanguageSelectionTrial() {
+  return {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: '<div class="osr-card" style="max-width:720px;margin:0 auto;text-align:center">'
+      + '<span class="osr-kicker">Language / Sprache</span>'
+      + '<h1>Choose the assessment language<br><span lang="de">Testsprache wählen</span></h1>'
+      + '<p>The selection applies to the full session.<br><span lang="de">Die Auswahl gilt für die gesamte Sitzung.</span></p>'
+      + '<div class="warning-box">The German parallel form is a pilot form. Cross-language psychometric equivalence has not yet been established.</div>'
+      + '</div>',
+    choices: ['English', 'Deutsch'],
+    data: { battery_phase: 'language_selection' },
+    on_finish: function(data) {
+      var selected = data.response === 1 ? 'de' : 'en';
+      window.BatteryLanguage.set(selected);
+      window.BatteryData.language = selected;
+      Object.assign(data, window.BatteryLanguage.metadata());
+      sessionStorage.setItem('csb-language-confirmed', '1');
+      window.location.reload();
+    }
+  };
+}
+
 /* ---- Global error handler: show errors on screen ---- */
 function escapeErrorText(value) {
   return String(value)
@@ -97,7 +123,7 @@ function makeWelcomeTrials() {
   var welcome = {
     type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="max-width:700px;margin:0 auto;text-align:center;padding:1em">'
-      + '<h1 style="color:#a8d8ea">Baseline Cognitive &amp; Spatial Battery</h1>'
+      + '<h1 style="color:#a8d8ea">' + batteryText('battery_title') + '</h1>'
       + '<div class="info-box" style="text-align:left">'
       + '<p><strong>What this is:</strong> A brief computerized baseline cognitive/spatial battery '
       + 'administered during the intake session to characterize individual differences relevant to '
@@ -113,7 +139,7 @@ function makeWelcomeTrials() {
       + '<p style="color:#8899aa;font-size:0.9rem;margin-top:1em">'
       + 'Please run this on a <strong>laptop or sufficiently large tablet</strong> in a quiet environment.<br>'
       + 'Mouse, trackpad, touch and standard gamepad input are supported; the input modality is recorded.</p></div>',
-    choices: ['Begin Setup'],
+    choices: [batteryText('begin_setup')],
     data: { battery_phase: 'welcome' }
   };
 
@@ -228,13 +254,16 @@ function makeTaskMenu(jsPsych) {
   return {
     type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="max-width:680px;margin:0 auto;text-align:center">'
-      + '<h2 style="color:#a8d8ea;margin-bottom:0.4em">Task Menu</h2>'
+      + '<h2 style="color:#a8d8ea;margin-bottom:0.4em">' + batteryText('task_menu') + '</h2>'
       + '<p style="color:#cdd9e5;margin-bottom:0.3em">'
       + 'Participant ID: <strong id="pid-display">loading...</strong></p>'
       + '<p style="color:#8899aa;font-size:0.85rem;margin-bottom:1.2em">'
       + 'Select which tasks to run. For the baseline session choose <em>Run Full Battery</em>.</p>'
       + '<div style="display:grid;gap:0.6em;max-width:420px;margin:0 auto">'
-      + '<button class="battery-btn primary" id="btn-full">Run Full Pilot Battery (~28-38 min)</button>'
+      + '<button class="battery-btn primary" id="btn-full">' + batteryText('full_battery') + ' (~28-38 min)</button>'
+      + '<button class="battery-btn" id="btn-core">' + batteryText('core_only') + '</button>'
+      + '<button class="battery-btn" id="btn-trail">' + batteryText('trail_only') + '</button>'
+      + '<button class="battery-btn" id="btn-spatial">' + batteryText('spatial_only') + '</button>'
       + '<button class="battery-btn" id="btn-osr">Original Story Recall only</button>'
       + '<button class="battery-btn" id="btn-asf">Animal Naming only</button>'
       + '<button class="battery-btn" id="btn-ovn">Original Visual Naming only</button>'
@@ -263,6 +292,9 @@ function makeTaskMenu(jsPsych) {
       }
 
       var btnFull = document.getElementById('btn-full');
+      var btnCore = document.getElementById('btn-core');
+      var btnTrail = document.getElementById('btn-trail');
+      var btnSpatial = document.getElementById('btn-spatial');
       var btnOSR  = document.getElementById('btn-osr');
       var btnASF  = document.getElementById('btn-asf');
       var btnOVN  = document.getElementById('btn-ovn');
@@ -273,6 +305,9 @@ function makeTaskMenu(jsPsych) {
       var btnNS   = document.getElementById('btn-ns');
 
       if (btnFull) btnFull.addEventListener('click', function() { finish('full'); });
+      if (btnCore) btnCore.addEventListener('click', function() { finish('eti_core'); });
+      if (btnTrail) btnTrail.addEventListener('click', function() { finish('trail'); });
+      if (btnSpatial) btnSpatial.addEventListener('click', function() { finish('spatial'); });
       if (btnOSR)  btnOSR.addEventListener('click', function() { finish('osr'); });
       if (btnASF)  btnASF.addEventListener('click', function() { finish('asf'); });
       if (btnOVN)  btnOVN.addEventListener('click', function() { finish('ovn'); });
@@ -292,8 +327,8 @@ function makeBreakScreen(nextTaskName) {
   return {
     type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="max-width:600px;margin:0 auto;text-align:center">'
-      + '<h3 style="color:#a8d8ea">Take a short break if needed</h3>'
-      + '<p>Next task: <strong>' + nextTaskName + '</strong></p>'
+      + '<h3 style="color:#a8d8ea">' + batteryText('break_title') + '</h3>'
+      + '<p>' + batteryText('next_task') + ': <strong>' + nextTaskName + '</strong></p>'
       + '<p style="color:#8899aa;font-size:0.85rem">Press Continue when ready.</p>'
       + '</div>',
     choices: ['Continue'],
@@ -313,18 +348,19 @@ function makeCompletionScreen() {
       window.BatteryData.batteryChoice = window._batteryChoice || window.BatteryData.batteryChoice;
       window.BatteryData.sessionStatus = 'participant_complete';
       checkpointBatterySession();
+      sessionStorage.removeItem('csb-language-confirmed');
 
       var display = document.getElementById('jspsych-content') ||
         document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
       if (display) {
         display.innerHTML = '<div id="completion-screen" class="osr-card">'
-          + '<span class="osr-kicker">Participant session complete</span>'
-          + '<h2>&#10003; Thank you</h2>'
+          + '<span class="osr-kicker">' + batteryText('participant_complete') + '</span>'
+          + '<h2>&#10003; ' + batteryText('thank_you') + '</h2>'
           + '<p>All participant tasks are finished.</p>'
           + '<div class="info-box"><p>Your responses have been saved locally under session <strong>'
           + String(pid).replace(/[&<>"']/g, '') + '</strong>.</p>'
           + '<p id="participant-sync-status">Secure cross-device synchronization is continuing in the background…</p>'
-          + '<p>Scoring will be completed separately by the examiner and will not interrupt this session.</p></div>'
+          + '<p>' + batteryText('scoring_separate') + '</p></div>'
           + '<p class="osr-fineprint">Research staff: use <strong>admin.html</strong> from an authorized device to open the examiner checkpoint.</p>'
           + '<button class="battery-btn download" id="participant-backup-json">Research staff: download backup JSON</button>'
           + '<p id="participant-backup-status" class="osr-status" aria-live="polite"></p></div>';
@@ -384,7 +420,9 @@ window.addEventListener('load', function() {
     on_finish: function() { /* completion screen handles its own display */ }
   });
 
-  var welcomeTrials = makeWelcomeTrials();
+  var welcomeTrials = sessionStorage.getItem('csb-language-confirmed') === '1'
+    ? makeWelcomeTrials()
+    : [makeLanguageSelectionTrial()];
   var taskMenu = makeTaskMenu(jsPsych);
 
   /* Conditional timeline nodes */
@@ -392,7 +430,7 @@ window.addEventListener('load', function() {
     timeline: buildOSRImmediateTimeline(),
     conditional_function: function() {
       var c = window._batteryChoice;
-      return c === 'full' || c === 'osr';
+      return c === 'full' || c === 'eti_core' || c === 'osr';
     }
   };
 
@@ -400,7 +438,7 @@ window.addEventListener('load', function() {
     timeline: buildOSRDelayedTimeline(),
     conditional_function: function() {
       var c = window._batteryChoice;
-      return c === 'full' || c === 'osr';
+      return c === 'full' || c === 'eti_core' || c === 'osr';
     }
   };
 
@@ -408,7 +446,7 @@ window.addEventListener('load', function() {
     timeline: buildVisualSequencingTimeline(),
     conditional_function: function() {
       var c = window._batteryChoice;
-      return c === 'full' || c === 'vs';
+      return c === 'full' || c === 'trail' || c === 'vs';
     }
   };
 
@@ -416,7 +454,7 @@ window.addEventListener('load', function() {
     timeline: [makeBreakScreen('Animal Naming Task')].concat(buildAnimalFluencyTimeline()),
     conditional_function: function() {
       var c = window._batteryChoice;
-      return c === 'full' || c === 'asf';
+      return c === 'full' || c === 'eti_core' || c === 'asf';
     }
   };
 
@@ -424,7 +462,7 @@ window.addEventListener('load', function() {
     timeline: [makeBreakScreen('Original Visual Naming')].concat(buildOriginalVisualNamingTimeline()),
     conditional_function: function() {
       var c = window._batteryChoice;
-      return c === 'full' || c === 'ovn';
+      return c === 'full' || c === 'eti_core' || c === 'ovn';
     }
   };
 
@@ -432,7 +470,7 @@ window.addEventListener('load', function() {
     timeline: [makeBreakScreen('Original Complex Figure — copy')].concat(buildOCFImmediateTimeline()),
     conditional_function: function() {
       var c = window._batteryChoice;
-      return c === 'full' || c === 'ocf';
+      return c === 'full' || c === 'eti_core' || c === 'ocf';
     }
   };
 
@@ -440,7 +478,7 @@ window.addEventListener('load', function() {
     timeline: [makeBreakScreen('Original Complex Figure — delayed recall')].concat(buildOCFDelayedTimeline()),
     conditional_function: function() {
       var c = window._batteryChoice;
-      return c === 'full' || c === 'ocf';
+      return c === 'full' || c === 'eti_core' || c === 'ocf';
     }
   };
 
@@ -495,7 +533,7 @@ window.addEventListener('load', function() {
     timeline: [makeBreakScreen('Object-Location Memory Task')].concat(buildObjectLocationTimeline()),
     conditional_function: function() {
       var c = window._batteryChoice;
-      return c === 'full' || c === 'olm';
+      return c === 'full' || c === 'spatial' || c === 'olm';
     }
   };
 
@@ -503,7 +541,7 @@ window.addEventListener('load', function() {
     timeline: [makeBreakScreen('Spatial Pointing Task')].concat(buildSpatialPointingTimeline()),
     conditional_function: function() {
       var c = window._batteryChoice;
-      return c === 'full' || c === 'sp';
+      return c === 'full' || c === 'spatial' || c === 'sp';
     }
   };
 
@@ -511,7 +549,7 @@ window.addEventListener('load', function() {
     timeline: [makeBreakScreen('Number Span Task')].concat(buildNumberSpanTimeline()),
     conditional_function: function() {
       var c = window._batteryChoice;
-      return c === 'full' || c === 'ns';
+      return c === 'full' || c === 'eti_core' || c === 'ns';
     }
   };
 
@@ -526,18 +564,17 @@ window.addEventListener('load', function() {
     osrImmediateTimeline,
     ocfImmediateTimeline,
     setP15,
-    vsTimeline,
-    setP35,
-    osrDelayedTimeline,
-    ocfDelayedTimeline,
-    setP50,
     asfTimeline,
     ovnTimeline,
-    olmTimeline,
+    nsTimeline,
+    setP50,
+    ocfDelayedTimeline,
+    osrDelayedTimeline,
     setP70,
+    olmTimeline,
     spTimeline,
     setP90,
-    nsTimeline,
+    vsTimeline,
     makeCompletionScreen()
   ]);
 

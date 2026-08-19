@@ -1,16 +1,25 @@
 const { test, expect } = require('@playwright/test');
 
-test('battery loads all eight task choices without browser errors', async ({ page }) => {
+async function openEnglishBattery(page) {
+  await page.goto('/');
+  const english = page.getByRole('button', { name: 'English' });
+  if (await english.isVisible()) await english.click();
+  await expect(page.getByRole('heading', { name: /Baseline Cognitive/ })).toBeVisible();
+}
+
+test('battery loads ETI core, comparator, spatial and individual task choices without browser errors', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/');
-  await expect(page.getByRole('heading', { name: /Baseline Cognitive/ })).toBeVisible();
+  await openEnglishBattery(page);
   await page.getByRole('button', { name: 'Begin Setup' }).click();
   await page.locator('input[type="text"]').fill('E2E_001');
   await page.getByRole('button', { name: 'Confirm ID' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Continue without fullscreen' }).click();
   await expect(page.getByRole('heading', { name: 'Task Menu' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /ETI-core measures only/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Trail comparators only/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /additional spatial measures only/ })).toBeVisible();
   for (const label of [
     'Original Story Recall only',
     'Animal Naming only',
@@ -27,7 +36,7 @@ test('battery loads all eight task choices without browser errors', async ({ pag
 
 test('desktop workspace uses the available screen width', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
+  await openEnglishBattery(page);
   const width = await page.locator('.jspsych-content-wrapper').evaluate((element) => element.getBoundingClientRect().width);
   expect(width).toBeGreaterThan(1300);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -36,7 +45,7 @@ test('desktop workspace uses the available screen width', async ({ page }) => {
 
 
 test('complex figure accepts multiple separate mouse strokes', async ({ page }) => {
-  await page.goto('/');
+  await openEnglishBattery(page);
   await page.getByRole('button', { name: 'Begin Setup' }).click();
   await page.locator('input[type="text"]').fill('E2E_OCF');
   await page.getByRole('button', { name: 'Confirm ID' }).click();
@@ -79,7 +88,7 @@ test('visual naming starts its clock only after the image is available', async (
     await route.continue();
   });
 
-  await page.goto('/');
+  await openEnglishBattery(page);
   await page.getByRole('button', { name: 'Begin Setup' }).click();
   await page.locator('input[type="text"]').fill('E2E_OVN_ONSET');
   await page.getByRole('button', { name: 'Confirm ID' }).click();

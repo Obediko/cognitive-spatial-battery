@@ -2,7 +2,9 @@
 
 This project uses original or structurally matched tasks. The compiled export is **NACC-referenced**, not a NACC submission file and not evidence that the original CSB forms are norm-equivalent to NACC instruments.
 
-The official NACC UDSv4 C2 form reports:
+The ETI manuscript uses these eight UDS v3 score variables: `CRAFTVRS`, `CRAFTDVR`, `ANIMALS`, `MINTTOTS`, `UDSBENTC`, `UDSBENTD`, `DIGFORCT`, and `DIGBACCT`. The software exports explicitly named analogue fields and never presents them as actual NACC administrations.
+
+The official NACC UDS v3 C2 form reports:
 
 - Craft Story immediate and delayed: verbatim 0–44 and paraphrase 0–25.
 - Benson copy and delayed recall: 0–17; recognition 0/1.
@@ -13,8 +15,10 @@ The official NACC UDSv4 C2 form reports:
 - Trails B: completion seconds 0–300, commission errors 0–40 and correct lines 0–24.
 - MINT: total and uncued correct 0–32, with cue counts.
 
-Reference: NACC UDSv4 Initial Visit Form C2, January 2025:
-https://files.alz.washington.edu/documentation/uds4-ivp-c2.pdf
+Reference: NACC UDS v3 Initial Visit Form C2, March 2015:
+https://files.alz.washington.edu/documentation/uds3-ivp-c2.pdf
+
+`TRAILB` is a construct-validity/prognostic comparator in the manuscript, not a ninth ETI input. Trail A is retained as its processing-speed control. A calculated ETI is deliberately absent until the normative means, scaling, dissimilarity definition and covariance parameters are versioned and supplied.
 
 ## Digital measures without NACC counterparts
 

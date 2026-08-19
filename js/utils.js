@@ -58,6 +58,7 @@ function batteryCheckpointPayload() {
     saved_at: getTimestamp(),
     participantId: window.BatteryData.participantId,
     sessionStart: window.BatteryData.sessionStart,
+    language: window.BatteryData.language || (window.BatteryLanguage ? window.BatteryLanguage.get() : 'en'),
     trials: window.BatteryData.trials,
     taskSummaries: window.BatteryData.taskSummaries,
     batteryChoice: window.BatteryData.batteryChoice || null,
@@ -98,12 +99,20 @@ function loadBatteryCheckpoint(participantId, options) {
     if (!raw) return false;
     var saved = JSON.parse(raw);
     if (!saved || saved.participantId !== participantId || !Array.isArray(saved.trials)) return false;
+    var selectedLanguage = window.BatteryLanguage ? window.BatteryLanguage.get() : 'en';
+    if (saved.language && saved.language !== selectedLanguage) {
+      window.alert('This participant ID already belongs to a ' + saved.language.toUpperCase()
+        + ' session. Select that language before restoring it.');
+      return false;
+    }
     if (options.confirm !== false &&
         !window.confirm('A saved session for this participant ID was found. Restore its trials, summaries and local recordings?')) {
       return false;
     }
     window.BatteryData.participantId = saved.participantId;
     window.BatteryData.sessionStart = saved.sessionStart;
+    window.BatteryData.language = saved.language || 'en';
+    if (window.BatteryLanguage) window.BatteryLanguage.set(window.BatteryData.language);
     window.BatteryData.trials = saved.trials;
     window.BatteryData.taskSummaries = saved.taskSummaries || {};
     window.BatteryData.batteryChoice = saved.batteryChoice || null;
@@ -505,6 +514,7 @@ window.BatteryData = {
   trials: [],
   taskSummaries: {},
   batteryChoice: null,
+  language: window.BatteryLanguage ? window.BatteryLanguage.get() : 'en',
   sessionStatus: 'in_progress',
 
   /* Push one or more row objects. Auto-stamps participant_id, timestamp, window. */
@@ -514,6 +524,8 @@ window.BatteryData = {
     const arr   = Array.isArray(rows) ? rows : [rows];
     arr.forEach(r => {
       r.participant_id      = this.participantId;
+      r.administration_language = this.language || 'en';
+      if (window.BatteryLanguage) Object.assign(r, window.BatteryLanguage.metadata());
       r.timestamp           = r.timestamp || stamp;
       r.window_width_px     = win.width;
       r.window_height_px    = win.height;
@@ -624,6 +636,9 @@ function buildSummary() {
 
   return {
     participant_id: bd.participantId,
+    administration_language: bd.language || (window.BatteryLanguage ? window.BatteryLanguage.get() : 'en'),
+    language_form_version: window.BatteryLanguage ? window.BatteryLanguage.metadata().language_form_version : null,
+    language_equivalence_status: window.BatteryLanguage ? window.BatteryLanguage.metadata().language_equivalence_status : null,
     session_start:  bd.sessionStart,
     session_end:    sessionEnd.toISOString(),
     total_battery_duration_ms: totalDur,
@@ -639,6 +654,7 @@ function buildSummary() {
     osr_story_audio_standardized: osr.osr_story_audio_standardized ?? null,
     osr_task_version:         osr.osr_task_version         ?? null,
     osr_dictionary_version:   osr.osr_dictionary_version   ?? null,
+    osr_story_form:           osr.osr_story_form           ?? null,
 
     /* Animal Semantic Fluency */
     asf_total_valid_unique: asf.asf_total_valid_unique ?? null,
@@ -658,6 +674,7 @@ function buildSummary() {
     ovn_items_administered: ovn.ovn_items_administered ?? null,
     ovn_review_status: ovn.ovn_review_status ?? null,
     ovn_task_version: ovn.ovn_task_version ?? null,
+    ovn_stimulus_set: ovn.ovn_stimulus_set ?? null,
 
     /* Original Complex Figure */
     ocf_copy_score: ocf.ocf_copy_score ?? null,
@@ -673,6 +690,10 @@ function buildSummary() {
     set_shifting_ratio:              vs.set_shifting_ratio              ?? null,
     errors_sequencing:               vs.errors_sequencing               ?? null,
     errors_set_shifting:             vs.errors_set_shifting             ?? null,
+    correct_connections_sequencing:  vs.correct_connections_sequencing  ?? null,
+    correct_connections_set_shifting: vs.correct_connections_set_shifting ?? null,
+    traila_timed_out:                vs.traila_timed_out                 ?? null,
+    trailb_timed_out:                vs.trailb_timed_out                 ?? null,
 
     /* Object-Location Memory */
     olm_mean_euclidean_error_px:    mean(olmErrors),
@@ -744,7 +765,14 @@ function exportAllCSV() {
 function exportAllJSON() {
   const pid  = window.BatteryData.participantId || 'unknown';
   const date = new Date().toISOString().slice(0, 10);
-  const payload = { summary: buildSummary(), trials: window.BatteryData.trials, taskSummaries: window.BatteryData.taskSummaries };
+  const summary = buildSummary();
+  const payload = {
+    summary: summary,
+    compiled_scores: window.BatteryReporting ? window.BatteryReporting.compiled(summary) : null,
+    score_dictionary: window.BatteryReporting ? window.BatteryReporting.definitions() : null,
+    trials: window.BatteryData.trials,
+    taskSummaries: window.BatteryData.taskSummaries
+  };
   triggerDownload(JSON.stringify(payload, null, 2), pid + '_' + date + '_battery.json', 'application/json');
 }
 

@@ -5,7 +5,7 @@ Computerized Visual Sequencing and Set-Shifting Task
 (NOT the Trail Making Test - do not label it as such)
 
 Condition A - Sequencing:   click 1 -> 2 -> 3 ... -> 25
-Condition B - Set-Shifting: click 1->A->2->B->3->C ... ->13->M
+Condition B - Set-Shifting: click 1->A->2->B->3->C ... ->12->L->13
 
 Practice:
   Sequencing  1-8 (with feedback)
@@ -39,9 +39,10 @@ function vsSeqNumbers(count) {
 }
 function vsSeqSetShifting() {
   var nums = Array.from({ length: 13 }, function(_, i) { return String(i + 1); });
-  var lets = 'ABCDEFGHIJKLM'.split('');
+  var lets = 'ABCDEFGHIJKL'.split('');
   var out  = [];
-  for (var i = 0; i < 13; i++) { out.push(nums[i]); out.push(lets[i]); }
+  for (var i = 0; i < 12; i++) { out.push(nums[i]); out.push(lets[i]); }
+  out.push('13');
   return out;
 }
 
@@ -116,6 +117,50 @@ function buildVSTrial(opts) {
       var trialRows     = [];
       var trialStart    = performance.now();
       var lastClickTime = trialStart;
+      var finished = false;
+      var timeLimitMs = trial_type === 'main'
+        ? (condition === 'sequencing' ? 150000 : 300000)
+        : 120000;
+
+      function finishTrial(timedOut) {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timeoutHandle);
+        var completionTime = Math.min(Math.round(performance.now() - trialStart), timeLimitMs);
+        trialRows.forEach(function(r) {
+          r.completion_time_ms = completionTime;
+          r.total_errors = totalErrors;
+          r.timed_out = !!timedOut;
+          r.correct_connections = Math.max(0, nextIdx - 1);
+        });
+        if (trialRows.length) window.BatteryData.addTrials(trialRows);
+        else window.BatteryData.addTrials({
+          task_name: 'visual_sequencing_set_shifting', condition: condition,
+          trial_type: trial_type, phase: 'timeout', completion_time_ms: completionTime,
+          total_errors: totalErrors, timed_out: true, correct_connections: 0
+        });
+
+        var existing = window.BatteryData.taskSummaries.visual_sequencing_set_shifting || {};
+        if (condition === 'sequencing') {
+          existing.completion_time_sequencing_ms = completionTime;
+          existing.errors_sequencing = totalErrors;
+          existing.correct_connections_sequencing = Math.max(0, nextIdx - 1);
+          existing.traila_timed_out = !!timedOut;
+        } else {
+          existing.completion_time_set_shifting_ms = completionTime;
+          existing.errors_set_shifting = totalErrors;
+          existing.correct_connections_set_shifting = Math.max(0, nextIdx - 1);
+          existing.trailb_timed_out = !!timedOut;
+          if (existing.completion_time_sequencing_ms != null) {
+            existing.set_shifting_cost_ms = completionTime - existing.completion_time_sequencing_ms;
+            existing.set_shifting_ratio = +(completionTime / existing.completion_time_sequencing_ms).toFixed(4);
+          }
+        }
+        window.BatteryData.setTaskSummary('visual_sequencing_set_shifting', existing);
+        setTimeout(function() { done(); }, 350);
+      }
+
+      var timeoutHandle = setTimeout(function() { finishTrial(true); }, timeLimitMs);
 
       /* ── Create target circles ── */
       sequence.forEach(function(label, idx) {
@@ -162,29 +207,7 @@ function buildVSTrial(opts) {
             nextIdx++;
 
             if (nextIdx >= sequence.length) {
-              var completionTime = Math.round(performance.now() - trialStart);
-              trialRows.forEach(function(r) {
-                r.completion_time_ms = completionTime;
-                r.total_errors       = totalErrors;
-              });
-
-              window.BatteryData.addTrials(trialRows);
-
-              var existing = window.BatteryData.taskSummaries['visual_sequencing_set_shifting'] || {};
-              if (condition === 'sequencing') {
-                existing.completion_time_sequencing_ms = completionTime;
-                existing.errors_sequencing             = totalErrors;
-              } else {
-                existing.completion_time_set_shifting_ms = completionTime;
-                existing.errors_set_shifting             = totalErrors;
-                if (existing.completion_time_sequencing_ms != null) {
-                  existing.set_shifting_cost_ms = completionTime - existing.completion_time_sequencing_ms;
-                  existing.set_shifting_ratio   = +(completionTime / existing.completion_time_sequencing_ms).toFixed(4);
-                }
-              }
-              window.BatteryData.setTaskSummary('visual_sequencing_set_shifting', existing);
-
-              setTimeout(function() { done(); }, 350);
+              finishTrial(false);
             }
 
           } else {
@@ -224,7 +247,7 @@ function vsFullInstructions() {
       + '<p><strong>Part B - Set-Shifting</strong><br>'
       + 'Circles containing <em>both numbers and letters</em> will appear. '
       + 'Click them in <em>alternating</em> order: '
-      + '<strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; 3 &rarr; C &hellip; &rarr; 13 &rarr; M</strong>.</p>'
+      + '<strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; 3 &rarr; C &hellip; &rarr; 12 &rarr; L &rarr; 13</strong>.</p>'
       + '<p>If you click the wrong target, a brief message will appear. '
       + '<strong>Do not stop</strong> - keep going from the last correct target.</p>'
       + '<p>We will start with a short practice for each part. Press <strong>Next</strong> to begin.</p>'
@@ -245,7 +268,7 @@ function vsReadyScreen(condition, isPractice) {
         : 'Click circles <strong>1 &rarr; 2 &rarr; &hellip; &rarr; 25</strong> in order.')
     : (isPractice
         ? 'Click in order: <strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; 3 &rarr; C &rarr; 4 &rarr; D</strong>.'
-        : 'Click in order: <strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; &hellip; &rarr; 13 &rarr; M</strong>.');
+        : 'Click in order: <strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; &hellip; &rarr; 12 &rarr; L &rarr; 13</strong>.');
   return {
     type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="max-width:600px;margin:0 auto;text-align:center">'
@@ -308,3 +331,10 @@ function buildVisualSequencingTimeline(randomizeOrder) {
 
   return timeline;
 }
+
+window.VSProtocol = {
+  sequenceA: function() { return vsSeqNumbers(25); },
+  sequenceB: function() { return vsSeqSetShifting(); },
+  trailaLimitMs: 150000,
+  trailbLimitMs: 300000
+};

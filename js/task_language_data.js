@@ -68,5 +68,27 @@ window.BatteryLexicons = (function() {
     if (fillers.has(key)) return { canonical: key, decision: 'rule_violation', confidence: 'filler' };
     return { canonical: key, decision: 'uncertain', confidence: 'unknown' };
   }
-  return { animals: { classify: classify, en: en, de: de } };
+  var namingDe = {
+    cup:['Tasse',['Becher']], chair:['Stuhl',[]], key:['Schlüssel',[]], bicycle:['Fahrrad',['Rad']],
+    spoon:['Löffel',[]], umbrella:['Regenschirm',['Schirm']], ladder:['Leiter',[]],
+    kettle:['Wasserkocher',['Teekessel']], scissors:['Schere',[]], anchor:['Anker',[]],
+    binoculars:['Fernglas',[]], stethoscope:['Stethoskop',[]], compass:['Kompass',[]],
+    hammock:['Hängematte',[]], whisk:['Schneebesen',[]], accordion:['Akkordeon',[]],
+    abacus:['Abakus',['Rechenrahmen']], sundial:['Sonnenuhr',[]], sextant:['Sextant',[]],
+    hourglass:['Sanduhr',[]], pulley:['Flaschenzug',['Rolle']], thimble:['Fingerhut',[]],
+    calipers:['Messschieber',['Schieblehre']], metronome:['Metronom',[]], periscope:['Periskop',[]],
+    bellows:['Blasebalg',[]], astrolabe:['Astrolabium',['Astrolab']], yoke:['Joch',[]],
+    plumb_bob:['Senklot',['Lot']], spigot:['Zapfhahn',['Hahn']], trellis:['Spalier',[]],
+    weather_vane:['Wetterfahne',['Windfahne']]
+  };
+  function namingFor(art, fallbackTarget, fallbackAlternatives) {
+    if ((window.BatteryLanguage ? window.BatteryLanguage.get() : 'en') !== 'de' || !namingDe[art]) {
+      return { target: fallbackTarget, alternatives: fallbackAlternatives || [] };
+    }
+    return { target: namingDe[art][0], alternatives: namingDe[art][1] };
+  }
+  return {
+    animals: { classify: classify, en: en, de: de },
+    naming: { forItem: namingFor, de: namingDe }
+  };
 })();

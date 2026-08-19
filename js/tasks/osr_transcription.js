@@ -112,7 +112,7 @@
     });
   }
 
-  function transcribeInWorker(audioData, onProgress) {
+  function transcribeInWorker(audioData, onProgress, language) {
     return new Promise(function(resolve, reject) {
       var worker;
       try {
@@ -134,16 +134,17 @@
       worker.postMessage({
         type: 'transcribe',
         jobId: jobId,
-        audioData: audioData
+        audioData: audioData,
+        language: language || (window.BatteryLanguage ? window.BatteryLanguage.whisperLanguage() : 'en')
       }, [audioData.buffer]);
     });
   }
 
-  function transcribeBlob(blob, onProgress) {
+  function transcribeBlob(blob, onProgress, language) {
     function run() {
       return bounded(blobToFloat32Mono16k(blob), 20000, 'Audio decoding')
         .then(function(audioData) {
-          return transcribeInWorker(audioData, onProgress);
+          return transcribeInWorker(audioData, onProgress, language);
         });
     }
     var job = transcriptionQueue.then(run, run);

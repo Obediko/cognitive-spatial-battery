@@ -39,28 +39,34 @@
       var target = document.getElementById('jspsych-content') || document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
       target.innerHTML = '<div class="osr-card" style="max-width:900px;margin:0 auto;"><span class="osr-kicker">Examiner checkpoint</span>'
         + '<h2>Review complete</h2><p>Participant ID: <strong>' + escapeHtml(BatteryData.participantId) + '</strong></p>'
-        + '<table class="summary-table"><tr><th>Measure</th><th>Verified/provisional value</th></tr>'
+        + '<h3>Eight ETI-ready analogue inputs</h3><table class="summary-table"><tr><th>Measure</th><th>Verified/provisional value</th></tr>'
         + '<tr><td>Story immediate verbatim</td><td>' + summaryValue(summary.osr_immediate_verbatim, ' / 44') + '</td></tr>'
         + '<tr><td>Story delayed verbatim</td><td>' + summaryValue(summary.osr_delayed_verbatim, ' / 44') + '</td></tr>'
         + '<tr><td>Animal Fluency</td><td>' + summaryValue(summary.asf_total_valid_unique) + '</td></tr>'
         + '<tr><td>Visual Naming uncued</td><td>' + summaryValue(summary.ovn_total_uncued) + '</td></tr>'
         + '<tr><td>Complex Figure copy</td><td>' + summaryValue(summary.ocf_copy_score, ' / 17') + '</td></tr>'
         + '<tr><td>Complex Figure delayed</td><td>' + summaryValue(summary.ocf_delayed_score, ' / 17') + '</td></tr>'
-        + '<tr><td>Number Span forward / backward</td><td>' + summaryValue(summary.ns_forward_span)
-        + ' / ' + summaryValue(summary.ns_backward_span) + '</td></tr>'
-        + '<tr><td>Sequencing / set-shifting time</td><td>' + summaryValue(summary.completion_time_sequencing_ms, ' ms')
-        + ' / ' + summaryValue(summary.completion_time_set_shifting_ms, ' ms') + '</td></tr>'
+        + '<tr><td>Number Span correct trials — forward / backward</td><td>' + summaryValue(summary.ns_forward_correct_trials, ' / 14')
+        + ' / ' + summaryValue(summary.ns_backward_correct_trials, ' / 14') + '</td></tr></table>'
+        + '<h3>Trail comparators (not ETI inputs)</h3><table class="summary-table">'
+        + '<tr><td>Trail A / Trail B analogue time</td><td>' + summaryValue(summary.completion_time_sequencing_ms == null ? null : summary.completion_time_sequencing_ms / 1000, ' sec')
+        + ' / ' + summaryValue(summary.completion_time_set_shifting_ms == null ? null : summary.completion_time_set_shifting_ms / 1000, ' sec') + '</td></tr></table>'
+        + '<h3>Additional spatial outcomes (not ETI inputs)</h3><table class="summary-table">'
         + '<tr><td>Object-Location Memory mean error</td><td>' + summaryValue(summary.olm_mean_euclidean_error_px, ' px') + '</td></tr>'
         + '<tr><td>Spatial Pointing mean absolute error</td><td>' + summaryValue(summary.sp_mean_absolute_angular_error_deg, '°') + '</td></tr></table>'
         + '<div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin-top:1rem;">'
         + '<button class="battery-btn download" id="admin-export-csv">Download trials CSV</button>'
         + '<button class="battery-btn download" id="admin-export-json">Download full JSON</button>'
-        + '<button class="battery-btn download" id="admin-export-summary">Download summary JSON</button></div>'
+        + '<button class="battery-btn download" id="admin-export-summary">Download summary JSON</button>'
+        + '<button class="battery-btn download" id="admin-export-package">Download research package</button></div>'
         + '<p class="osr-fineprint">Verified scoring has been synchronized. Automatic suggestions remain provisional unless examiner-verified.</p>'
         + '<p><a href="admin.html">Return to session list</a></p></div>';
       document.getElementById('admin-export-csv').onclick = exportAllCSV;
       document.getElementById('admin-export-json').onclick = exportAllJSON;
       document.getElementById('admin-export-summary').onclick = exportSummaryJSON;
+      document.getElementById('admin-export-package').onclick = function() {
+        if (window.BatteryReporting) window.BatteryReporting.exportResearchPackage();
+      };
     }};
   }
   function buildReviewTimeline(alreadyReviewed) {

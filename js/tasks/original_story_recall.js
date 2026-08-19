@@ -127,6 +127,43 @@
     'She went home'
   ];
 
+  var OSR_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
+  if (OSR_IS_GERMAN) {
+    OSR_DICTIONARY_VERSION = 'osr44-de-0.1-pilot';
+    OSR_STORY_FORM = 'osr44-library-wallet-a-de-0.1-pilot';
+    OSR_STORY_TEXT = 'Am Donnerstagmorgen nahm Elena den Bus um sieben Uhr fünfzehn zur Bibliothek. Sie gab drei Bücher zurück und druckte ein Bewerbungsformular aus. Im Obergeschoss fand sie neben einem Fenster eine blaue Brieftasche. Darin waren eine Identitätskarte und zwei Fahrkarten. Elena gab sie der Bibliothekarin, die den Besitzer anrief. Zwanzig Minuten später kam ein älterer Mann, dankte Elena und bot ihr Kaffee an. Sie lehnte ab und fuhr mit dem Bus um elf Uhr nach Hause.';
+    OSR_AUDIO_FILES = {
+      story: OSR_AUDIO_BASE + 'osr44_library_wallet_a_de_pilot_missing.wav',
+      instruction: OSR_AUDIO_BASE + 'osr_instruction_de_pilot_missing.wav',
+      immediatePrompt: OSR_AUDIO_BASE + 'osr_immediate_prompt_de_pilot_missing.wav',
+      delayedPrompt: OSR_AUDIO_BASE + 'osr_delayed_prompt_de_pilot_missing.wav',
+      neutralPrompt: OSR_AUDIO_BASE + 'osr_neutral_prompt_de_pilot_missing.wav'
+    };
+    OSR_VERBATIM_UNITS = [
+      ['Donnerstag','Donnerstag'],['morgen','Morgen'],['Elena','Elena'],['nahm','nahm / nehmen'],
+      ['sieben Uhr fünfzehn','7:15 / sieben Uhr fünfzehn'],['Bus','Bus'],['Bibliothek','Bibliothek'],
+      ['gab zurück','gab zurück / zurückgeben'],['drei','drei / 3'],['Bücher','Buch / Bücher'],
+      ['druckte','druckte / drucken'],['Bewerbung','Bewerbung'],['Formular','Formular'],['Obergeschoss','Obergeschoss / oben'],
+      ['fand','fand / finden'],['blaue','blau / blaue'],['Brieftasche','Brieftasche / Portemonnaie / Geldbörse'],
+      ['neben','neben'],['Fenster','Fenster'],['darin','darin / innen'],['Identität','Identitätskarte / Ausweis'],
+      ['Karte','Identitätskarte / Karte'],['zwei','zwei / 2'],['Fahr','Fahrkarten / Zug'],['karten','Fahrkarte / Fahrkarten'],
+      ['Elena','Elena'],['gab','gab / geben'],['Bibliothekarin','Bibliothekarin / Bibliothekar'],
+      ['anrief','anrief / anrufen'],['Besitzer','Besitzer / Eigentümer'],['zwanzig','zwanzig / 20'],
+      ['Minuten später','Minute(n) später'],['älterer','alt / älter'],['Mann','Mann'],['kam','kam / kommen'],
+      ['dankte','dankte / danken'],['Elena','Elena'],['bot an','bot an / anbieten'],['Kaffee','Kaffee'],
+      ['lehnte ab','lehnte ab / ablehnen'],['fuhr','fuhr / fahren'],['elf Uhr','11 Uhr / elf Uhr'],['Bus','Bus'],['nach Hause','Hause / heim']
+    ];
+    OSR_PARAPHRASE_UNITS = [
+      'Das Ereignis fand am Donnerstagmorgen statt','Die Hauptperson hieß Elena','Sie nahm um 7:15 Uhr einen Bus',
+      'Sie fuhr zu einer Bibliothek','Sie gab drei Bücher zurück','Sie druckte ein Formular','Das Formular betraf eine Bewerbung',
+      'Sie ging in ein Obergeschoss','Sie fand oder bemerkte eine Brieftasche','Die Brieftasche war blau','Sie lag neben einem Fenster',
+      'Sie enthielt eine Identitätskarte','Sie enthielt zwei Fahrkarten','Elena gab die Brieftasche einer Bibliothekarin',
+      'Die Bibliothekarin rief jemanden an','Die angerufene Person war der Besitzer','Etwa zwanzig Minuten vergingen',
+      'Ein älterer Mann kam','Der ältere Mann war der Besitzer','Er dankte Elena','Er bot Elena Kaffee an',
+      'Elena lehnte das Angebot ab','Elena nahm später einen weiteren Bus','Dieser Bus fuhr um 11 Uhr','Sie fuhr nach Hause'
+    ];
+  }
+
   window.OSRState = {
     version: OSR_VERSION,
     dictionaryVersion: OSR_DICTIONARY_VERSION,
@@ -293,11 +330,12 @@
 
           var utterance = new SpeechSynthesisUtterance(OSR_STORY_TEXT);
           var voices = window.speechSynthesis.getVoices();
-          var voice = voices.find(function(v) { return /^en(-|_)/i.test(v.lang) && /female|samantha|zira|serena/i.test(v.name); })
-            || voices.find(function(v) { return /^en(-|_)/i.test(v.lang); })
+          var languagePattern = OSR_IS_GERMAN ? /^de(-|_)/i : /^en(-|_)/i;
+          var voice = voices.find(function(v) { return languagePattern.test(v.lang) && /female|samantha|zira|serena|anna|petra|vicki/i.test(v.name); })
+            || voices.find(function(v) { return languagePattern.test(v.lang); })
             || voices[0] || null;
           if (voice) utterance.voice = voice;
-          utterance.lang = voice ? voice.lang : 'en-GB';
+          utterance.lang = voice ? voice.lang : (OSR_IS_GERMAN ? 'de-DE' : 'en-GB');
           utterance.rate = 0.88;
           utterance.pitch = 1;
           utterance.volume = 1;
@@ -375,9 +413,13 @@
       async: true,
       func: function(done) {
         var display = osrDisplay();
-        var prompt = condition === 'immediate'
-          ? 'Please tell me the story now. Include as many details as you can remember.'
-          : 'Earlier, you heard a short story. Please tell me that story again, including as many details as you can remember.';
+        var prompt = OSR_IS_GERMAN
+          ? (condition === 'immediate'
+            ? 'Bitte erzählen Sie mir jetzt die Geschichte. Nennen Sie so viele Einzelheiten, wie Sie erinnern.'
+            : 'Sie haben vorhin eine kurze Geschichte gehört. Bitte erzählen Sie diese Geschichte erneut und nennen Sie so viele Einzelheiten, wie Sie erinnern.')
+          : (condition === 'immediate'
+            ? 'Please tell me the story now. Include as many details as you can remember.'
+            : 'Earlier, you heard a short story. Please tell me that story again, including as many details as you can remember.');
         display.innerHTML = '<div class="osr-card"><span class="osr-kicker">'
           + (condition === 'immediate' ? 'Immediate recall' : 'Delayed recall') + '</span>'
           + '<h2>Tell the story back</h2><p class="osr-prompt">' + prompt + '</p>'
@@ -750,7 +792,8 @@
           osr_delay_out_of_window: delay == null || delay < OSR_MIN_DELAY_MS || delay > OSR_MAX_DELAY_MS,
           osr_story_audio_standardized: window.OSRState.storyAudioStandardized,
           osr_task_version: OSR_VERSION,
-          osr_dictionary_version: OSR_DICTIONARY_VERSION
+          osr_dictionary_version: OSR_DICTIONARY_VERSION,
+          osr_story_form: OSR_STORY_FORM
         });
       }
     };
