@@ -20,6 +20,7 @@
    Exports (global): buildObjectLocationTimeline()
    ============================================================ */
 'use strict';
+const OLM_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
 
 /* ── Object stimulus definitions ─────────────────────────────
    Each entry: { id, label, emoji, color, imagePath? }
@@ -50,6 +51,10 @@ const OLM_OBJECTS = [
   { id: 'hat',        label: 'Hat',        emoji: '\uD83E\uDDF9', color: '#4db6ac', imagePath: 'assets/images/objects/hat.jpg' },
   { id: 'flower',     label: 'Flower',     emoji: '\uD83C\uDF38', color: '#f48fb1', imagePath: 'assets/images/objects/flower.jpg' }
 ];
+if (OLM_IS_GERMAN) {
+  const labels = { clock:'Uhr',lamp:'Lampe',book:'Buch',key:'Schlüssel',cup:'Tasse',chair:'Stuhl',apple:'Apfel',pencil:'Bleistift',shoe:'Schuh',bottle:'Flasche',flower:'Blume',comb:'Kamm',plate:'Teller',hat:'Hut',ruler:'Lineal',candle:'Kerze',toothbrush:'Zahnbürste',bowl:'Schüssel',basket:'Korb',bag:'Tasche',scissors:'Schere',umbrella:'Regenschirm',spoon:'Löffel',box:'Kiste' };
+  OLM_OBJECTS.forEach(item => { if (labels[item.id]) item.label = labels[item.id]; });
+}
 
 /* Block assignments (indices into OLM_OBJECTS, 8 per block) */
 const OLM_BLOCK_INDICES = {
@@ -396,6 +401,16 @@ function buildOLMBlock(blockNum, blockIndices, trialType, showFeedback) {
 
 /* ── Instructions ─────────────────────────────────────────── */
 function olmInstructions() {
+  if (OLM_IS_GERMAN) return {
+    type: jsPsychInstructions,
+    pages: [`<div style="max-width:700px;margin:0 auto;text-align:left"><h2 style="color:#a8d8ea">Objekt-Ort-Gedächtnis</h2>
+      <p>Sie sehen <strong>8 Alltagsgegenstände</strong> an verschiedenen Positionen. Merken Sie sich, wo jeder Gegenstand lag.</p>
+      <ol><li><strong>Einprägen:</strong> Lernen Sie die Positionen.</li><li><strong>Pause:</strong> Ein Fixationskreuz wird gezeigt.</li>
+      <li><strong>Abruf:</strong> Klicken Sie auf die erinnerte Position des gezeigten Gegenstands.</li></ol>
+      <p>Nach einem kurzen Übungsblock folgen drei Hauptblöcke ohne Rückmeldung.</p></div>`],
+    show_clickable_nav: true, button_label_next: 'Weiter →',
+    data: { task_name: 'object_location_memory', phase: 'instructions' }
+  };
   return {
     type: jsPsychInstructions,
     pages: [
@@ -425,11 +440,11 @@ function olmBlockReady(blockNum, isPractice) {
   return {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<div style="max-width:600px;margin:0 auto;text-align:center">
-      <h3 style="color:#a8d8ea">${isPractice ? 'Practice Block' : 'Block ' + blockNum + ' of 3'}</h3>
-      <p>Study the ${isPractice ? '3' : '8'} object locations during the encoding phase.</p>
+      <h3 style="color:#a8d8ea">${OLM_IS_GERMAN ? (isPractice ? 'Übungsblock' : 'Block ' + blockNum + ' von 3') : (isPractice ? 'Practice Block' : 'Block ' + blockNum + ' of 3')}</h3>
+      <p>${OLM_IS_GERMAN ? ('Merken Sie sich die Positionen der ' + (isPractice ? '3' : '8') + ' Gegenstände.') : ('Study the ' + (isPractice ? '3' : '8') + ' object locations during the encoding phase.')}</p>
       <p style="color:#8899aa;font-size:0.85rem">Click <strong>Start</strong> when ready.</p>
     </div>`,
-    choices: ['Start'],
+    choices: [OLM_IS_GERMAN ? 'Starten' : 'Start'],
     data: { task_name: 'object_location_memory', phase: isPractice ? 'practice_ready' : 'block_ready', block_number: blockNum }
   };
 }
@@ -452,10 +467,10 @@ function buildObjectLocationTimeline() {
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `<div style="max-width:600px;margin:0 auto;text-align:center">
-      <h3 style="color:#a8d8ea">Object-Location Memory Task Complete</h3>
-      <p style="color:#8899aa">Download task data now or continue to the next task.</p>
+      <h3 style="color:#a8d8ea">${OLM_IS_GERMAN ? 'Objekt-Ort-Aufgabe abgeschlossen' : 'Object-Location Memory Task Complete'}</h3>
+      <p style="color:#8899aa">${OLM_IS_GERMAN ? 'Laden Sie die Aufgabendaten herunter oder fahren Sie fort.' : 'Download task data now or continue to the next task.'}</p>
     </div>`,
-    choices: ['Download Task CSV', 'Continue Battery'],
+    choices: [OLM_IS_GERMAN ? 'Aufgaben-CSV herunterladen' : 'Download Task CSV', OLM_IS_GERMAN ? 'Batterie fortsetzen' : 'Continue Battery'],
     data: { task_name: 'object_location_memory', phase: 'end' },
     on_finish(data) {
       if (data.response === 0) exportTaskCSV('object_location_memory');

@@ -293,10 +293,10 @@
         var display = nsDisplay();
         var sequence = nsControlledSequence(direction, length, trialIndex);
         display.innerHTML = '<div class="osr-card osr-listening"><span class="osr-kicker">'
-          + (direction === 'forward' ? 'Forward span' : 'Backward span') + ' · length ' + length
-          + ' · trial ' + trialIndex + '</span>'
+          + (NS_IS_GERMAN ? (direction === 'forward' ? 'Vorwärts' : 'Rückwärts') : (direction === 'forward' ? 'Forward span' : 'Backward span')) + ' · ' + (NS_IS_GERMAN ? 'Länge ' : 'length ') + length
+          + ' · ' + (NS_IS_GERMAN ? 'Durchgang ' : 'trial ') + trialIndex + '</span>'
           + '<div class="osr-soundmark" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>'
-          + '<h2>Listen for the digits</h2><p id="ns-play-status" class="osr-status" aria-live="polite">Preparing audio…</p></div>';
+          + '<h2>' + (NS_IS_GERMAN ? 'Hören Sie auf die Ziffern' : 'Listen for the digits') + '</h2><p id="ns-play-status" class="osr-status" aria-live="polite">...</p></div>';
 
         var status = document.getElementById('ns-play-status');
         if (status) status.textContent = 'Playing…';
@@ -304,19 +304,31 @@
         nsPlaySequence(sequence).then(function() {
           var expected = nsExpectedResponse(direction, sequence);
           display.innerHTML = '<div class="osr-card"><span class="osr-kicker">'
-            + (direction === 'forward' ? 'Forward span' : 'Backward span') + ' · length ' + length
-            + ' · trial ' + trialIndex + '</span>'
-            + '<h2>Examiner: enter participant\'s response</h2>'
-            + '<p class="osr-fineprint">Enter your answer using digits only, in the order requested.</p>'
+            + (NS_IS_GERMAN ? (direction === 'forward' ? 'Vorwärts' : 'Rückwärts') : (direction === 'forward' ? 'Forward span' : 'Backward span')) + ' · ' + (NS_IS_GERMAN ? 'Länge ' : 'length ') + length
+            + ' · ' + (NS_IS_GERMAN ? 'Durchgang ' : 'trial ') + trialIndex + '</span>'
+            + '<h2>' + (NS_IS_GERMAN ? 'Geben Sie die erinnerten Ziffern ein' : 'Enter the digits you remember') + '</h2>'
+            + '<p class="osr-fineprint">' + (NS_IS_GERMAN ? 'Verwenden Sie nur Ziffern und die verlangte Reihenfolge.' : 'Use digits only and enter them in the requested order.') + '</p>'
             + '<input type="text" id="ns-response-input" inputmode="numeric" pattern="[0-9]*" '
             + 'style="font-size:1.4rem;letter-spacing:0.15em;text-align:center;width:100%;max-width:320px;padding:0.5em;margin:0.6em 0" '
-            + 'placeholder="Digits only" autocomplete="off">'
-            + '<button class="battery-btn primary" id="ns-score-trial" type="button">Score &amp; continue</button>'
+            + 'placeholder="' + (NS_IS_GERMAN ? 'Nur Ziffern' : 'Digits only') + '" autocomplete="off">'
+            + '<div id="ns-digit-pad" style="display:grid;grid-template-columns:repeat(5,minmax(48px,1fr));gap:.4rem;max-width:420px;margin:.5rem auto">'
+            + [1,2,3,4,5,6,7,8,9,0].map(function(digit) { return '<button class="battery-btn ns-digit-key" type="button" data-digit="' + digit + '">' + digit + '</button>'; }).join('')
+            + '<button class="battery-btn" id="ns-delete" type="button" style="grid-column:span 2">' + (NS_IS_GERMAN ? 'Löschen' : 'Delete') + '</button></div>'
+            + '<button class="battery-btn primary" id="ns-score-trial" type="button">' + (NS_IS_GERMAN ? 'Antwort senden' : 'Submit response') + '</button>'
             + '<p id="ns-score-status" class="osr-status" aria-live="polite"></p></div>';
 
           var input = document.getElementById('ns-response-input');
           var scoreButton = document.getElementById('ns-score-trial');
           if (input) input.focus();
+          Array.prototype.forEach.call(document.querySelectorAll('.ns-digit-key'), function(button) {
+            button.addEventListener('click', function() {
+              if (input) input.value += button.getAttribute('data-digit');
+            });
+          });
+          var deleteButton = document.getElementById('ns-delete');
+          if (deleteButton) deleteButton.addEventListener('click', function() {
+            if (input) input.value = input.value.slice(0, -1);
+          });
 
           function scoreTrial() {
             var response = (input ? input.value : '').replace(/[^0-9]/g, '');

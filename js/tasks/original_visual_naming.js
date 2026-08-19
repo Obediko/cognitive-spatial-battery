@@ -474,12 +474,12 @@
           recorder = null;
           stimulusLoad = null;
           itemStartedAt = 0;
-          display.innerHTML = '<div class="ovn-shell ovn-participant"><div class="ovn-progress">Item ' + (index + 1)
-            + ' of ' + items.length + '<span id="ovn-response-prompt">Please wait for the image</span></div>'
+          display.innerHTML = '<div class="ovn-shell ovn-participant"><div class="ovn-progress">' + (OVN_IS_GERMAN ? 'Bild ' : 'Item ') + (index + 1)
+            + (OVN_IS_GERMAN ? ' von ' : ' of ') + items.length + '<span id="ovn-response-prompt">' + (OVN_IS_GERMAN ? 'Bitte warten Sie auf das Bild' : 'Please wait for the image') + '</span></div>'
             + '<div class="ovn-picture-card">' + ovnStimulusMarkup(item)
-            + '<div class="ovn-clock"><strong id="ovn-time">20</strong><span>seconds after image appears</span></div></div>'
-            + '<button class="battery-btn primary" id="ovn-deferred-next" disabled>Answer given — next item</button>'
-            + '<p class="osr-fineprint">The response clock and recording start only after the stimulus is visible.</p></div>';
+            + '<div class="ovn-clock"><strong id="ovn-time">20</strong><span>' + (OVN_IS_GERMAN ? 'Sekunden nach Erscheinen des Bildes' : 'seconds after image appears') + '</span></div></div>'
+            + '<button class="battery-btn primary" id="ovn-deferred-next" disabled>' + (OVN_IS_GERMAN ? 'Antwort gegeben — nächstes Bild' : 'Answer given — next item') + '</button>'
+            + '<p class="osr-fineprint">' + (OVN_IS_GERMAN ? 'Zeitmessung und Aufnahme beginnen erst, wenn das Bild sichtbar ist.' : 'The response clock and recording start only after the stimulus is visible.') + '</p></div>';
 
           var nextButton = document.getElementById('ovn-deferred-next');
           nextButton.onclick = endItem;
@@ -488,7 +488,7 @@
             stimulusLoad = loadInfo;
             itemStartedAt = Date.now();
             var prompt = document.getElementById('ovn-response-prompt');
-            if (prompt) prompt.textContent = 'Speak one answer clearly';
+            if (prompt) prompt.textContent = OVN_IS_GERMAN ? 'Sagen Sie eine Antwort deutlich' : 'Speak one answer clearly';
             nextButton.disabled = false;
             if (stream && typeof MediaRecorder !== 'undefined') {
               try {

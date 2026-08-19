@@ -119,26 +119,28 @@ function hideLoadingFallback() {
    WELCOME TRIALS
    ==================================================== */
 function makeWelcomeTrials() {
+  var de = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
 
   var welcome = {
     type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="max-width:700px;margin:0 auto;text-align:center;padding:1em">'
       + '<h1 style="color:#a8d8ea">' + batteryText('battery_title') + '</h1>'
       + '<div class="info-box" style="text-align:left">'
-      + '<p><strong>What this is:</strong> A brief computerized baseline cognitive/spatial battery '
-      + 'administered during the intake session to characterize individual differences relevant to '
-      + 'spatial navigation performance.</p>'
-      + '<p><strong>What this is NOT:</strong> This is not a stimulation-outcome task. '
-      + 'Results will be used for participant characterization and may serve as covariates '
-      + 'or exploratory moderators in analyses.</p>'
-      + '<p><strong>Duration:</strong> Approximately 28-38 minutes for the full pilot battery.</p>'
-      + '<p><strong>Tasks included:</strong> Original Story Recall &bull; Animal Naming &bull; Visual Sequencing &amp; Set-Shifting &bull; '
-      + 'Original Visual Naming &bull; Original Complex Figure &bull; Number Span &bull; Visual Sequencing &amp; Set-Shifting &bull; '
-      + 'Object-Location Memory &bull; Spatial Pointing</p>'
+      + (de
+        ? '<p><strong>Zweck:</strong> Diese computerisierte Testbatterie erfasst kognitive und räumliche Ausgangsleistungen.</p>'
+          + '<p><strong>Kein Diagnosetest:</strong> Die Ergebnisse dienen der Forschungscharakterisierung und nicht einer klinischen Diagnose.</p>'
+          + '<p><strong>Dauer:</strong> Etwa 28–38 Minuten für die vollständige Pilotbatterie.</p>'
+          + '<p><strong>Aufgaben:</strong> Geschichte erinnern &bull; Tiere nennen &bull; Gegenstände benennen &bull; komplexe Figur &bull; Zahlenspanne &bull; zusätzliche räumliche Aufgaben &bull; Trail-Vergleichsaufgaben</p>'
+        : '<p><strong>What this is:</strong> A brief computerized baseline cognitive/spatial battery administered during the intake session to characterize individual differences relevant to spatial navigation performance.</p>'
+          + '<p><strong>What this is NOT:</strong> This is not a stimulation-outcome task. Results will be used for participant characterization and may serve as covariates or exploratory moderators in analyses.</p>'
+          + '<p><strong>Duration:</strong> Approximately 28-38 minutes for the full pilot battery.</p>'
+          + '<p><strong>Tasks included:</strong> Original Story Recall &bull; Animal Naming &bull; Original Visual Naming &bull; Original Complex Figure &bull; Number Span &bull; additional spatial tasks &bull; Trail comparators</p>')
       + '</div>'
       + '<p style="color:#8899aa;font-size:0.9rem;margin-top:1em">'
-      + 'Please run this on a <strong>laptop or sufficiently large tablet</strong> in a quiet environment.<br>'
-      + 'Mouse, trackpad, touch and standard gamepad input are supported; the input modality is recorded.</p></div>',
+      + (de
+        ? 'Bitte verwenden Sie in ruhiger Umgebung einen <strong>Laptop oder ein ausreichend großes Tablet</strong>.<br>Maus, Trackpad, Touchscreen und Standard-Gamepad werden unterstützt.'
+        : 'Please run this on a <strong>laptop or sufficiently large tablet</strong> in a quiet environment.<br>Mouse, trackpad, touch and standard gamepad input are supported; the input modality is recorded.')
+      + '</p></div>',
     choices: [batteryText('begin_setup')],
     data: { battery_phase: 'welcome' }
   };
@@ -147,17 +149,17 @@ function makeWelcomeTrials() {
     type: jsPsychSurveyText,
     questions: [{
       prompt: '<div style="text-align:center">'
-        + '<h3 style="color:#a8d8ea">Participant ID</h3>'
+        + '<h3 style="color:#a8d8ea">' + (de ? 'Teilnehmenden-ID' : 'Participant ID') + '</h3>'
         + '<p style="color:#cdd9e5;max-width:500px;margin:0 auto 1em">'
-        + 'Please enter your <strong>pseudonymous participant ID</strong> (e.g. P001, CSB_042).<br>'
+        + (de ? 'Geben Sie die <strong>pseudonyme Teilnehmenden-ID</strong> ein (z. B. P001, CSB_042).<br>' : 'Please enter your <strong>pseudonymous participant ID</strong> (e.g. P001, CSB_042).<br>')
         + '<span style="color:#ef9a9a;font-size:0.85rem">'
-        + 'Do NOT enter your name, email, student number, date of birth, or any identifying information.'
+        + (de ? 'Geben Sie keinen Namen, keine E-Mail-Adresse, kein Geburtsdatum und keine anderen Identifikationsdaten ein.' : 'Do NOT enter your name, email, student number, date of birth, or any identifying information.')
         + '</span></p></div>',
       name: 'participant_id',
       required: true,
       placeholder: 'e.g. P001'
     }],
-    button_label: 'Confirm ID',
+    button_label: de ? 'ID bestätigen' : 'Confirm ID',
     data: { battery_phase: 'participant_id' },
     on_finish: function(data) {
       var pid = (data.response && data.response.participant_id)
@@ -175,17 +177,15 @@ function makeWelcomeTrials() {
   var deviceCheck = {
     type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="max-width:660px;margin:0 auto;text-align:center">'
-      + '<h3 style="color:#a8d8ea;margin-bottom:0.6em">Before We Start</h3>'
+      + '<h3 style="color:#a8d8ea;margin-bottom:0.6em">' + (de ? 'Vor dem Beginn' : 'Before We Start') + '</h3>'
       + '<div class="info-box" style="text-align:left">'
-      + '<p>&#10003; Use a <strong>laptop or sufficiently large tablet</strong> - not a phone.</p>'
-      + '<p>&#10003; Use a current version of <strong>Chrome, Edge or Safari</strong>.</p>'
-      + '<p>&#10003; Ensure your screen is at least <strong>900 x 600 px</strong>.</p>'
-      + '<p>&#10003; Close other applications to minimise distractions.</p>'
-      + '<p>&#10003; You will be prompted to enter <strong>fullscreen mode</strong>.</p>'
+      + (de
+        ? '<p>&#10003; Verwenden Sie einen <strong>Laptop oder ein ausreichend großes Tablet</strong>, kein Telefon.</p><p>&#10003; Verwenden Sie eine aktuelle Version von <strong>Chrome, Edge oder Safari</strong>.</p><p>&#10003; Die Fenstergröße muss mindestens <strong>900 × 600 px</strong> betragen.</p><p>&#10003; Schließen Sie andere Anwendungen.</p><p>&#10003; Der <strong>Vollbildmodus</strong> wird empfohlen.</p>'
+        : '<p>&#10003; Use a <strong>laptop or sufficiently large tablet</strong> - not a phone.</p><p>&#10003; Use a current version of <strong>Chrome, Edge or Safari</strong>.</p><p>&#10003; Ensure your screen is at least <strong>900 x 600 px</strong>.</p><p>&#10003; Close other applications to minimise distractions.</p><p>&#10003; You will be prompted to enter <strong>fullscreen mode</strong>.</p>')
       + '</div>'
       + '<p style="color:#8899aa;font-size:0.85rem;margin-top:0.5em">'
-      + 'Current window: <strong id="curr-dims">checking...</strong></p></div>',
-    choices: ['Continue'],
+      + (de ? 'Aktuelles Fenster: ' : 'Current window: ') + '<strong id="curr-dims">...</strong></p></div>',
+    choices: [de ? 'Weiter' : 'Continue'],
     data: { battery_phase: 'device_check' },
     on_load: function() {
       var el = document.getElementById('curr-dims');
@@ -201,11 +201,10 @@ function makeWelcomeTrials() {
         document.querySelector('.jspsych-content') ||
         document.getElementById('jspsych-target');
       display.innerHTML = '<div style="text-align:center;max-width:600px;margin:0 auto">'
-        + '<h3 style="color:#a8d8ea">Fullscreen Mode</h3>'
-        + '<p>Fullscreen is recommended for consistent spatial measurements.</p>'
-        + '<p style="color:#8899aa;font-size:0.85rem">If your browser blocks fullscreen, the battery will continue and record that condition.</p>'
-        + '<button class="battery-btn primary" id="enter-fullscreen">Enter Fullscreen</button>'
-        + '<button class="battery-btn" id="skip-fullscreen" style="margin-left:0.6rem">Continue without fullscreen</button>'
+        + '<h3 style="color:#a8d8ea">' + (de ? 'Vollbildmodus' : 'Fullscreen Mode') + '</h3>'
+        + '<p>' + (de ? 'Der Vollbildmodus wird für einheitliche räumliche Messungen empfohlen.' : 'Fullscreen is recommended for consistent spatial measurements.') + '</p>'
+        + '<button class="battery-btn primary" id="enter-fullscreen">' + (de ? 'Vollbild starten' : 'Enter Fullscreen') + '</button>'
+        + '<button class="battery-btn" id="skip-fullscreen" style="margin-left:0.6rem">' + (de ? 'Ohne Vollbild fortfahren' : 'Continue without fullscreen') + '</button>'
         + '<p id="fullscreen-status" class="osr-status" aria-live="polite"></p></div>';
 
       function finish(granted, reason) {
@@ -251,27 +250,28 @@ function makeWelcomeTrials() {
    TASK MENU
    ==================================================== */
 function makeTaskMenu(jsPsych) {
+  var de = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
   return {
     type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="max-width:680px;margin:0 auto;text-align:center">'
       + '<h2 style="color:#a8d8ea;margin-bottom:0.4em">' + batteryText('task_menu') + '</h2>'
       + '<p style="color:#cdd9e5;margin-bottom:0.3em">'
-      + 'Participant ID: <strong id="pid-display">loading...</strong></p>'
+      + (de ? 'Teilnehmenden-ID: ' : 'Participant ID: ') + '<strong id="pid-display">...</strong></p>'
       + '<p style="color:#8899aa;font-size:0.85rem;margin-bottom:1.2em">'
-      + 'Select which tasks to run. For the baseline session choose <em>Run Full Battery</em>.</p>'
+      + (de ? 'Wählen Sie die Aufgaben aus. Für die Basissitzung verwenden Sie die vollständige Pilotbatterie.' : 'Select which tasks to run. For the baseline session choose <em>Run Full Battery</em>.') + '</p>'
       + '<div style="display:grid;gap:0.6em;max-width:420px;margin:0 auto">'
       + '<button class="battery-btn primary" id="btn-full">' + batteryText('full_battery') + ' (~28-38 min)</button>'
       + '<button class="battery-btn" id="btn-core">' + batteryText('core_only') + '</button>'
       + '<button class="battery-btn" id="btn-trail">' + batteryText('trail_only') + '</button>'
       + '<button class="battery-btn" id="btn-spatial">' + batteryText('spatial_only') + '</button>'
-      + '<button class="battery-btn" id="btn-osr">Original Story Recall only</button>'
-      + '<button class="battery-btn" id="btn-asf">Animal Naming only</button>'
-      + '<button class="battery-btn" id="btn-ovn">Original Visual Naming only</button>'
-      + '<button class="battery-btn" id="btn-ocf">Original Complex Figure only</button>'
-      + '<button class="battery-btn" id="btn-vs">Visual Sequencing &amp; Set-Shifting only</button>'
-      + '<button class="battery-btn" id="btn-olm">Object-Location Memory only</button>'
-      + '<button class="battery-btn" id="btn-sp">Spatial Pointing only</button>'
-      + '<button class="battery-btn" id="btn-ns">Number Span only</button>'
+      + '<button class="battery-btn" id="btn-osr">' + (de ? 'Nur Geschichte erinnern' : 'Original Story Recall only') + '</button>'
+      + '<button class="battery-btn" id="btn-asf">' + (de ? 'Nur Tiere nennen' : 'Animal Naming only') + '</button>'
+      + '<button class="battery-btn" id="btn-ovn">' + (de ? 'Nur Gegenstände benennen' : 'Original Visual Naming only') + '</button>'
+      + '<button class="battery-btn" id="btn-ocf">' + (de ? 'Nur komplexe Figur' : 'Original Complex Figure only') + '</button>'
+      + '<button class="battery-btn" id="btn-vs">' + (de ? 'Nur Trail-Vergleichsaufgaben' : 'Visual Sequencing &amp; Set-Shifting only') + '</button>'
+      + '<button class="battery-btn" id="btn-olm">' + (de ? 'Nur Objekt-Ort-Gedächtnis' : 'Object-Location Memory only') + '</button>'
+      + '<button class="battery-btn" id="btn-sp">' + (de ? 'Nur räumliches Zeigen' : 'Spatial Pointing only') + '</button>'
+      + '<button class="battery-btn" id="btn-ns">' + (de ? 'Nur Zahlenspanne' : 'Number Span only') + '</button>'
       + '</div>'
       + '<p style="color:#8899aa;font-size:0.8rem;margin-top:1.2em">'
       + 'Pilot mode: set <code>window.PILOT_MODE = false</code> in utils.js for real sessions.'

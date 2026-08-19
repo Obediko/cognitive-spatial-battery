@@ -18,6 +18,7 @@
    Exports (global): buildSpatialPointingTimeline()
    ============================================================ */
 'use strict';
+const SP_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
 
 /* ── Landmark definitions ────────────────────────────────── */
 const SP_LANDMARKS = [
@@ -28,6 +29,10 @@ const SP_LANDMARKS = [
   { id: 'fountain',label: 'Fountain',emoji: '\u26F2',        color: '#0288d1' },
   { id: 'tower',   label: 'Tower',   emoji: '\uD83D\uDDFC', color: '#6d4c41' }
 ];
+if (SP_IS_GERMAN) {
+  const labels = { tree:'Baum',house:'Haus',flag:'Flagge',bench:'Bank',fountain:'Brunnen',tower:'Turm' };
+  SP_LANDMARKS.forEach(item => { item.label = labels[item.id] || item.label; });
+}
 
 /* ── Arena constants ─────────────────────────────────────── */
 const SP_ARENA_R    = 250;  // radius of circular arena in px
@@ -329,6 +334,15 @@ function buildSPTrial(trialNum, targetLandmark, startPosObj, practiceOrMain, sho
 
 /* ── Instructions ─────────────────────────────────────────── */
 function spInstructions() {
+  if (SP_IS_GERMAN) return {
+    type: jsPsychInstructions,
+    pages: [`<div style="max-width:700px;margin:0 auto;text-align:left"><h2 style="color:#a8d8ea">Räumliches Zeigen</h2>
+      <p>Merken Sie sich zunächst die Positionen von <strong>6 Orientierungspunkten</strong> in einer kreisförmigen Arena.</p>
+      <p>Danach wird eine Startposition und der Name eines nicht sichtbaren Ziels gezeigt. Klicken Sie in die Richtung, in der das erinnerte Ziel liegt, und bestätigen Sie Ihre Antwort.</p>
+      <p>Es folgen zwei Übungsdurchgänge mit Rückmeldung und 18 Hauptdurchgänge.</p></div>`],
+    show_clickable_nav: true, button_label_next: 'Weiter →',
+    data: { task_name: 'spatial_pointing', phase: 'instructions' }
+  };
   return {
     type: jsPsychInstructions,
     pages: [
@@ -362,11 +376,11 @@ function buildSpatialPointingTimeline() {
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `<div style="max-width:600px;margin:0 auto;text-align:center">
-      <h3 style="color:#a8d8ea">Practice Trials (2)</h3>
-      <p>Feedback will be shown after each practice trial.</p>
+      <h3 style="color:#a8d8ea">${SP_IS_GERMAN ? 'Übungsdurchgänge (2)' : 'Practice Trials (2)'}</h3>
+      <p>${SP_IS_GERMAN ? 'Nach jedem Übungsdurchgang wird eine Rückmeldung gezeigt.' : 'Feedback will be shown after each practice trial.'}</p>
       <p style="color:#8899aa;font-size:0.85rem">Click <strong>Start</strong> when ready.</p>
     </div>`,
-    choices: ['Start Practice'],
+    choices: [SP_IS_GERMAN ? 'Übung starten' : 'Start Practice'],
     data: { task_name: 'spatial_pointing', phase: 'practice_ready' }
   });
 
@@ -392,11 +406,11 @@ function buildSpatialPointingTimeline() {
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `<div style="max-width:600px;margin:0 auto;text-align:center">
-      <h3 style="color:#a8d8ea">Main Trials (18)</h3>
-      <p>No feedback will be given during the main trials.</p>
+      <h3 style="color:#a8d8ea">${SP_IS_GERMAN ? 'Hauptdurchgänge (18)' : 'Main Trials (18)'}</h3>
+      <p>${SP_IS_GERMAN ? 'Während der Hauptdurchgänge wird keine Rückmeldung gegeben.' : 'No feedback will be given during the main trials.'}</p>
       <p style="color:#8899aa;font-size:0.85rem">Click <strong>Start</strong> when ready.</p>
     </div>`,
-    choices: ['Start Main Trials'],
+    choices: [SP_IS_GERMAN ? 'Hauptdurchgänge starten' : 'Start Main Trials'],
     data: { task_name: 'spatial_pointing', phase: 'main_ready' }
   });
 
@@ -425,10 +439,10 @@ function buildSpatialPointingTimeline() {
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `<div style="max-width:600px;margin:0 auto;text-align:center">
-      <h3 style="color:#a8d8ea">Spatial Pointing Task Complete</h3>
-      <p style="color:#8899aa">Download task data now or continue.</p>
+      <h3 style="color:#a8d8ea">${SP_IS_GERMAN ? 'Räumliches Zeigen abgeschlossen' : 'Spatial Pointing Task Complete'}</h3>
+      <p style="color:#8899aa">${SP_IS_GERMAN ? 'Laden Sie die Aufgabendaten herunter oder fahren Sie fort.' : 'Download task data now or continue.'}</p>
     </div>`,
-    choices: ['Download Task CSV', 'Continue Battery'],
+    choices: [SP_IS_GERMAN ? 'Aufgaben-CSV herunterladen' : 'Download Task CSV', SP_IS_GERMAN ? 'Batterie fortsetzen' : 'Continue Battery'],
     data: { task_name: 'spatial_pointing', phase: 'end' },
     on_finish(data) {
       if (data.response === 0) exportTaskCSV('spatial_pointing');

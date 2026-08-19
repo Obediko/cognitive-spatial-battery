@@ -217,19 +217,18 @@
   function osrInstructionTrial() {
     return {
       type: jsPsychHtmlButtonResponse,
-      stimulus: '<div class="osr-card">'
-        + '<span class="osr-kicker">ETI Core · Verbal memory</span>'
-        + '<h2>Original Story Recall</h2>'
-        + '<p>You will hear a short story once. Listen carefully because, when it ends, '
-        + 'you will be asked to tell the whole story back in as much detail as you can.</p>'
-        + '<div class="info-box"><p>You may use your own words.</p>'
-        + '<p>Do not write anything down and do not use another device.</p>'
-        + '<p>Your response will be recorded locally for scoring.</p></div>'
-        + '<p class="osr-fineprint">The recording stays in this browser session and is not uploaded.</p>'
-        + '<button class="battery-btn" id="osr-replay-instructions" type="button">Replay instructions audio</button>'
+      stimulus: '<div class="osr-card"><span class="osr-kicker">ETI Core · Verbal memory</span>'
+        + '<h2>' + (OSR_IS_GERMAN ? 'Geschichte erinnern' : 'Original Story Recall') + '</h2>'
+        + '<p>' + (OSR_IS_GERMAN
+          ? 'Sie hören einmal eine kurze Geschichte. Hören Sie genau zu. Anschließend sollen Sie die gesamte Geschichte mit möglichst vielen Einzelheiten wiedergeben.'
+          : 'You will hear a short story once. Listen carefully because, when it ends, you will be asked to tell the whole story back in as much detail as you can.') + '</p>'
+        + '<div class="info-box"><p>' + (OSR_IS_GERMAN ? 'Sie dürfen eigene Worte verwenden.' : 'You may use your own words.') + '</p>'
+        + '<p>' + (OSR_IS_GERMAN ? 'Schreiben Sie nichts auf und verwenden Sie kein anderes Gerät.' : 'Do not write anything down and do not use another device.') + '</p>'
+        + '<p>' + (OSR_IS_GERMAN ? 'Ihre Antwort wird für die Auswertung aufgezeichnet.' : 'Your response will be recorded locally for scoring.') + '</p></div>'
+        + '<button class="battery-btn" id="osr-replay-instructions" type="button">' + (OSR_IS_GERMAN ? 'Anweisung erneut abspielen' : 'Replay instructions audio') + '</button>'
         + '<p id="osr-instruction-audio-status" class="osr-status" aria-live="polite"></p>'
         + '</div>',
-      choices: ['Continue to microphone check'],
+      choices: [OSR_IS_GERMAN ? 'Weiter zur Mikrofonprüfung' : 'Continue to microphone check'],
       data: { task_name: 'original_story_recall', phase: 'instructions', task_version: OSR_VERSION },
       on_load: function() {
         var button = document.getElementById('osr-replay-instructions');
@@ -266,9 +265,10 @@
       async: true,
       func: function(done) {
         var display = osrDisplay();
-        display.innerHTML = '<div class="osr-card"><span class="osr-kicker">Device check</span>'
-          + '<h2>Microphone access</h2><p>Allow microphone access when your browser asks.</p>'
-          + '<button class="battery-btn primary" id="osr-mic-check">Check microphone</button>'
+        display.innerHTML = '<div class="osr-card"><span class="osr-kicker">' + (OSR_IS_GERMAN ? 'Geräteprüfung' : 'Device check') + '</span>'
+          + '<h2>' + (OSR_IS_GERMAN ? 'Mikrofonzugriff' : 'Microphone access') + '</h2><p>'
+          + (OSR_IS_GERMAN ? 'Erlauben Sie den Mikrofonzugriff, wenn der Browser danach fragt.' : 'Allow microphone access when your browser asks.') + '</p>'
+          + '<button class="battery-btn primary" id="osr-mic-check">' + (OSR_IS_GERMAN ? 'Mikrofon prüfen' : 'Check microphone') + '</button>'
           + '<p id="osr-mic-status" class="osr-status" aria-live="polite"></p></div>';
         var button = document.getElementById('osr-mic-check');
         var status = document.getElementById('osr-mic-status');
@@ -305,9 +305,10 @@
       async: true,
       func: function(done) {
         var display = osrDisplay();
-        display.innerHTML = '<div class="osr-card osr-listening"><span class="osr-kicker">Listen once</span>'
+        display.innerHTML = '<div class="osr-card osr-listening"><span class="osr-kicker">' + (OSR_IS_GERMAN ? 'Einmal anhören' : 'Listen once') + '</span>'
           + '<div class="osr-soundmark" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>'
-          + '<h2>The story is playing</h2><p>Please listen. The text will not appear on screen.</p>'
+          + '<h2>' + (OSR_IS_GERMAN ? 'Die Geschichte wird abgespielt' : 'The story is playing') + '</h2><p>'
+          + (OSR_IS_GERMAN ? 'Hören Sie zu. Der Text wird nicht auf dem Bildschirm angezeigt.' : 'Please listen. The text will not appear on screen.') + '</p>'
           + '<p id="osr-play-status" class="osr-status" aria-live="polite">Preparing audio…</p></div>';
 
         function finishTrial(extra) {
@@ -422,11 +423,11 @@
             : 'Earlier, you heard a short story. Please tell me that story again, including as many details as you can remember.');
         display.innerHTML = '<div class="osr-card"><span class="osr-kicker">'
           + (condition === 'immediate' ? 'Immediate recall' : 'Delayed recall') + '</span>'
-          + '<h2>Tell the story back</h2><p class="osr-prompt">' + prompt + '</p>'
-          + '<button class="battery-btn" id="osr-replay-prompt" type="button">Replay prompt audio</button>'
+          + '<h2>' + (OSR_IS_GERMAN ? 'Erzählen Sie die Geschichte' : 'Tell the story back') + '</h2><p class="osr-prompt">' + prompt + '</p>'
+          + '<button class="battery-btn" id="osr-replay-prompt" type="button">' + (OSR_IS_GERMAN ? 'Aufforderung erneut abspielen' : 'Replay prompt audio') + '</button>'
           + '<p id="osr-prompt-audio-status" class="osr-status" aria-live="polite"></p>'
-          + '<button class="battery-btn primary" id="osr-start-recording">Start recording</button>'
-          + '<button class="battery-btn" id="osr-stop-recording" disabled>Finish response</button>'
+          + '<button class="battery-btn primary" id="osr-start-recording">' + (OSR_IS_GERMAN ? 'Aufnahme starten' : 'Start recording') + '</button>'
+          + '<button class="battery-btn" id="osr-stop-recording" disabled>' + (OSR_IS_GERMAN ? 'Antwort beenden' : 'Finish response') + '</button>'
           + '<div id="osr-recording-indicator" class="osr-recording-indicator" hidden>'
           + '<span class="osr-recording-dot"></span> Recording <strong id="osr-recording-time">00:00</strong></div>'
           + '<button class="battery-btn" id="osr-play-neutral-prompt" type="button">Play neutral prompt</button>'

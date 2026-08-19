@@ -24,6 +24,7 @@ const VS_RADIUS      = 26;   // target circle radius in px
 const VS_MIN_DIST    = 72;   // minimum centre-to-centre distance in px
 const VS_EDGE_MARGIN = 55;   // minimum distance from canvas edge in px
 const VS_ERROR_MS    = 600;  // duration of error flash
+const VS_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
 
 /* ── Helper: get jsPsych display area without destroying its wrapper ── */
 function vsGetDisplayEl() {
@@ -90,13 +91,13 @@ function buildVSTrial(opts) {
         'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
         'width:100%;height:100%;font-family:Segoe UI,Arial,sans-serif;';
 
-      var condLabel = condition === 'sequencing'
-        ? (trial_type === 'practice' ? 'Practice - Sequencing'   : 'Sequencing')
-        : (trial_type === 'practice' ? 'Practice - Set-Shifting' : 'Set-Shifting');
+      var condLabel = VS_IS_GERMAN
+        ? (condition === 'sequencing' ? (trial_type === 'practice' ? 'Übung – Zahlenfolge' : 'Zahlenfolge') : (trial_type === 'practice' ? 'Übung – Wechseln' : 'Wechseln'))
+        : (condition === 'sequencing' ? (trial_type === 'practice' ? 'Practice - Sequencing' : 'Sequencing') : (trial_type === 'practice' ? 'Practice - Set-Shifting' : 'Set-Shifting'));
 
       var statusBar = document.createElement('div');
       statusBar.className   = 'vs-status-bar';
-      statusBar.innerHTML   = '<strong>' + condLabel + '</strong> &nbsp;|&nbsp; Click targets in correct order.';
+      statusBar.innerHTML   = '<strong>' + condLabel + '</strong> &nbsp;|&nbsp; ' + (VS_IS_GERMAN ? 'Klicken Sie die Ziele in der richtigen Reihenfolge an.' : 'Click targets in correct order.');
 
       var canvas   = document.createElement('div');
       canvas.className      = 'vs-container';
@@ -234,6 +235,18 @@ function buildVSTrial(opts) {
 
 /* ── Instruction screens ──────────────────────────────────── */
 function vsFullInstructions() {
+  if (VS_IS_GERMAN) {
+    return {
+      type: jsPsychInstructions,
+      pages: ['<div style="max-width:700px;margin:0 auto;text-align:left"><h2 style="color:#a8d8ea">Visuelle Reihenfolge und Aufgabenwechsel</h2>'
+        + '<p>Diese Aufgabe besteht aus zwei Teilen.</p><p><strong>Teil A – Zahlenfolge:</strong> Klicken Sie die Kreise 1 bis 25 in aufsteigender Reihenfolge an.</p>'
+        + '<p><strong>Teil B – Wechseln:</strong> Wechseln Sie zwischen Zahlen und Buchstaben: <strong>1 → A → 2 → B → … → 12 → L → 13</strong>.</p>'
+        + '<p>Arbeiten Sie so schnell und genau wie möglich. Nach einem Fehler fahren Sie beim letzten richtigen Ziel fort.</p></div>'],
+      show_clickable_nav: true,
+      button_label_next: 'Weiter →',
+      data: { task_name: 'visual_sequencing_set_shifting', phase: 'instructions' }
+    };
+  }
   return {
     type: jsPsychInstructions,
     pages: [
@@ -260,8 +273,8 @@ function vsFullInstructions() {
 }
 
 function vsReadyScreen(condition, isPractice) {
-  var label = condition === 'sequencing' ? 'Sequencing' : 'Set-Shifting';
-  var kind  = isPractice ? 'Practice' : 'Main Trial';
+  var label = VS_IS_GERMAN ? (condition === 'sequencing' ? 'Zahlenfolge' : 'Wechseln') : (condition === 'sequencing' ? 'Sequencing' : 'Set-Shifting');
+  var kind  = VS_IS_GERMAN ? (isPractice ? 'Übung' : 'Hauptaufgabe') : (isPractice ? 'Practice' : 'Main Trial');
   var desc  = condition === 'sequencing'
     ? (isPractice
         ? 'Click circles <strong>1 &rarr; 2 &rarr; &hellip; &rarr; 8</strong> in order.'
@@ -279,7 +292,7 @@ function vsReadyScreen(condition, isPractice) {
                 : '<p style="color:#8899aa">No feedback during the main trial. Keep going if you make an error.</p>')
             + '<p style="color:#8899aa;font-size:0.85rem">Click <strong>Start</strong> when ready.</p>'
             + '</div>',
-    choices: ['Start'],
+    choices: [VS_IS_GERMAN ? 'Starten' : 'Start'],
     data: { task_name: 'visual_sequencing_set_shifting', phase: isPractice ? 'practice_ready' : 'main_ready', condition: condition }
   };
 }
@@ -319,10 +332,10 @@ function buildVisualSequencingTimeline(randomizeOrder) {
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="max-width:600px;margin:0 auto;text-align:center">'
-            + '<h3 style="color:#a8d8ea">Visual Sequencing Task Complete</h3>'
-            + '<p style="color:#8899aa">You may download the data for this task now, or wait until the end of the full battery.</p>'
+            + '<h3 style="color:#a8d8ea">' + (VS_IS_GERMAN ? 'Trail-Vergleichsaufgaben abgeschlossen' : 'Visual Sequencing Task Complete') + '</h3>'
+            + '<p style="color:#8899aa">' + (VS_IS_GERMAN ? 'Die Daten können jetzt oder am Ende der Batterie heruntergeladen werden.' : 'You may download the data for this task now, or wait until the end of the full battery.') + '</p>'
             + '</div>',
-    choices: ['Download Task CSV', 'Continue Battery'],
+    choices: [VS_IS_GERMAN ? 'Aufgaben-CSV herunterladen' : 'Download Task CSV', VS_IS_GERMAN ? 'Batterie fortsetzen' : 'Continue Battery'],
     data: { task_name: 'visual_sequencing_set_shifting', phase: 'end' },
     on_finish: function(data) {
       if (data.response === 0) exportTaskCSV('visual_sequencing_set_shifting');
