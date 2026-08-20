@@ -62,6 +62,7 @@ function batteryCheckpointPayload() {
     trials: window.BatteryData.trials,
     taskSummaries: window.BatteryData.taskSummaries,
     batteryChoice: window.BatteryData.batteryChoice || null,
+    selectedTasks: Array.isArray(window.BatteryData.selectedTasks) ? window.BatteryData.selectedTasks : [],
     sessionStatus: window.BatteryData.sessionStatus || 'in_progress',
     taskState: {
       ocfCopyCompletedAt: window.OCFState ? window.OCFState.copyCompletedAt : null
@@ -116,6 +117,8 @@ function loadBatteryCheckpoint(participantId, options) {
     window.BatteryData.trials = saved.trials;
     window.BatteryData.taskSummaries = saved.taskSummaries || {};
     window.BatteryData.batteryChoice = saved.batteryChoice || null;
+    window.BatteryData.selectedTasks = Array.isArray(saved.selectedTasks) ? saved.selectedTasks : [];
+    window._selectedBatteryTasks = window.BatteryData.selectedTasks.slice();
     window.BatteryData.sessionStatus = saved.sessionStatus || 'in_progress';
     if (window.OCFState) {
       window.OCFState.copyCompletedAt = saved.taskState && saved.taskState.ocfCopyCompletedAt
@@ -173,6 +176,7 @@ function listBatteryCheckpoints() {
         sessionStart: saved.sessionStart || null,
         sessionStatus: saved.sessionStatus || 'in_progress',
         batteryChoice: saved.batteryChoice || null,
+        selectedTasks: Array.isArray(saved.selectedTasks) ? saved.selectedTasks : [],
         trialCount: saved.trials.length
       });
     } catch (error) {
@@ -514,6 +518,7 @@ window.BatteryData = {
   trials: [],
   taskSummaries: {},
   batteryChoice: null,
+  selectedTasks: [],
   language: window.BatteryLanguage ? window.BatteryLanguage.get() : 'en',
   sessionStatus: 'in_progress',
 
@@ -652,6 +657,7 @@ function buildSummary() {
     osr_delay_duration_ms:    osr.osr_delay_duration_ms    ?? null,
     osr_delay_out_of_window:  osr.osr_delay_out_of_window  ?? null,
     osr_story_audio_standardized: osr.osr_story_audio_standardized ?? null,
+    osr_audio_set_version:     osr.osr_audio_set_version     ?? null,
     osr_task_version:         osr.osr_task_version         ?? null,
     osr_dictionary_version:   osr.osr_dictionary_version   ?? null,
     osr_story_form:           osr.osr_story_form           ?? null,
@@ -715,6 +721,7 @@ function buildSummary() {
     ns_forward_correct_trials: ns.ns_forward_correct_trials ?? null,
     ns_backward_correct_trials: ns.ns_backward_correct_trials ?? null,
     ns_audio_standardized: ns.ns_audio_standardized ?? null,
+    ns_audio_set_version:  ns.ns_audio_set_version  ?? null,
     ns_task_version: ns.ns_task_version ?? null,
     ns_sequence_version: ns.ns_sequence_version ?? null,
 

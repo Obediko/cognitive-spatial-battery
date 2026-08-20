@@ -13,6 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 AUDIO_ROOTS = [ROOT / "assets/audio/digits", ROOT / "assets/audio/osr"]
+GERMAN_MANIFEST = ROOT / "assets/audio/german_audio_manifest.json"
 SILENCE_DBFS = -50.0
 SILENCE_LINEAR = 32767 * (10 ** (SILENCE_DBFS / 20))
 
@@ -67,8 +68,8 @@ def inspect(path: Path) -> dict:
 
 def validate(rows: list[dict]) -> list[str]:
     failures = []
-    if len(rows) != 17:
-        failures.append(f"expected 17 WAV files, found {len(rows)}")
+    if len(rows) != 34:
+        failures.append(f"expected 34 WAV files (17 English and 17 German), found {len(rows)}")
     for row in rows:
         path = row["path"]
         if row.get("status") != "analyzed":
@@ -86,10 +87,32 @@ def validate(rows: list[dict]) -> list[str]:
             failures.append(f"{path}: edge silence exceeds 300 ms")
         if "/digit_" in path and row["duration_s"] >= 0.95:
             failures.append(f"{path}: digit clip is too long for a 1-second onset schedule")
+        if "osr44_" in path and row["duration_s"] < 20:
+            failures.append(f"{path}: story duration below 20 seconds suggests truncation")
+        if "osr_instruction" in path and row["duration_s"] < 8:
+            failures.append(f"{path}: story instruction duration below 8 seconds suggests truncation")
+        if "ons_" in path and "instruction" in path and row["duration_s"] < 4:
+            failures.append(f"{path}: Number Span instruction duration below 4 seconds suggests truncation")
 
     digit_rms = [row["rms_dbfs"] for row in rows if "/digit_" in row["path"] and row.get("rms_dbfs") is not None]
     if digit_rms and max(digit_rms) - min(digit_rms) > 3:
         failures.append(f"digit RMS spread exceeds 3 dB ({max(digit_rms) - min(digit_rms):.2f} dB)")
+
+    try:
+        manifest = json.loads(GERMAN_MANIFEST.read_text(encoding="utf-8"))
+        expected = manifest.get("files", {})
+        actual = {row["path"]: row.get("sha256") for row in rows if "_de_v" in row["path"]}
+        if len(expected) != 17:
+            failures.append(f"German audio manifest must contain 17 files, found {len(expected)}")
+        if set(expected) != set(actual):
+            missing = sorted(set(expected) - set(actual))
+            extra = sorted(set(actual) - set(expected))
+            failures.append(f"German audio manifest/file mismatch; missing={missing}, extra={extra}")
+        for path, expected_hash in expected.items():
+            if path in actual and actual[path] != expected_hash:
+                failures.append(f"{path}: SHA-256 does not match German audio manifest")
+    except (OSError, ValueError, TypeError) as error:
+        failures.append(f"German audio manifest could not be verified: {error}")
     return failures
 
 

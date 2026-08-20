@@ -18,11 +18,11 @@
     delayedPrompt: OSR_AUDIO_BASE + 'osr_delayed_prompt_v1.wav',
     neutralPrompt: OSR_AUDIO_BASE + 'osr_neutral_prompt_v1.wav'
   };
-  var OSR_AUDIO_LOAD_TIMEOUT_MS = 8000;
+  var OSR_AUDIO_LOAD_TIMEOUT_MS = 15000;
 
   // Loads a standardized audio file and resolves with a ready-to-play <audio>
   // element. Rejects (rather than hanging) on load error or timeout so callers
-  // can fall back to another playback method.
+  // can pause and offer a retry without substituting a different voice.
   function osrLoadAudio(src) {
     return new Promise(function(resolve, reject) {
       var el = new Audio();
@@ -30,6 +30,8 @@
       var timeoutId = setTimeout(function() {
         if (settled) return;
         settled = true;
+        el.removeEventListener('loadeddata', onReady);
+        el.removeEventListener('canplay', onReady);
         el.removeEventListener('canplaythrough', onReady);
         el.removeEventListener('error', onError);
         reject(new Error('timeout loading ' + src));
@@ -39,15 +41,25 @@
         if (settled) return;
         settled = true;
         clearTimeout(timeoutId);
+        el.removeEventListener('loadeddata', onReady);
+        el.removeEventListener('canplay', onReady);
+        el.removeEventListener('canplaythrough', onReady);
+        el.removeEventListener('error', onError);
         resolve(el);
       }
       function onError() {
         if (settled) return;
         settled = true;
         clearTimeout(timeoutId);
+        el.removeEventListener('loadeddata', onReady);
+        el.removeEventListener('canplay', onReady);
+        el.removeEventListener('canplaythrough', onReady);
+        el.removeEventListener('error', onError);
         reject(new Error('failed to load ' + src));
       }
 
+      el.addEventListener('loadeddata', onReady, { once: true });
+      el.addEventListener('canplay', onReady, { once: true });
       el.addEventListener('canplaythrough', onReady, { once: true });
       el.addEventListener('error', onError, { once: true });
       el.preload = 'auto';
@@ -129,15 +141,15 @@
 
   var OSR_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
   if (OSR_IS_GERMAN) {
-    OSR_DICTIONARY_VERSION = 'osr44-de-0.1-pilot';
-    OSR_STORY_FORM = 'osr44-library-wallet-a-de-0.1-pilot';
+    OSR_DICTIONARY_VERSION = 'osr44-de-0.2-pilot';
+    OSR_STORY_FORM = 'osr44-library-wallet-a-de-0.2-pilot';
     OSR_STORY_TEXT = 'Am Donnerstagmorgen nahm Elena den Bus um sieben Uhr fünfzehn zur Bibliothek. Sie gab drei Bücher zurück und druckte ein Bewerbungsformular aus. Im Obergeschoss fand sie neben einem Fenster eine blaue Brieftasche. Darin waren eine Identitätskarte und zwei Fahrkarten. Elena gab sie der Bibliothekarin, die den Besitzer anrief. Zwanzig Minuten später kam ein älterer Mann, dankte Elena und bot ihr Kaffee an. Sie lehnte ab und fuhr mit dem Bus um elf Uhr nach Hause.';
     OSR_AUDIO_FILES = {
-      story: OSR_AUDIO_BASE + 'osr44_library_wallet_a_de_pilot_missing.wav',
-      instruction: OSR_AUDIO_BASE + 'osr_instruction_de_pilot_missing.wav',
-      immediatePrompt: OSR_AUDIO_BASE + 'osr_immediate_prompt_de_pilot_missing.wav',
-      delayedPrompt: OSR_AUDIO_BASE + 'osr_delayed_prompt_de_pilot_missing.wav',
-      neutralPrompt: OSR_AUDIO_BASE + 'osr_neutral_prompt_de_pilot_missing.wav'
+      story: OSR_AUDIO_BASE + 'osr44_library_wallet_a_de_v2.wav',
+      instruction: OSR_AUDIO_BASE + 'osr_instruction_de_v2.wav',
+      immediatePrompt: OSR_AUDIO_BASE + 'osr_immediate_prompt_de_v2.wav',
+      delayedPrompt: OSR_AUDIO_BASE + 'osr_delayed_prompt_de_v2.wav',
+      neutralPrompt: OSR_AUDIO_BASE + 'osr_neutral_prompt_de_v2.wav'
     };
     OSR_VERBATIM_UNITS = [
       ['Donnerstag','Donnerstag'],['morgen','Morgen'],['Elena','Elena'],['nahm','nahm / nehmen'],
@@ -245,10 +257,10 @@
             if (status) status.textContent = '';
             if (button) button.disabled = false;
           }).catch(function() {
-            // Standardized audio unavailable: examiner can read the on-screen
-            // text aloud instead, so this is a soft failure, not a blocker.
             if (status) status.innerHTML =
-              '<span class="osr-error">Standardized audio unavailable — please read the instructions aloud instead.</span>';
+              '<span class="osr-error">' + (OSR_IS_GERMAN
+                ? 'Die standardisierte Aufnahme konnte nicht geladen werden. Prüfen Sie die Verbindung und versuchen Sie es erneut.'
+                : 'The standardized recording could not be loaded. Check the connection and retry.') + '</span>';
             if (button) button.disabled = false;
           });
         }
@@ -321,64 +333,6 @@
           done(Object.assign(base, extra));
         }
 
-        function speakWithBrowserTts(reasonForFallback) {
-          if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
-            window.OSRState.protocolFlags.playback_interrupted = true;
-            document.getElementById('osr-play-status').innerHTML =
-              '<span class="osr-error">No playback engine is available. This pilot session cannot continue.</span>';
-            return;
-          }
-
-          var utterance = new SpeechSynthesisUtterance(OSR_STORY_TEXT);
-          var voices = window.speechSynthesis.getVoices();
-          var languagePattern = OSR_IS_GERMAN ? /^de(-|_)/i : /^en(-|_)/i;
-          var voice = voices.find(function(v) { return languagePattern.test(v.lang) && /female|samantha|zira|serena|anna|petra|vicki/i.test(v.name); })
-            || voices.find(function(v) { return languagePattern.test(v.lang); })
-            || voices[0] || null;
-          if (voice) utterance.voice = voice;
-          utterance.lang = voice ? voice.lang : (OSR_IS_GERMAN ? 'de-DE' : 'en-GB');
-          utterance.rate = 0.88;
-          utterance.pitch = 1;
-          utterance.volume = 1;
-
-          window.OSRState.voiceMetadata = {
-            name: voice ? voice.name : null,
-            lang: voice ? voice.lang : utterance.lang,
-            rate: utterance.rate,
-            pitch: utterance.pitch,
-            local_service: voice ? voice.localService : null
-          };
-          window.OSRState.storyAudioStandardized = false;
-          window.OSRState.protocolFlags.playback_interrupted = true;
-
-          utterance.onstart = function() {
-            var status = document.getElementById('osr-play-status');
-            if (status) status.textContent = 'Playing (fallback voice)…';
-          };
-          utterance.onerror = function(event) {
-            var status = document.getElementById('osr-play-status');
-            if (status) status.innerHTML = '<span class="osr-error">Playback failed: '
-              + osrEscape(event.error || 'unknown error') + '. This session will be flagged.</span>';
-            setTimeout(function() {
-              finishTrial({
-                story_audio_standardized: false,
-                playback_failed: true,
-                playback_error: event.error || 'unknown error',
-                playback_fallback_reason: reasonForFallback
-              });
-            }, 1200);
-          };
-          utterance.onend = function() {
-            finishTrial({
-              story_audio_standardized: false,
-              playback_fallback_reason: reasonForFallback,
-              voice_metadata: JSON.stringify(window.OSRState.voiceMetadata)
-            });
-          };
-          window.speechSynthesis.cancel();
-          window.speechSynthesis.speak(utterance);
-        }
-
         var status = document.getElementById('osr-play-status');
 
         osrLoadAudio(OSR_AUDIO_FILES.story).then(function(audioEl) {
@@ -396,13 +350,25 @@
             voice_metadata: JSON.stringify(window.OSRState.voiceMetadata)
           });
         }).catch(function(error) {
-          // Standardized recording missing or failed to play (e.g. file not
-          // deployed, network blip, unsupported codec). Fall back to browser
-          // TTS rather than blocking the session, but flag it clearly so this
-          // participant's story-recall data can be reviewed/excluded if the
-          // fallback voice isn't acceptable for scoring.
-          if (status) status.textContent = 'Standardized audio unavailable, using fallback voice…';
-          speakWithBrowserTts(error && error.message ? error.message : 'unknown error');
+          window.OSRState.protocolFlags.playback_interrupted = true;
+          if (status) status.innerHTML = '<span class="osr-error">' + (OSR_IS_GERMAN
+            ? 'Die standardisierte Geschichte konnte nicht geladen werden. Diese Aufgabe wurde angehalten, damit keine nicht standardisierte Computerstimme verwendet wird.'
+            : 'The standardized story could not be loaded. This task is paused so that a non-standardized computer voice is never substituted.')
+            + '</span><br><button class="battery-btn primary" id="osr-retry-story" type="button">'
+            + (OSR_IS_GERMAN ? 'Audio erneut laden' : 'Retry standardized audio') + '</button>';
+          var retry = document.getElementById('osr-retry-story');
+          if (retry) retry.addEventListener('click', function() {
+            retry.disabled = true;
+            osrLoadAudio(OSR_AUDIO_FILES.story).then(function(audioEl) {
+              return osrPlayLoadedAudio(audioEl, function() { status.textContent = 'Playing…'; });
+            }).then(function() {
+              window.OSRState.storyAudioStandardized = true;
+              finishTrial({ story_audio_standardized: true, audio_retry_used: true });
+            }).catch(function(retryError) {
+              retry.disabled = false;
+              status.insertAdjacentHTML('afterbegin', '<span class="osr-error">' + osrEscape(retryError.message) + '</span><br>');
+            });
+          });
         });
       }
     };
@@ -451,8 +417,9 @@
               if (statusEl) statusEl.textContent = '';
               if (triggerButton) triggerButton.disabled = false;
             }).catch(function() {
-              if (statusEl) statusEl.innerHTML =
-                '<span class="osr-error">Standardized audio unavailable — please read the prompt aloud instead.</span>';
+              if (statusEl) statusEl.innerHTML = '<span class="osr-error">' + (OSR_IS_GERMAN
+                ? 'Die standardisierte Aufnahme konnte nicht geladen werden. Bitte erneut versuchen.'
+                : 'The standardized recording could not be loaded. Please retry.') + '</span>';
               if (triggerButton) triggerButton.disabled = false;
             });
           }
@@ -794,7 +761,8 @@
           osr_story_audio_standardized: window.OSRState.storyAudioStandardized,
           osr_task_version: OSR_VERSION,
           osr_dictionary_version: OSR_DICTIONARY_VERSION,
-          osr_story_form: OSR_STORY_FORM
+          osr_story_form: OSR_STORY_FORM,
+          osr_audio_set_version: OSR_IS_GERMAN ? 'osr-audio-de-thorsten-2.0-pilot' : 'osr-audio-en-kokoro-1.0-pilot'
         });
       }
     };

@@ -19,9 +19,14 @@ assert.ok(html.indexOf('js/reporting.js') > html.indexOf('js/utils.js'));
 assert.ok(language.includes("SUPPORTED = ['en', 'de']"));
 assert.ok(language.includes('pilot_unvalidated'));
 assert.ok(language.includes('story_form_version'));
-assert.ok(story.includes('osr44-library-wallet-a-de-0.1-pilot'));
+assert.ok(story.includes('osr44-library-wallet-a-de-0.2-pilot'));
 assert.ok(story.includes('OSR_IS_GERMAN'));
-assert.ok(span.includes('German recordings are not yet validated or bundled'));
+assert.ok(story.includes('osr44_library_wallet_a_de_v2.wav'));
+assert.ok(span.includes("'ons_forward_instruction_de_v2.wav'"));
+assert.ok(span.includes("'_de_v2.wav'"));
+assert.ok(!story.includes('SpeechSynthesisUtterance'));
+assert.ok(!span.includes('SpeechSynthesisUtterance'));
+assert.ok(!span.includes('if (NS_IS_GERMAN) return Promise.resolve()'));
 assert.ok(worker.includes("message.language === 'de' ? 'german' : 'english'"));
 
 assert.ok(trails.includes("'ABCDEFGHIJKL'.split('')"), 'Trail B must use letters A-L');
@@ -33,5 +38,8 @@ const timelineStart = main.indexOf('var timeline = welcomeTrials.concat([');
 const timeline = main.slice(timelineStart, main.indexOf(']);', timelineStart));
 assert.ok(timeline.lastIndexOf('vsTimeline') > timeline.lastIndexOf('spTimeline'), 'Trail A/B must be last');
 assert.ok(timeline.indexOf('ocfDelayedTimeline') < timeline.indexOf('osrDelayedTimeline'));
+assert.ok(main.includes("eti_core: ['osr', 'asf', 'ovn', 'ocf', 'ns']"));
+assert.ok(main.includes("additional: ['olm', 'sp', 'vs']"));
+assert.ok(main.includes("finish('custom', tasks)"));
 
 console.log('bilingual_reporting.test.js: all assertions passed');

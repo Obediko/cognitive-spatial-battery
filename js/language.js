@@ -15,8 +15,8 @@ window.BatteryLanguage = (function() {
       english: 'English', german: 'Deutsch', continue: 'Continue',
       begin_setup: 'Begin setup', participant_id: 'Participant ID', confirm_id: 'Confirm ID',
       before_start: 'Before we start', fullscreen: 'Fullscreen mode',
-      task_menu: 'Task menu', full_battery: 'Run full pilot battery',
-      core_only: 'Run ETI-core measures only', trail_only: 'Run Trail comparators only',
+      task_menu: 'Task menu', full_battery: 'Run ETI core: all 8 scores',
+      core_only: 'Run ETI core: all 8 scores', trail_only: 'Run Trail comparators only',
       spatial_only: 'Run additional spatial measures only',
       break_title: 'Take a short break if needed', next_task: 'Next task',
       participant_complete: 'Participant session complete', thank_you: 'Thank you',
@@ -30,8 +30,8 @@ window.BatteryLanguage = (function() {
       english: 'English', german: 'Deutsch', continue: 'Weiter',
       begin_setup: 'Einrichtung beginnen', participant_id: 'Teilnehmenden-ID', confirm_id: 'ID bestätigen',
       before_start: 'Vor dem Beginn', fullscreen: 'Vollbildmodus',
-      task_menu: 'Testauswahl', full_battery: 'Vollständige Pilotbatterie starten',
-      core_only: 'Nur ETI-Kernmaße starten', trail_only: 'Nur Trail-Vergleichsaufgaben starten',
+      task_menu: 'Testauswahl', full_battery: 'ETI-Kern starten: alle 8 Scores',
+      core_only: 'ETI-Kern starten: alle 8 Scores', trail_only: 'Nur Trail-Vergleichsaufgaben starten',
       spatial_only: 'Nur zusätzliche räumliche Aufgaben starten',
       break_title: 'Machen Sie bei Bedarf eine kurze Pause', next_task: 'Nächste Aufgabe',
       participant_complete: 'Testsitzung abgeschlossen', thank_you: 'Vielen Dank',
@@ -46,7 +46,7 @@ window.BatteryLanguage = (function() {
       animal: 'asf60-en-1.0', naming: 'ovn32-en-1.0', instructions: 'csb-instructions-en-1.0'
     },
     de: {
-      session: 'csb-de-0.1-pilot', story: 'osr44-library-wallet-a-de-0.1-pilot',
+      session: 'csb-de-0.3-pilot', story: 'osr44-library-wallet-a-de-0.2-pilot',
       animal: 'asf60-de-0.1-pilot', naming: 'ovn32-de-0.1-pilot', instructions: 'csb-instructions-de-0.1-pilot'
     }
   };
