@@ -7,8 +7,6 @@ import {
 const sessions = () => getStore("csb-sessions");
 const artifacts = () => getStore("csb-artifacts");
 const audit = () => getStore("csb-audit");
-const DELETABLE = new Set(["in_progress", "examiner_review_in_progress", "scoring_in_progress"]);
-
 function publicMetadata(id, record) {
   return {
     remoteId: id,
@@ -84,14 +82,11 @@ export default async function handler(req) {
     if (!passwordOk) return json({ error: "Password confirmation failed" }, 401);
     const record = await sessions().get(body.id, { type: "json", consistency: "strong" });
     if (!record) return json({ error: "Session not found" }, 404);
-    if (!DELETABLE.has(record.sessionStatus || "in_progress")) {
-      return json({ error: "Only actively ongoing sessions can be deleted here" }, 409);
-    }
     const listed = await artifacts().list({ prefix: body.id + "/" });
     for (const item of listed.blobs) await artifacts().delete(item.key);
     await sessions().delete(body.id);
     await audit().setJSON(randomUUID(), {
-      action: "delete_ongoing_session",
+      action: "delete_session",
       remoteIdHash: opaqueAuditId(body.id),
       previousStatus: record.sessionStatus || "in_progress",
       deletedAt: new Date().toISOString()
