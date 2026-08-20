@@ -31,7 +31,7 @@ Detailed administration, stimuli, cueing, stopping, and scoring rules are in `do
 
 ## Task order
 
-The full-battery order is story immediate, figure copy, animal fluency, visual naming, Number Span, figure delayed, story delayed, optional object-location and pointing measures, then Trail A/B last. Delay gates and actual delay metadata remain authoritative.
+The full-battery order is story immediate, figure copy, animal fluency, visual naming, Number Span, story delayed, figure delayed, optional object-location and pointing measures, then Trail A/B last. Story delayed recall runs first because its retention interval begins earlier; completing it normally carries the figure interval into its required 10–15-minute window. Delay gates and actual delay metadata remain authoritative.
 
 ## English and German forms
 
