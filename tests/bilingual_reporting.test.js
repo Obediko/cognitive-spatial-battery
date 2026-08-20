@@ -33,7 +33,11 @@ assert.ok(span.includes("'_de_v2.wav'"));
 assert.ok(!story.includes('SpeechSynthesisUtterance'));
 assert.ok(!span.includes('SpeechSynthesisUtterance'));
 assert.ok(!span.includes('if (NS_IS_GERMAN) return Promise.resolve()'));
-assert.ok(worker.includes("message.language === 'de' ? 'german' : 'english'"));
+assert.ok(worker.includes("ASR_ENGLISH_MODEL_ID = 'Xenova/whisper-small.en'"));
+assert.ok(worker.includes("ASR_MULTILINGUAL_MODEL_ID = 'Xenova/whisper-small'"));
+assert.ok(worker.includes("if (message.language === 'de')"));
+assert.ok(worker.includes("generationOptions.language = 'german'"));
+assert.ok(!worker.includes("language: message.language === 'de' ? 'german' : 'english'"));
 
 assert.ok(trails.includes("'ABCDEFGHIJKL'.split('')"), 'Trail B must use letters A-L');
 assert.ok(trails.includes("out.push('13')"), 'Trail B must end at 13');
