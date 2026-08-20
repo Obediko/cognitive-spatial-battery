@@ -9,8 +9,9 @@ async function openEnglishBattery(page) {
 
 test('language selection shows US and German flags', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('button', { name: /🇺🇸 English/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: /🇩🇪 Deutsch/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'English' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Deutsch' })).toBeVisible();
+  await expect(page.locator('.language-flag')).toHaveCount(2);
 });
 
 test('battery clearly separates the eight ETI scores and supports custom task selection', async ({ page }) => {
