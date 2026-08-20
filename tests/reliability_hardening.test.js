@@ -19,6 +19,7 @@ const ovn = read('js/tasks/original_visual_naming.js');
 const ocf = read('js/tasks/original_complex_figure.js');
 const olm = read('js/tasks/object_location_memory.js');
 const sp = read('js/tasks/spatial_pointing.js');
+const css = read('css/style.css');
 
 assert.ok(utils.includes('function requestMicrophone(timeoutMs)'));
 assert.ok(utils.includes('function stopRecorder(recorder, chunks, timeoutMs)'));
@@ -48,6 +49,8 @@ assert.ok(osr.includes("new Error('playback timed out')"));
 assert.ok(asf.includes('requestMicrophone(12000)'));
 assert.ok(asf.includes('stopRecorder(recorder, chunks, 3000)'));
 assert.ok(asf.includes("batteryArtifactKey(window.BatteryData.participantId, 'asf', 'main')"));
+assert.ok(asf.includes('Timer running; audio is not being recorded.'));
+assert.ok(css.includes('[hidden] { display: none !important; }'));
 
 assert.ok(ovn.includes('<img class="ovn-stimulus-image"'));
 assert.ok(ovn.includes("typeof image.decode === 'function'"));
