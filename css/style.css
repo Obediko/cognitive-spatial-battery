@@ -470,6 +470,39 @@ code { background: #0d1b2a; padding: 0.15em 0.4em; border-radius: 3px; font-size
   color: #94a3b8;
   font-size: 0.84rem;
 }
+
+@media print {
+  body.admin-page,
+  body.admin-page #jspsych-target,
+  body.admin-page .jspsych-display-element {
+    background: #fff !important;
+    color: #111 !important;
+  }
+  body.admin-page .individual-result {
+    max-width: none !important;
+    margin: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    color: #111 !important;
+  }
+  body.admin-page .individual-result .battery-btn,
+  body.admin-page .individual-result a {
+    display: none !important;
+  }
+  body.admin-page .individual-result .summary-table th,
+  body.admin-page .individual-result .summary-table td {
+    color: #111 !important;
+    border-color: #777 !important;
+    background: #fff !important;
+  }
+  body.admin-page .individual-result .osr-fineprint,
+  body.admin-page .individual-result .info-box {
+    color: #222 !important;
+    background: #fff !important;
+  }
+  @page { margin: 12mm; }
+}
 .osr-prompt {
   max-width: 620px;
   margin: 1rem auto 1.4rem;
