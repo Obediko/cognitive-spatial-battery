@@ -249,30 +249,58 @@ function makeWelcomeTrials() {
 /* ====================================================
    TASK MENU
    ==================================================== */
+var BATTERY_TASK_GROUPS = {
+  eti_core: ['osr', 'asf', 'ovn', 'ocf', 'ns'],
+  additional: ['olm', 'sp', 'vs']
+};
+
+function batteryTaskSelected(taskId) {
+  if (Array.isArray(window._selectedBatteryTasks)) {
+    return window._selectedBatteryTasks.indexOf(taskId) !== -1;
+  }
+  var legacy = {
+    full: BATTERY_TASK_GROUPS.eti_core.concat(BATTERY_TASK_GROUPS.additional),
+    eti_core: BATTERY_TASK_GROUPS.eti_core,
+    trail: ['vs'], spatial: ['olm', 'sp'],
+    osr: ['osr'], asf: ['asf'], ovn: ['ovn'], ocf: ['ocf'],
+    ns: ['ns'], olm: ['olm'], sp: ['sp'], vs: ['vs']
+  };
+  return (legacy[window._batteryChoice] || []).indexOf(taskId) !== -1;
+}
+
 function makeTaskMenu(jsPsych) {
   var de = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
   return {
     type: jsPsychHtmlButtonResponse,
-    stimulus: '<div style="max-width:680px;margin:0 auto;text-align:center">'
+    stimulus: '<div class="battery-builder">'
       + '<h2 style="color:#a8d8ea;margin-bottom:0.4em">' + batteryText('task_menu') + '</h2>'
       + '<p style="color:#cdd9e5;margin-bottom:0.3em">'
       + (de ? 'Teilnehmenden-ID: ' : 'Participant ID: ') + '<strong id="pid-display">...</strong></p>'
-      + '<p style="color:#8899aa;font-size:0.85rem;margin-bottom:1.2em">'
-      + (de ? 'Wählen Sie die Aufgaben aus. Für die Basissitzung verwenden Sie die vollständige Pilotbatterie.' : 'Select which tasks to run. For the baseline session choose <em>Run Full Battery</em>.') + '</p>'
-      + '<div style="display:grid;gap:0.6em;max-width:420px;margin:0 auto">'
-      + '<button class="battery-btn primary" id="btn-full">' + batteryText('full_battery') + ' (~28-38 min)</button>'
-      + '<button class="battery-btn" id="btn-core">' + batteryText('core_only') + '</button>'
-      + '<button class="battery-btn" id="btn-trail">' + batteryText('trail_only') + '</button>'
-      + '<button class="battery-btn" id="btn-spatial">' + batteryText('spatial_only') + '</button>'
-      + '<button class="battery-btn" id="btn-osr">' + (de ? 'Nur Geschichte erinnern' : 'Original Story Recall only') + '</button>'
-      + '<button class="battery-btn" id="btn-asf">' + (de ? 'Nur Tiere nennen' : 'Animal Naming only') + '</button>'
-      + '<button class="battery-btn" id="btn-ovn">' + (de ? 'Nur Gegenstände benennen' : 'Original Visual Naming only') + '</button>'
-      + '<button class="battery-btn" id="btn-ocf">' + (de ? 'Nur komplexe Figur' : 'Original Complex Figure only') + '</button>'
-      + '<button class="battery-btn" id="btn-vs">' + (de ? 'Nur Trail-Vergleichsaufgaben' : 'Visual Sequencing &amp; Set-Shifting only') + '</button>'
-      + '<button class="battery-btn" id="btn-olm">' + (de ? 'Nur Objekt-Ort-Gedächtnis' : 'Object-Location Memory only') + '</button>'
-      + '<button class="battery-btn" id="btn-sp">' + (de ? 'Nur räumliches Zeigen' : 'Spatial Pointing only') + '</button>'
-      + '<button class="battery-btn" id="btn-ns">' + (de ? 'Nur Zahlenspanne' : 'Number Span only') + '</button>'
-      + '</div>'
+      + '<p class="battery-builder-intro">' + (de
+        ? 'Die ETI-Kernbatterie umfasst fünf Aufgabenfamilien, die genau acht ETI-Analogscores liefern. Zusätzliche Aufgaben sind klar getrennt und fließen nicht in den ETI-Score ein.'
+        : 'The ETI core contains five task families that produce exactly eight ETI-analogue scores. Additional tasks are separated and are not ETI inputs.') + '</p>'
+      + '<section class="battery-task-group eti-task-group"><div class="battery-group-heading">'
+      + '<div><span class="osr-kicker">' + (de ? 'ETI-KERN' : 'ETI CORE') + '</span><h3>'
+      + (de ? '8 Scores aus 5 Aufgabenfamilien' : '8 scores from 5 task families') + '</h3></div>'
+      + '<button class="battery-btn primary" id="btn-core" type="button">' + batteryText('core_only') + ' (~20–28 min)</button></div>'
+      + '<div class="battery-score-grid">'
+      + '<label><input class="task-check" type="checkbox" value="osr" checked><span><strong>' + (de ? 'Geschichte erinnern' : 'Original Story Recall') + '</strong><small>CRAFTVRS analogue + CRAFTDVR analogue</small></span></label>'
+      + '<label><input class="task-check" type="checkbox" value="asf" checked><span><strong>' + (de ? 'Tiere nennen' : 'Animal Naming') + '</strong><small>ANIMALS analogue</small></span></label>'
+      + '<label><input class="task-check" type="checkbox" value="ovn" checked><span><strong>' + (de ? 'Visuelles Benennen' : 'Original Visual Naming') + '</strong><small>MINTTOTS analogue</small></span></label>'
+      + '<label><input class="task-check" type="checkbox" value="ocf" checked><span><strong>' + (de ? 'Komplexe Figur' : 'Original Complex Figure') + '</strong><small>UDSBENTC analogue + UDSBENTD analogue</small></span></label>'
+      + '<label><input class="task-check" type="checkbox" value="ns" checked><span><strong>' + (de ? 'Zahlenspanne' : 'Number Span') + '</strong><small>DIGFORCT analogue + DIGBACCT analogue</small></span></label>'
+      + '</div></section>'
+      + '<section class="battery-task-group additional-task-group"><span class="osr-kicker">' + (de ? 'ZUSÄTZLICH' : 'ADDITIONAL') + '</span><h3>'
+      + (de ? 'Nicht Bestandteil der 8 ETI-Scores' : 'Not part of the 8 ETI scores') + '</h3><div class="battery-score-grid">'
+      + '<label><input class="task-check" type="checkbox" value="olm"><span><strong>' + (de ? 'Objekt-Ort-Gedächtnis' : 'Object-Location Memory') + '</strong><small>' + (de ? 'zusätzlicher räumlicher Endpunkt' : 'additional spatial outcome') + '</small></span></label>'
+      + '<label><input class="task-check" type="checkbox" value="sp"><span><strong>' + (de ? 'Räumliches Zeigen' : 'Spatial Pointing') + '</strong><small>' + (de ? 'zusätzlicher räumlicher Endpunkt' : 'additional spatial outcome') + '</small></span></label>'
+      + '<label><input class="task-check" type="checkbox" value="vs"><span><strong>' + (de ? 'Trail A/B-Vergleich' : 'Trail A/B comparator') + '</strong><small>' + (de ? 'läuft zuletzt; kein ETI-Input' : 'runs last; not an ETI input') + '</small></span></label>'
+      + '</div></section>'
+      + '<div class="battery-builder-actions"><button class="battery-btn" id="btn-select-core" type="button">' + (de ? 'Nur ETI auswählen' : 'Select ETI core') + '</button>'
+      + '<button class="battery-btn" id="btn-select-all" type="button">' + (de ? 'Alle auswählen' : 'Select all tasks') + '</button>'
+      + '<button class="battery-btn" id="btn-clear" type="button">' + (de ? 'Auswahl löschen' : 'Clear selection') + '</button>'
+      + '<button class="battery-btn primary" id="btn-selected" type="button">' + (de ? 'Ausgewählte Aufgaben starten' : 'Run selected tasks') + '</button></div>'
+      + '<p id="battery-selection-status" class="osr-status" aria-live="polite"></p>'
       + '<p style="color:#8899aa;font-size:0.8rem;margin-top:1.2em">'
       + 'Pilot mode: set <code>window.PILOT_MODE = false</code> in utils.js for real sessions.'
       + '</p></div>',
@@ -283,39 +311,37 @@ function makeTaskMenu(jsPsych) {
       var el = document.getElementById('pid-display');
       if (el) el.textContent = window.BatteryData.participantId || 'not set';
 
-      function finish(choice) {
+      function finish(choice, selectedTasks) {
+        window._selectedBatteryTasks = selectedTasks.slice();
         window._batteryChoice = choice;
         window.BatteryData.batteryChoice = choice;
+        window.BatteryData.selectedTasks = selectedTasks.slice();
         window.BatteryData.sessionStatus = 'in_progress';
         checkpointBatterySession();
-        jsPsych.finishTrial({ battery_choice: choice });
+        jsPsych.finishTrial({ battery_choice: choice, selected_tasks: selectedTasks.slice() });
       }
 
-      var btnFull = document.getElementById('btn-full');
       var btnCore = document.getElementById('btn-core');
-      var btnTrail = document.getElementById('btn-trail');
-      var btnSpatial = document.getElementById('btn-spatial');
-      var btnOSR  = document.getElementById('btn-osr');
-      var btnASF  = document.getElementById('btn-asf');
-      var btnOVN  = document.getElementById('btn-ovn');
-      var btnOCF  = document.getElementById('btn-ocf');
-      var btnVS   = document.getElementById('btn-vs');
-      var btnOLM  = document.getElementById('btn-olm');
-      var btnSP   = document.getElementById('btn-sp');
-      var btnNS   = document.getElementById('btn-ns');
-
-      if (btnFull) btnFull.addEventListener('click', function() { finish('full'); });
-      if (btnCore) btnCore.addEventListener('click', function() { finish('eti_core'); });
-      if (btnTrail) btnTrail.addEventListener('click', function() { finish('trail'); });
-      if (btnSpatial) btnSpatial.addEventListener('click', function() { finish('spatial'); });
-      if (btnOSR)  btnOSR.addEventListener('click', function() { finish('osr'); });
-      if (btnASF)  btnASF.addEventListener('click', function() { finish('asf'); });
-      if (btnOVN)  btnOVN.addEventListener('click', function() { finish('ovn'); });
-      if (btnOCF)  btnOCF.addEventListener('click', function() { finish('ocf'); });
-      if (btnVS)   btnVS.addEventListener('click',   function() { finish('vs'); });
-      if (btnOLM)  btnOLM.addEventListener('click',  function() { finish('olm'); });
-      if (btnSP)   btnSP.addEventListener('click',   function() { finish('sp'); });
-      if (btnNS)   btnNS.addEventListener('click',   function() { finish('ns'); });
+      var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.task-check'));
+      function setChecked(ids) {
+        checkboxes.forEach(function(box) { box.checked = ids.indexOf(box.value) !== -1; });
+      }
+      function selected() {
+        return checkboxes.filter(function(box) { return box.checked; }).map(function(box) { return box.value; });
+      }
+      if (btnCore) btnCore.addEventListener('click', function() { finish('eti_core', BATTERY_TASK_GROUPS.eti_core); });
+      document.getElementById('btn-select-core').addEventListener('click', function() { setChecked(BATTERY_TASK_GROUPS.eti_core); });
+      document.getElementById('btn-select-all').addEventListener('click', function() { setChecked(BATTERY_TASK_GROUPS.eti_core.concat(BATTERY_TASK_GROUPS.additional)); });
+      document.getElementById('btn-clear').addEventListener('click', function() { setChecked([]); });
+      document.getElementById('btn-selected').addEventListener('click', function() {
+        var tasks = selected();
+        var status = document.getElementById('battery-selection-status');
+        if (!tasks.length) {
+          status.textContent = de ? 'Wählen Sie mindestens eine Aufgabe aus.' : 'Select at least one task.';
+          return;
+        }
+        finish('custom', tasks);
+      });
     }
   };
 }
@@ -429,56 +455,49 @@ window.addEventListener('load', function() {
   var osrImmediateTimeline = {
     timeline: buildOSRImmediateTimeline(),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'eti_core' || c === 'osr';
+      return batteryTaskSelected('osr');
     }
   };
 
   var osrDelayedTimeline = {
     timeline: buildOSRDelayedTimeline(),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'eti_core' || c === 'osr';
+      return batteryTaskSelected('osr');
     }
   };
 
   var vsTimeline = {
     timeline: buildVisualSequencingTimeline(),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'trail' || c === 'vs';
+      return batteryTaskSelected('vs');
     }
   };
 
   var asfTimeline = {
     timeline: [makeBreakScreen('Animal Naming Task')].concat(buildAnimalFluencyTimeline()),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'eti_core' || c === 'asf';
+      return batteryTaskSelected('asf');
     }
   };
 
   var ovnTimeline = {
     timeline: [makeBreakScreen('Original Visual Naming')].concat(buildOriginalVisualNamingTimeline()),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'eti_core' || c === 'ovn';
+      return batteryTaskSelected('ovn');
     }
   };
 
   var ocfImmediateTimeline = {
     timeline: [makeBreakScreen('Original Complex Figure — copy')].concat(buildOCFImmediateTimeline()),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'eti_core' || c === 'ocf';
+      return batteryTaskSelected('ocf');
     }
   };
 
   var ocfDelayedTimeline = {
     timeline: [makeBreakScreen('Original Complex Figure — delayed recall')].concat(buildOCFDelayedTimeline()),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'eti_core' || c === 'ocf';
+      return batteryTaskSelected('ocf');
     }
   };
 
@@ -493,63 +512,56 @@ window.addEventListener('load', function() {
       data: { battery_phase: 'examiner_handoff' }
     }],
     conditional_function: function() {
-      return ['full', 'osr', 'asf', 'ovn', 'ocf'].indexOf(window._batteryChoice) !== -1;
+      return false;
     }
   };
 
   var osrReviewTimeline = {
     timeline: buildOSRReviewTimeline(),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'osr';
+      return false;
     }
   };
 
   var asfReviewTimeline = {
     timeline: buildAnimalFluencyReviewTimeline(),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'asf';
+      return false;
     }
   };
 
   var ovnReviewTimeline = {
     timeline: buildOriginalVisualNamingReviewTimeline(),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'ovn';
+      return false;
     }
   };
 
   var ocfReviewTimeline = {
     timeline: buildOCFReviewTimeline(),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'ocf';
+      return false;
     }
   };
 
   var olmTimeline = {
     timeline: [makeBreakScreen('Object-Location Memory Task')].concat(buildObjectLocationTimeline()),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'spatial' || c === 'olm';
+      return batteryTaskSelected('olm');
     }
   };
 
   var spTimeline = {
     timeline: [makeBreakScreen('Spatial Pointing Task')].concat(buildSpatialPointingTimeline()),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'spatial' || c === 'sp';
+      return batteryTaskSelected('sp');
     }
   };
 
   var nsTimeline = {
     timeline: [makeBreakScreen('Number Span Task')].concat(buildNumberSpanTimeline()),
     conditional_function: function() {
-      var c = window._batteryChoice;
-      return c === 'full' || c === 'eti_core' || c === 'ns';
+      return batteryTaskSelected('ns');
     }
   };
 

@@ -7,7 +7,7 @@ async function openEnglishBattery(page) {
   await expect(page.getByRole('heading', { name: /Baseline Cognitive/ })).toBeVisible();
 }
 
-test('battery loads ETI core, comparator, spatial and individual task choices without browser errors', async ({ page }) => {
+test('battery clearly separates the eight ETI scores and supports custom task selection', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await openEnglishBattery(page);
@@ -17,19 +17,15 @@ test('battery loads ETI core, comparator, spatial and individual task choices wi
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Continue without fullscreen' }).click();
   await expect(page.getByRole('heading', { name: 'Task Menu' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /ETI-core measures only/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Trail comparators only/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: /additional spatial measures only/ })).toBeVisible();
-  for (const label of [
-    'Original Story Recall only',
-    'Animal Naming only',
-    'Original Visual Naming only',
-    'Original Complex Figure only',
-    'Visual Sequencing & Set-Shifting only',
-    'Object-Location Memory only',
-    'Spatial Pointing only',
-    'Number Span only'
-  ]) await expect(page.getByRole('button', { name: label })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Run ETI core: all 8 scores/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '8 scores from 5 task families' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Not part of the 8 ETI scores' })).toBeVisible();
+  await expect(page.locator('.task-check')).toHaveCount(8);
+  await expect(page.locator('.task-check:checked')).toHaveCount(5);
+  await page.getByRole('button', { name: 'Select all tasks' }).click();
+  await expect(page.locator('.task-check:checked')).toHaveCount(8);
+  await page.getByRole('button', { name: 'Select ETI core' }).click();
+  await expect(page.locator('.task-check:checked')).toHaveCount(5);
   expect(errors).toEqual([]);
 });
 
@@ -51,7 +47,9 @@ test('complex figure accepts multiple separate mouse strokes', async ({ page }) 
   await page.getByRole('button', { name: 'Confirm ID' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Continue without fullscreen' }).click();
-  await page.getByRole('button', { name: 'Original Complex Figure only' }).click();
+  await page.getByRole('button', { name: 'Clear selection' }).click();
+  await page.locator('.task-check[value="ocf"]').check();
+  await page.getByRole('button', { name: 'Run selected tasks' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Begin copy' }).click();
 
@@ -94,7 +92,9 @@ test('visual naming starts its clock only after the image is available', async (
   await page.getByRole('button', { name: 'Confirm ID' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Continue without fullscreen' }).click();
-  await page.getByRole('button', { name: 'Original Visual Naming only' }).click();
+  await page.getByRole('button', { name: 'Clear selection' }).click();
+  await page.locator('.task-check[value="ovn"]').check();
+  await page.getByRole('button', { name: 'Run selected tasks' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Begin' }).click();
 

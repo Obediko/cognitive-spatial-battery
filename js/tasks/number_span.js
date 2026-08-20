@@ -9,7 +9,7 @@
   var NS_SEQUENCE_VERSION = 'ons-controlled-form-a-1.0';
   var NS_AUDIO_BASE = 'assets/audio/digits/';
   var NS_ONSET_INTERVAL_MS = 1000; // nominal onset spacing; actual onsets are recorded
-  var NS_AUDIO_LOAD_TIMEOUT_MS = 8000;
+  var NS_AUDIO_LOAD_TIMEOUT_MS = 15000;
   var NS_POST_SEQUENCE_BUFFER_MS = 600; // extra pause after the last digit before responding
   var NS_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
 
@@ -20,17 +20,17 @@
   var NS_TRIALS_PER_LENGTH = 2;
 
   var NS_INSTRUCTION_FILES = {
-    forward: NS_AUDIO_BASE + 'ons_forward_instruction_v1.wav',
-    backward: NS_AUDIO_BASE + 'ons_backward_instruction_v1.wav'
+    forward: NS_AUDIO_BASE + (NS_IS_GERMAN ? 'ons_forward_instruction_de_v2.wav' : 'ons_forward_instruction_v1.wav'),
+    backward: NS_AUDIO_BASE + (NS_IS_GERMAN ? 'ons_backward_instruction_de_v2.wav' : 'ons_backward_instruction_v1.wav')
   };
 
   function nsDigitFile(d) {
-    return NS_AUDIO_BASE + 'digit_' + d + '_v1.wav';
+    return NS_AUDIO_BASE + 'digit_' + d + (NS_IS_GERMAN ? '_de_v2.wav' : '_v1.wav');
   }
 
   window.NSState = {
     version: NS_VERSION,
-    audioStandardized: !NS_IS_GERMAN, // German recordings are not yet validated or bundled
+    audioStandardized: true,
     digitBlobUrls: {},       // digit -> object URL (preloaded once)
     playbackOnsets: [],     // planned and observed audio starts for timing QA
     discontinued: { forward: false, backward: false },
@@ -81,12 +81,11 @@
   }
 
   // Preloads all ten digit files plus both instruction files once. If any
-  // file is missing, ns audio playback falls back to speechSynthesis for the
-  // affected digit(s)/instruction(s) and NSState.audioStandardized is set to
-  // false so the session can be flagged for review.
+  // file is missing, the task pauses for a retry. Browser speech synthesis is
+  // intentionally never substituted because it would change administration.
   function nsPreloadAudio() {
-    if (NS_IS_GERMAN) return Promise.resolve();
     var jobs = [];
+    window.NSState.audioStandardized = true;
     for (var d = 0; d <= 9; d++) {
       (function(digit) {
         jobs.push(
@@ -110,74 +109,42 @@
     return Promise.all(jobs);
   }
 
-  // Speaks a single digit (or short instruction) with the browser voice as a
-  // fallback when the standardized file for it failed to load.
-  function nsSpeakFallback(text) {
-    return new Promise(function(resolve) {
-      if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
-        resolve();
-        return;
-      }
-      var settled = false;
-      var utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = NS_IS_GERMAN ? 'de-DE' : 'en-GB';
-      var timer = setTimeout(function() {
-        if (settled) return;
-        settled = true;
-        try { window.speechSynthesis.cancel(); } catch (error) { console.warn(error); }
-        resolve();
-      }, 15000);
-      function finish() {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        resolve();
-      }
-      utterance.rate = 0.9;
-      utterance.onend = finish;
-      utterance.onerror = finish;
-      window.speechSynthesis.speak(utterance);
-    });
-  }
-
   function nsPlayInstruction(direction, statusEl, button) {
     if (button) button.disabled = true;
     if (statusEl) statusEl.textContent = 'Playing…';
     var url = NS_INSTRUCTION_FILES[direction + 'BlobUrl'];
     var finished = false;
-    var instructionTimer = setTimeout(function() { finish(); }, 30000);
-    var finish = function() {
+    var instructionTimer = setTimeout(function() { finish(false); }, 30000);
+    var finish = function(preserveStatus) {
       if (finished) return;
       finished = true;
       clearTimeout(instructionTimer);
-      if (statusEl) statusEl.textContent = '';
+      if (statusEl && !preserveStatus) statusEl.textContent = '';
       if (button) button.disabled = false;
     };
     if (url) {
       var el = new Audio(url);
-      el.addEventListener('ended', finish, { once: true });
+      el.addEventListener('ended', function() { finish(false); }, { once: true });
       el.addEventListener('error', function() {
-        if (statusEl) statusEl.textContent = 'Standardized audio unavailable, using fallback voice…';
-        nsSpeakFallback(NS_IS_GERMAN
-          ? (direction === 'forward'
-            ? 'Sie hören eine Ziffernfolge. Wiederholen Sie die Ziffern anschließend in derselben Reihenfolge.'
-            : 'Sie hören eine Ziffernfolge. Wiederholen Sie die Ziffern anschließend in umgekehrter Reihenfolge.')
-          : (direction === 'forward'
-            ? 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in the same order.'
-            : 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in reverse order.')
-        ).then(finish);
+        window.NSState.audioStandardized = false;
+        if (statusEl) statusEl.textContent = NS_IS_GERMAN
+          ? 'Die standardisierte Aufnahme konnte nicht abgespielt werden. Bitte erneut versuchen.'
+          : 'The standardized recording could not be played. Please retry.';
+        finish(true);
       }, { once: true });
-      el.play().catch(function() { finish(); });
+      el.play().catch(function() {
+        window.NSState.audioStandardized = false;
+        if (statusEl) statusEl.textContent = NS_IS_GERMAN
+          ? 'Die standardisierte Aufnahme konnte nicht abgespielt werden. Bitte erneut versuchen.'
+          : 'The standardized recording could not be played. Please retry.';
+        finish(true);
+      });
     } else {
-      if (statusEl) statusEl.textContent = 'Standardized audio unavailable, using fallback voice…';
-      nsSpeakFallback(NS_IS_GERMAN
-        ? (direction === 'forward'
-          ? 'Sie hören eine Ziffernfolge. Wiederholen Sie die Ziffern anschließend in derselben Reihenfolge.'
-          : 'Sie hören eine Ziffernfolge. Wiederholen Sie die Ziffern anschließend in umgekehrter Reihenfolge.')
-        : (direction === 'forward'
-          ? 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in the same order.'
-          : 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in reverse order.')
-      ).then(finish);
+      window.NSState.audioStandardized = false;
+      if (statusEl) statusEl.textContent = NS_IS_GERMAN
+        ? 'Die standardisierte Aufnahme ist nicht geladen. Bitte laden Sie die Aufgabe erneut.'
+        : 'The standardized recording is not loaded. Please reload the task.';
+      finish(true);
     }
   }
 
@@ -189,7 +156,7 @@
         + '<p>' + (NS_IS_GERMAN
           ? ('Sie hören einzelne Ziffern. Wiederholen Sie die Ziffern anschließend ' + (direction === 'forward' ? 'in derselben Reihenfolge.' : 'in umgekehrter Reihenfolge.'))
           : ('You will hear a series of digits, one at a time. When the sequence ends, repeat the digits ' + (direction === 'forward' ? 'in the same order.' : 'in reverse order.'))) + '</p>'
-        + '<button class="battery-btn" id="ns-replay-instructions" type="button">Replay instructions audio</button>'
+        + '<button class="battery-btn" id="ns-replay-instructions" type="button">' + (NS_IS_GERMAN ? 'Anweisung erneut abspielen' : 'Replay instructions audio') + '</button>'
         + '<p id="ns-instruction-status" class="osr-status" aria-live="polite"></p></div>',
       choices: ['Continue'],
       data: { task_name: 'number_span', phase: 'instructions', direction: direction, task_version: NS_VERSION },
@@ -272,8 +239,7 @@
             });
           } else {
             window.NSState.audioStandardized = false;
-            var fallback = nsSpeakFallback(String(digit));
-            if (index === sequence.length - 1) fallback.then(finish);
+            if (index === sequence.length - 1) finish();
           }
         }, index * NS_ONSET_INTERVAL_MS);
       });
@@ -420,6 +386,7 @@
           ns_forward_correct_trials: rows.filter(function(r) { return r.direction === 'forward' && r.correct; }).length,
           ns_backward_correct_trials: rows.filter(function(r) { return r.direction === 'backward' && r.correct; }).length,
           ns_audio_standardized: window.NSState.audioStandardized,
+          ns_audio_set_version: NS_IS_GERMAN ? 'ons-audio-de-thorsten-2.0-pilot' : 'ons-audio-en-kokoro-1.0-pilot',
           ns_task_version: NS_VERSION,
           ns_sequence_version: NS_SEQUENCE_VERSION
         });
@@ -433,10 +400,26 @@
       async: true,
       func: function(done) {
         var display = nsDisplay();
-        display.innerHTML = '<div class="osr-card"><span class="osr-kicker">ETI Core · Working memory</span>'
-          + '<h2>Preparing number span audio…</h2>'
-          + '<p class="osr-status" aria-live="polite">This only takes a moment.</p></div>';
-        nsPreloadAudio().then(function() { done(); });
+        function load() {
+          display.innerHTML = '<div class="osr-card"><span class="osr-kicker">ETI Core · Working memory</span>'
+            + '<h2>' + (NS_IS_GERMAN ? 'Audio für die Zahlenspanne wird vorbereitet…' : 'Preparing number span audio…') + '</h2>'
+            + '<p class="osr-status" aria-live="polite">' + (NS_IS_GERMAN ? 'Dies dauert nur einen Moment.' : 'This only takes a moment.') + '</p></div>';
+          nsPreloadAudio().then(function() {
+            if (window.NSState.audioStandardized) {
+              done({ audio_preload_complete: true });
+              return;
+            }
+            display.innerHTML = '<div class="osr-card"><span class="osr-kicker">ETI Core · Working memory</span>'
+              + '<h2>' + (NS_IS_GERMAN ? 'Audio konnte nicht vollständig geladen werden' : 'Audio did not load completely') + '</h2>'
+              + '<p class="osr-error">' + (NS_IS_GERMAN
+                ? 'Die Aufgabe wurde angehalten, damit keine nicht standardisierte Computerstimme verwendet wird.'
+                : 'The task is paused so that a non-standardized computer voice is never substituted.') + '</p>'
+              + '<button class="battery-btn primary" id="ns-retry-preload" type="button">'
+              + (NS_IS_GERMAN ? 'Standardisiertes Audio erneut laden' : 'Retry standardized audio') + '</button></div>';
+            document.getElementById('ns-retry-preload').addEventListener('click', load);
+          });
+        }
+        load();
       }
     };
   }

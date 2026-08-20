@@ -107,6 +107,77 @@ code { background: #0d1b2a; padding: 0.15em 0.4em; border-radius: 3px; font-size
 .battery-btn.download { background: #1b5e20; border-color: #66bb6a; color: #fff; min-width: 200px; }
 .battery-btn.download:hover { background: #2e7d32; }
 
+/* ---- Battery builder: ETI core versus optional modules ---- */
+.battery-builder {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  text-align: center;
+}
+.battery-builder-intro {
+  max-width: 850px;
+  margin: 0.5rem auto 1.1rem;
+  color: #cdd9e5;
+}
+.battery-task-group {
+  margin: 1rem auto;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border-radius: 12px;
+  text-align: left;
+}
+.eti-task-group {
+  background: #0d2a3e;
+  border: 3px solid #5bc0de;
+  box-shadow: 0 0 0 4px rgba(91, 192, 222, 0.09);
+}
+.additional-task-group {
+  background: #191f35;
+  border: 1px solid #58647d;
+}
+.battery-group-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.battery-group-heading h3,
+.battery-task-group > h3 { margin: 0.25rem 0 0.75rem; }
+.battery-score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.65rem;
+}
+.battery-score-grid label {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  min-height: 72px;
+  padding: 0.8rem;
+  background: rgba(5, 15, 29, 0.55);
+  border: 1px solid #3a6186;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.battery-score-grid label:has(input:checked) {
+  border-color: #7dd3fc;
+  background: rgba(15, 52, 96, 0.8);
+}
+.battery-score-grid input { width: 20px; height: 20px; margin-top: 0.1rem; accent-color: #e94560; }
+.battery-score-grid span { display: flex; flex-direction: column; gap: 0.25rem; }
+.battery-score-grid small { color: #aebed0; line-height: 1.35; }
+.battery-builder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 1rem;
+}
+@media (max-width: 720px) {
+  .battery-group-heading { align-items: stretch; flex-direction: column; }
+  .battery-group-heading .battery-btn { width: 100%; margin: 0; }
+}
+
 /* ---- Info / warning boxes ---- */
 .info-box {
   background: #0d2137;

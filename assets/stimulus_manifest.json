@@ -4,8 +4,8 @@
   "statement": "No NACC, Craft Story, MINT, Benson Figure, or Trail Making Test stimuli are included.",
   "stimuli": [
     {
-      "group": "osr_audio",
-      "path": "assets/audio/osr/*.wav",
+      "group": "osr_audio_english",
+      "path": "assets/audio/osr/*_v1.wav (English files only)",
       "creator_method": "synthetic TTS (Kokoro; repository generation record)",
       "licence_review": "pending_release_signoff",
       "validation": "automated_acoustic_QA_passed_and_researcher_listening_review_reported_complete",
@@ -13,13 +13,31 @@
       "researcher_approval": "approved_by_repository_owner_for_pilot"
     },
     {
-      "group": "number_span_audio",
-      "path": "assets/audio/digits/*.wav",
+      "group": "number_span_audio_english",
+      "path": "assets/audio/digits/*_v1.wav (English files only)",
       "creator_method": "synthetic TTS (Kokoro; repository generation record)",
       "licence_review": "pending_release_signoff",
       "validation": "automated_acoustic_QA_passed_and_researcher_listening_review_reported_complete",
       "researcher_supplied": true,
       "researcher_approval": "approved_by_repository_owner_for_pilot"
+    },
+    {
+      "group": "osr_audio_german_pilot",
+      "path": "assets/audio/osr/*_de_v2.wav",
+      "creator_method": "offline synthetic TTS (Piper 2023.11.14-2; de_DE-thorsten-high; smoother v2 profile; normalized to mono 48 kHz 16-bit PCM)",
+      "licence_review": "Piper runtime MIT; Thorsten Piper model repository MIT; underlying Thorsten voice project CC0",
+      "validation": "automated_acoustic_QA_passed; researcher_accepted_three_v2_previews; full_set_native_listener_review_pending",
+      "researcher_supplied_model": true,
+      "provenance_manifest": "assets/audio/german_audio_manifest.json"
+    },
+    {
+      "group": "number_span_audio_german_pilot",
+      "path": "assets/audio/digits/*_de_v2.wav",
+      "creator_method": "offline synthetic TTS (Piper 2023.11.14-2; de_DE-thorsten-high; smoother v2 profile; normalized to mono 48 kHz 16-bit PCM)",
+      "licence_review": "Piper runtime MIT; Thorsten Piper model repository MIT; underlying Thorsten voice project CC0",
+      "validation": "automated_acoustic_QA_passed; researcher_accepted_three_v2_previews; full_set_native_listener_review_pending",
+      "researcher_supplied_model": true,
+      "provenance_manifest": "assets/audio/german_audio_manifest.json"
     },
     {
       "group": "ovn_drawings",
@@ -64,12 +82,12 @@
     "listening_review": "reported_complete_for_story_recall_and_number_span"
   },
   "acoustic_qa": {
-    "checked_on": "2026-08-10",
-    "status": "passed",
+    "checked_on": "2026-08-20",
+    "status": "combined_english_german_v2_local_passed_pending_ci_confirmation",
     "method": "scripts/audio_qa.py",
     "github_actions_run": 24,
     "artifact_id": 9055037763,
-    "files_analyzed": 17,
+    "files_analyzed": 34,
     "criteria": [
       "mono 48 kHz 16-bit PCM",
       "zero exact clipped samples",
@@ -79,6 +97,6 @@
       "digit duration < 950 ms",
       "digit RMS spread <= 3 dB"
     ],
-    "limitation": "File QA and researcher listening do not establish cross-device playback equivalence."
+    "limitation": "The cited Actions artifact covers the original 17 English files. Combined English/German-v2 CI confirmation and full-set German native-listener review remain pending. File QA does not establish cross-device playback or language-form equivalence."
   }
 }

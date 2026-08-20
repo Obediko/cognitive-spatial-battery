@@ -19,11 +19,13 @@ ETI uses eight component scores produced by five test families—not eight separ
 
 Visual Sequencing/Set-Shifting is retained as a Trail A/B conceptual comparator and runs last. Object-Location Memory and Spatial Pointing are optional additional spatial outcomes. None of those three modules is an ETI input.
 
+At session start, the primary action runs only the ETI core. A custom battery builder allows any combination of the five ETI task families and three additional modules. The interface displays the eight ETI outputs separately from non-ETI measures, and the Trail A/B comparator remains last whenever selected.
+
 All scores are experimental pilot scores. They are not NACC scores and are not norm-equivalent to the source instruments whose principles motivated the designs.
 
 ## Research status
 
-This repository is suitable for software testing and supervised piloting only. It is **not cleared for inferential data collection** until the gates in [the validation plan](docs/validation/validation_plan.md) are signed off. German is an explicitly unvalidated parallel pilot form; its generated story/digit speech must be replaced by frozen reviewed recordings before research use.
+This repository is suitable for software testing and supervised piloting only. It is **not cleared for inferential data collection** until the gates in [the validation plan](docs/validation/validation_plan.md) are signed off. German is an explicitly unvalidated parallel pilot form. Frozen German story, prompt and digit recordings are bundled, but still require native-listener approval and cross-device validation before research use.
 
 ## Running locally
 
@@ -52,7 +54,7 @@ The examiner portal uses password-authenticated, HTTP-only sessions when the Net
 
 ## Standardized stimulus audio
 
-Story prompts, story playback, digit instructions, and digits use repository WAV files generated with a synthetic voice. A successful file load is recorded separately from scientific validation. The current files are **pilot-only** until intelligibility, pronunciation, duration, clipping, silence, loudness, and listener-equivalence checks pass. Browser speech synthesis is an emergency fallback and marks the session non-standardized.
+English and German story prompts, story playback, digit instructions, and digits use frozen repository WAV files generated with synthetic voices. The English form uses Kokoro and the German pilot uses Piper with the Thorsten High voice. A successful file load is recorded separately from scientific validation. The files remain **pilot-only** until intelligibility, pronunciation, duration, clipping, silence, loudness, and listener-equivalence checks pass. Browser speech synthesis is never substituted for missing standardized stimulus audio; the affected task pauses and offers a retry.
 
 See [the stimulus manifest](assets/stimulus_manifest.json) and task specifications under `docs/eti-core/`.
 

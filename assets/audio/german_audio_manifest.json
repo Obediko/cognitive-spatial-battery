@@ -1,0 +1,43 @@
+{
+  "manifest_version": "2.0.0",
+  "generated_on": "2026-08-20",
+  "status": "pilot_only_v2_preview_accepted_full_set_native_listener_review_pending",
+  "generator": {
+    "engine": "Piper",
+    "engine_release": "2023.11.14-2",
+    "runtime_archive_sha256": "a50cb45f355b7af1f6d758c1b360717877ba0a398cc8cbe6d2a7a3a26e225992",
+    "model": "de_DE-thorsten-high",
+    "model_sha256": "9df1c43c61149ef9b39e618e2b861fbe41e1fcea9390b2dac62e8761573ea4f1",
+    "model_sample_rate_hz": 22050,
+    "model_quality": "high",
+    "inference": { "noise_scale": 0.5, "length_scale": 1.15, "noise_w": 0.6 },
+    "postprocessing": "sentence-wise synthesis; 120 ms inter-sentence silence; leading silence trim; 50 ms onset pad; 90 ms fade-in; 40 ms fade-out; 80 ms retained trailing silence; FFmpeg loudnorm I=-24, TP=-3, LRA=7; resample to mono 48 kHz 16-bit PCM"
+  },
+  "licensing": {
+    "piper_runtime": "MIT",
+    "thorsten_piper_model_repository": "MIT",
+    "thorsten_voice_project": "CC0-1.0",
+    "note": "Retain this provenance record with redistributed audio."
+  },
+  "files": {
+    "assets/audio/digits/digit_0_de_v2.wav": "52e2976b23f523c800bd7150381e860bf54478531d8fa99f80d0a3de3e908777",
+    "assets/audio/digits/digit_1_de_v2.wav": "17e519f7048cef4c703b5fee45653f74890ee7bf5cd2a08db85028e346d48324",
+    "assets/audio/digits/digit_2_de_v2.wav": "b093c417f09e9adc22c6f1d4fc35b83315cf60599cfd3e6078878fd813afa525",
+    "assets/audio/digits/digit_3_de_v2.wav": "0a58b941c90170ced36faf5852bf354fe471f19876ed40e88e9788656c528e27",
+    "assets/audio/digits/digit_4_de_v2.wav": "8ff9b04092db5208ba8cabcd567e8416ab5ffc1726fa9eb94a61861af3759fda",
+    "assets/audio/digits/digit_5_de_v2.wav": "ffc0a2eeeeee56ab4d98ce4dcd56dbe8ccf2d856c21591ef67ae7bec7d0e592d",
+    "assets/audio/digits/digit_6_de_v2.wav": "81fadf8a99213ad4715d3e33caf1293e081aa9f0f2f50be43c0b63d0dcfc7e21",
+    "assets/audio/digits/digit_7_de_v2.wav": "fe36f425b06aa45299d6a1d9d287a00d78dbda509cce233f3c79ecdc32925837",
+    "assets/audio/digits/digit_8_de_v2.wav": "b471892ae0e45b90d5ae030f772a1756a053ee4d088f32a73194b5430c5ffadf",
+    "assets/audio/digits/digit_9_de_v2.wav": "ae4a5d4bdc2c227c42561f3d12877cfc4ca70a582dbb9c8c2cc0936537e00a68",
+    "assets/audio/digits/ons_forward_instruction_de_v2.wav": "ef2bfdf657ead4cefdebf3427de6e0965db261ef54fa76fa117c461856971324",
+    "assets/audio/digits/ons_backward_instruction_de_v2.wav": "b1685cd74908a16d99aff840ba8df897d452c375300ffee8ce36f4f21ae78816",
+    "assets/audio/osr/osr44_library_wallet_a_de_v2.wav": "9e4e0802833673d2913af69dc89856c6ad230945dd129fcc8c21dde924e167b0",
+    "assets/audio/osr/osr_instruction_de_v2.wav": "4e2a1fec7812e1a7b9b0a0544043de3067c6cd9218844ddbfe3151fd11316745",
+    "assets/audio/osr/osr_immediate_prompt_de_v2.wav": "ef5e86d31e589d1e71f9748ef06349847ae4479355a8d0e7ca01a2a1b5deffe8",
+    "assets/audio/osr/osr_delayed_prompt_de_v2.wav": "d025b8e6731bf00a70805b38ef97d31d24035e921fbadfe009dd65c60831f05e",
+    "assets/audio/osr/osr_neutral_prompt_de_v2.wav": "e74e394e136a848cc958b70adcec96a157fb37716a606088044f54006233320a"
+  },
+  "researcher_listening_review": "Repository owner accepted the v2 story, Number Span instruction, and digit comparison previews on 2026-08-20. Full-set native-listener review remains pending.",
+  "validation_boundary": "Automated file QA does not establish pronunciation, naturalness, intelligibility, cultural appropriateness, cross-device equivalence, or English-German measurement equivalence."
+}
