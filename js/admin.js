@@ -22,6 +22,18 @@
     if (value === null || value === undefined || (typeof value === 'number' && isNaN(value))) return 'Not scored';
     return escapeHtml(value) + (suffix || '');
   }
+  function scoreWithStatus(value, statusName, suffix) {
+    if (value !== null && value !== undefined && !(typeof value === 'number' && isNaN(value))) {
+      return summaryValue(value, suffix);
+    }
+    var labels = {
+      provisional: 'Needs review: one or more responses are uncertain',
+      unreviewed: 'Needs review: one or more responses are unclassified',
+      deferred: 'Scoring was deferred',
+      incomplete: 'Incomplete administration; no final score calculated'
+    };
+    return escapeHtml(labels[statusName] || 'Not scored yet');
+  }
   function checkpointPayload() {
     return {
       saved_at: getTimestamp(), participantId: BatteryData.participantId,
@@ -36,29 +48,44 @@
       BatteryData.sessionStatus = 'examiner_review_complete';
       checkpointBatterySession();
       var summary = buildSummary();
+      var asf = BatteryData.taskSummaries.animal_semantic_fluency || {};
+      var ovn = BatteryData.taskSummaries.original_visual_naming || {};
       var target = document.getElementById('jspsych-content') || document.querySelector('.jspsych-content') || document.getElementById('jspsych-target');
-      target.innerHTML = '<div class="osr-card" style="max-width:900px;margin:0 auto;"><span class="osr-kicker">Examiner checkpoint</span>'
-        + '<h2>Review complete</h2><p>Participant ID: <strong>' + escapeHtml(BatteryData.participantId) + '</strong></p>'
-        + '<h3>Eight ETI-ready analogue inputs</h3><table class="summary-table"><tr><th>Measure</th><th>Verified/provisional value</th></tr>'
-        + '<tr><td>Story immediate verbatim</td><td>' + summaryValue(summary.osr_immediate_verbatim, ' / 44') + '</td></tr>'
-        + '<tr><td>Story delayed verbatim</td><td>' + summaryValue(summary.osr_delayed_verbatim, ' / 44') + '</td></tr>'
-        + '<tr><td>Animal Fluency</td><td>' + summaryValue(summary.asf_total_valid_unique) + '</td></tr>'
-        + '<tr><td>Visual Naming uncued</td><td>' + summaryValue(summary.ovn_total_uncued) + '</td></tr>'
-        + '<tr><td>Complex Figure copy</td><td>' + summaryValue(summary.ocf_copy_score, ' / 17') + '</td></tr>'
-        + '<tr><td>Complex Figure delayed</td><td>' + summaryValue(summary.ocf_delayed_score, ' / 17') + '</td></tr>'
-        + '<tr><td>Number Span correct trials — forward / backward</td><td>' + summaryValue(summary.ns_forward_correct_trials, ' / 14')
-        + ' / ' + summaryValue(summary.ns_backward_correct_trials, ' / 14') + '</td></tr></table>'
-        + '<h3>Trail comparators (not ETI inputs)</h3><table class="summary-table">'
+      var etiRows = [];
+      if (hasTask('original_story_recall')) etiRows.push(
+        '<tr><td>Story Recall analogue, immediate: total units recalled, verbatim scoring</td><td>' + summaryValue(summary.osr_immediate_verbatim) + '</td><td>0–44</td></tr>',
+        '<tr><td>Story Recall analogue, delayed: total units recalled, verbatim scoring</td><td>' + summaryValue(summary.osr_delayed_verbatim) + '</td><td>0–44</td></tr>');
+      if (hasTask('animal_semantic_fluency')) etiRows.push('<tr><td>Animal Fluency analogue: total valid unique animals named in 60 seconds</td><td>'
+        + scoreWithStatus(summary.asf_total_valid_unique, asf.asf_review_status) + '</td><td>0–77</td></tr>');
+      if (hasTask('original_visual_naming')) etiRows.push('<tr><td>Visual Naming analogue: total correct without a cue</td><td>'
+        + scoreWithStatus(summary.ovn_total_uncued, ovn.ovn_review_status) + '</td><td>0–32</td></tr>');
+      if (hasTask('original_complex_figure')) etiRows.push(
+        '<tr><td>Complex Figure analogue: total score for copy</td><td>' + summaryValue(summary.ocf_copy_score) + '</td><td>0–17</td></tr>',
+        '<tr><td>Complex Figure analogue: total score following delay</td><td>' + summaryValue(summary.ocf_delayed_score) + '</td><td>0–17</td></tr>');
+      if (hasTask('number_span')) etiRows.push(
+        '<tr><td>Number Span forward analogue: number of correct trials</td><td>' + summaryValue(summary.ns_forward_correct_trials) + '</td><td>0–14</td></tr>',
+        '<tr><td>Number Span backward analogue: number of correct trials</td><td>' + summaryValue(summary.ns_backward_correct_trials) + '</td><td>0–14</td></tr>');
+      var extraSections = '';
+      if (hasTask('visual_sequencing_set_shifting')) extraSections += '<h3>Trail comparators (not ETI inputs)</h3><table class="summary-table">'
         + '<tr><td>Trail A / Trail B analogue time</td><td>' + summaryValue(summary.completion_time_sequencing_ms == null ? null : summary.completion_time_sequencing_ms / 1000, ' sec')
-        + ' / ' + summaryValue(summary.completion_time_set_shifting_ms == null ? null : summary.completion_time_set_shifting_ms / 1000, ' sec') + '</td></tr></table>'
-        + '<h3>Additional spatial outcomes (not ETI inputs)</h3><table class="summary-table">'
-        + '<tr><td>Object-Location Memory mean error</td><td>' + summaryValue(summary.olm_mean_euclidean_error_px, ' px') + '</td></tr>'
-        + '<tr><td>Spatial Pointing mean absolute error</td><td>' + summaryValue(summary.sp_mean_absolute_angular_error_deg, '°') + '</td></tr></table>'
+        + ' / ' + summaryValue(summary.completion_time_set_shifting_ms == null ? null : summary.completion_time_set_shifting_ms / 1000, ' sec') + '</td></tr></table>';
+      var spatialRows = [];
+      if (hasTask('object_location_memory')) spatialRows.push('<tr><td>Object-Location Memory mean error</td><td>' + summaryValue(summary.olm_mean_euclidean_error_px, ' px') + '</td></tr>');
+      if (hasTask('spatial_pointing')) spatialRows.push('<tr><td>Spatial Pointing mean absolute error</td><td>' + summaryValue(summary.sp_mean_absolute_angular_error_deg, '°') + '</td></tr>');
+      if (spatialRows.length) extraSections += '<h3>Additional spatial outcomes (not ETI inputs)</h3><table class="summary-table">' + spatialRows.join('') + '</table>';
+      target.innerHTML = '<div class="osr-card individual-result" style="max-width:900px;margin:0 auto;"><span class="osr-kicker">Examiner checkpoint</span>'
+        + '<h2>Review complete</h2><p>Participant ID: <strong>' + escapeHtml(BatteryData.participantId) + '</strong></p>'
+        + '<h3>Eight ETI analogue inputs</h3><p class="osr-fineprint">NACC-style raw-score labels and ranges. These original tasks are analogues, not NACC instrument scores.</p>'
+        + '<table class="summary-table"><tr><th>Measure</th><th>Raw value</th><th>Expected range</th></tr>' + etiRows.join('') + '</table>'
+        + '<div class="info-box"><p><strong>How to read these values:</strong> Story Recall counts verified details out of 44. Animal Fluency counts distinct valid animal names. Visual Naming counts pictures named correctly without help. Complex Figure counts reproduced elements out of 17. Number Span counts correctly repeated trials in each direction.</p>'
+        + '<p>These are task scores, not diagnoses or norm-referenced interpretations.</p></div>'
+        + extraSections
         + '<div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin-top:1rem;">'
         + '<button class="battery-btn download" id="admin-export-csv">Download trials CSV</button>'
         + '<button class="battery-btn download" id="admin-export-json">Download full JSON</button>'
         + '<button class="battery-btn download" id="admin-export-summary">Download summary JSON</button>'
-        + '<button class="battery-btn download" id="admin-export-package">Download research package</button></div>'
+        + '<button class="battery-btn download" id="admin-export-package">Download research package</button>'
+        + '<button class="battery-btn" id="admin-print-individual">Print individual result</button></div>'
         + '<p class="osr-fineprint">Verified scoring has been synchronized. Automatic suggestions remain provisional unless examiner-verified.</p>'
         + '<p><a href="admin.html">Return to session list</a></p></div>';
       document.getElementById('admin-export-csv').onclick = exportAllCSV;
@@ -67,6 +94,7 @@
       document.getElementById('admin-export-package').onclick = function() {
         if (window.BatteryReporting) window.BatteryReporting.exportResearchPackage();
       };
+      document.getElementById('admin-print-individual').onclick = function() { window.print(); };
     }};
   }
   function buildReviewTimeline(alreadyReviewed) {
@@ -74,18 +102,17 @@
       stimulus: '<div class="osr-card"><span class="osr-kicker">Examiner only</span><h2>Scoring checkpoint</h2>'
         + '<p>Session <strong>' + escapeHtml(BatteryData.participantId) + '</strong> is loaded.</p>'
         + '<div class="warning-box">Confirm that the participant can no longer see or operate this screen.</div></div>',
-      choices: ['Begin examiner review'], data: { battery_phase: 'admin_checkpoint' } }];
-    if (!alreadyReviewed) {
-      if (hasTask('original_story_recall')) timeline = timeline.concat(buildOSRReviewTimeline());
-      if (hasTask('animal_semantic_fluency')) timeline = timeline.concat(buildAnimalFluencyReviewTimeline());
-      if (hasTask('original_visual_naming')) timeline = timeline.concat(buildOriginalVisualNamingReviewTimeline());
-      if (hasTask('original_complex_figure')) timeline = timeline.concat(buildOCFReviewTimeline());
-    }
+      choices: [alreadyReviewed ? 'Review and rescore session' : 'Begin examiner review'], data: { battery_phase: 'admin_checkpoint' } }];
+    if (hasTask('original_story_recall')) timeline = timeline.concat(buildOSRReviewTimeline());
+    if (hasTask('animal_semantic_fluency')) timeline = timeline.concat(buildAnimalFluencyReviewTimeline());
+    if (hasTask('original_visual_naming')) timeline = timeline.concat(buildOriginalVisualNamingReviewTimeline());
+    if (hasTask('original_complex_figure')) timeline = timeline.concat(buildOCFReviewTimeline());
     timeline.push(adminCompletionTrial()); return timeline;
   }
   function startLoadedReview(priorStatus) {
     var alreadyReviewed = priorStatus === 'examiner_review_complete';
-    if (!alreadyReviewed) { BatteryData.sessionStatus = 'examiner_review_in_progress'; checkpointBatterySession(); }
+    BatteryData.sessionStatus = 'examiner_review_in_progress';
+    checkpointBatterySession();
     document.getElementById('admin-shell').hidden = true;
     initJsPsych({ display_element: 'jspsych-target', on_finish: function() {} }).run(buildReviewTimeline(alreadyReviewed));
   }
@@ -169,6 +196,48 @@
       if (error.status !== 401) document.getElementById('admin-login-panel').querySelector('.warning-box').textContent = error.message;
     });
   }
+  function localCheckpoints() {
+    return listBatteryCheckpoints().map(function(item) {
+      try { return JSON.parse(localStorage.getItem('csb-recovery-v1:' + encodeURIComponent(item.participantId))); }
+      catch (error) { return null; }
+    }).filter(Boolean);
+  }
+  function allCheckpoints() {
+    status('Preparing collective results…');
+    return Promise.all(remoteSessions.map(function(session) {
+      return api('/api/admin-sessions?id=' + encodeURIComponent(session.remoteId)).then(function(data) { return data.checkpoint; });
+    })).then(function(remote) {
+      var seen = {};
+      var combined = [];
+      remote.concat(localCheckpoints()).forEach(function(checkpoint) {
+        var key = String(checkpoint.participantId) + '|' + String(checkpoint.sessionStart || '');
+        if (!seen[key]) { seen[key] = true; combined.push(checkpoint); }
+      });
+      status(combined.length + ' unique session result' + (combined.length === 1 ? '' : 's') + ' prepared.');
+      return combined;
+    });
+  }
+  function printCollective(checkpoints, printWindow) {
+    var rows = window.BatteryReporting.collectiveRows(checkpoints);
+    var definitions = window.BatteryReporting.definitions();
+    var ids = definitions.map(function(def) { return def.measure_id; }).filter(function(id) {
+      return rows.some(function(row) { return Object.prototype.hasOwnProperty.call(row, id); });
+    });
+    var labels = {};
+    definitions.forEach(function(def) { labels[def.measure_id] = def.definition; });
+    var html = '<!doctype html><html><head><title>Collective cognitive battery results</title><style>'
+      + 'body{font-family:Arial,sans-serif;color:#111;padding:24px}table{border-collapse:collapse;width:100%;font-size:11px}'
+      + 'th,td{border:1px solid #777;padding:6px;text-align:left;vertical-align:top}th{background:#eee}h1{font-size:20px}'
+      + '@media print{body{padding:0}@page{size:landscape;margin:10mm}}</style></head><body><h1>Collective cognitive battery results</h1>'
+      + '<p>One row per unique participant session. Only measures administered in at least one included session are shown.</p><table><thead><tr><th>Participant ID</th>'
+      + ids.map(function(id) { return '<th>' + escapeHtml(labels[id] || id) + '</th>'; }).join('') + '</tr></thead><tbody>'
+      + rows.map(function(row) { return '<tr><td>' + escapeHtml(row.participant_id) + '</td>' + ids.map(function(id) {
+        var value = Object.prototype.hasOwnProperty.call(row, id) ? row[id] : 'Not administered';
+        return '<td>' + escapeHtml(value == null ? 'Needs review / incomplete' : value) + '</td>';
+      }).join('') + '</tr>'; }).join('') + '</tbody></table></body></html>';
+    printWindow.document.open(); printWindow.document.write(html); printWindow.document.close();
+    printWindow.focus(); setTimeout(function() { printWindow.print(); }, 250);
+  }
   window.addEventListener('load', function() {
     document.getElementById('admin-login').onclick = function() {
       var input = document.getElementById('admin-password');
@@ -178,6 +247,21 @@
     };
     document.getElementById('admin-logout').onclick = function() {
       api('/api/admin-login', { method: 'DELETE' }).finally(function() { location.reload(); });
+    };
+    document.getElementById('admin-collective-csv').onclick = function() {
+      allCheckpoints().then(function(checkpoints) {
+        if (!checkpoints.length) return status('No sessions are available to export.');
+        window.BatteryReporting.exportCollectiveCSV(checkpoints);
+      }).catch(function(error) { status('Collective export failed: ' + error.message); });
+    };
+    document.getElementById('admin-collective-print').onclick = function() {
+      var printWindow = window.open('', '_blank');
+      if (!printWindow) return status('The browser blocked the print window. Allow pop-ups and try again.');
+      printWindow.document.write('<p style="font-family:Arial;padding:2rem;">Preparing collective results…</p>');
+      allCheckpoints().then(function(checkpoints) {
+        if (!checkpoints.length) { printWindow.close(); return status('No sessions are available to print.'); }
+        printCollective(checkpoints, printWindow);
+      }).catch(function(error) { printWindow.close(); status('Collective printing failed: ' + error.message); });
     };
     refreshRemote();
   });
