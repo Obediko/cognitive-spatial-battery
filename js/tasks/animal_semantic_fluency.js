@@ -384,6 +384,13 @@
         var body = document.getElementById('asf-response-body');
         var asrOutcome = { attempted: false, succeeded: false, model: null };
         var reviewActive = true;
+        var priorTrial = window.BatteryData.trials.slice().reverse().find(function(row) {
+          return row.task_name === 'animal_semantic_fluency' && row.phase === 'category_generation' && row.response_rows;
+        });
+        var priorRows = [];
+        if (priorTrial) {
+          try { priorRows = JSON.parse(priorTrial.response_rows) || []; } catch (error) { priorRows = []; }
+        }
 
         var normalise = asfNormalise;
 
@@ -463,7 +470,18 @@
         }
 
         var asrStatus = document.getElementById('asf-asr-status');
-        if (window.ASFState.audio && window.OSRTranscription && typeof window.OSRTranscription.transcribeBlob === 'function') {
+        if (priorRows.length) {
+          document.getElementById('asf-transcript').value = priorTrial.transcript || priorRows.map(function(row) { return row.response; }).join('\n');
+          priorRows.forEach(function(saved) {
+            makeRow(saved.response || '');
+            var row = body.lastElementChild;
+            row.querySelector('.asf-canonical').value = saved.canonical || '';
+            row.querySelector('.asf-decision').value = saved.decision || 'unreviewed';
+            row.querySelector('.asf-note').value = saved.note || '';
+          });
+          updateCounts();
+          asrStatus.textContent = 'Saved scoring decisions loaded. Review and change them as needed.';
+        } else if (window.ASFState.audio && window.OSRTranscription && typeof window.OSRTranscription.transcribeBlob === 'function') {
           asrOutcome.attempted = true;
           asrOutcome.model = window.OSRTranscription.modelId;
           asrStatus.textContent = 'Loading local Whisper transcription…';
@@ -545,8 +563,10 @@
           });
           done();
         });
-        makeRow('');
-        updateCounts();
+        if (!priorRows.length) {
+          makeRow('');
+          updateCounts();
+        }
       }
     };
   }
