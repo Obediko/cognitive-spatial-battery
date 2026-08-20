@@ -7,7 +7,8 @@
 'use strict';
 
 var TRANSFORMERS_JS_CDN_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js';
-var ASR_MODEL_ID = 'Xenova/whisper-small.en';
+var ASR_ENGLISH_MODEL_ID = 'Xenova/whisper-small.en';
+var ASR_MULTILINGUAL_MODEL_ID = 'Xenova/whisper-small';
 var MODEL_TIMEOUT_MS = 120000;
 var INFERENCE_TIMEOUT_MS = 90000;
 var transformersModulePromise = null;
@@ -37,11 +38,16 @@ function loadTransformersModule() {
   return transformersModulePromise;
 }
 
-function loadAsrPipeline(jobId) {
+function modelForLanguage(language) {
+  return language === 'de' ? ASR_MULTILINGUAL_MODEL_ID : ASR_ENGLISH_MODEL_ID;
+}
+
+function loadAsrPipeline(jobId, language) {
+  var requestedModelId = modelForLanguage(language);
   if (!asrPipelinePromise) {
     asrPipelinePromise = bounded(
       loadTransformersModule().then(function(transformersModule) {
-        return transformersModule.pipeline('automatic-speech-recognition', ASR_MODEL_ID, {
+        return transformersModule.pipeline('automatic-speech-recognition', requestedModelId, {
           progress_callback: function(progress) {
             if (progress && progress.status === 'progress' && typeof progress.progress === 'number') {
               self.postMessage({ type: 'progress', jobId: jobId, progress: progress.progress });
@@ -63,16 +69,21 @@ self.onmessage = function(event) {
   var message = event.data || {};
   if (message.type !== 'transcribe' || !message.jobId || !message.audioData) return;
   var jobId = message.jobId;
-  Promise.resolve(loadAsrPipeline(jobId)).then(function(asr) {
+  Promise.resolve(loadAsrPipeline(jobId, message.language)).then(function(asr) {
     var audioData = message.audioData instanceof Float32Array
       ? message.audioData : new Float32Array(message.audioData);
+    var generationOptions = {
+      chunk_length_s: 30,
+      stride_length_s: 5
+    };
+    /* whisper-small.en is already fixed to English and rejects explicit
+       language/task options. The multilingual model requires both for German. */
+    if (message.language === 'de') {
+      generationOptions.language = 'german';
+      generationOptions.task = 'transcribe';
+    }
     return bounded(
-      asr(audioData, {
-        chunk_length_s: 30,
-        stride_length_s: 5,
-        language: message.language === 'de' ? 'german' : 'english',
-        task: 'transcribe'
-      }),
+      asr(audioData, generationOptions),
       INFERENCE_TIMEOUT_MS,
       'Whisper transcription'
     );
