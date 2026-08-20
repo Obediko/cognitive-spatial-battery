@@ -19,7 +19,8 @@
 'use strict';
 
 (function() {
-  var ASR_MODEL_ID = 'Xenova/whisper-small.en';
+  var ASR_MODEL_ID = window.BatteryLanguage && window.BatteryLanguage.get() === 'de'
+    ? 'Xenova/whisper-small' : 'Xenova/whisper-small.en';
   var ASR_TARGET_SAMPLE_RATE = 16000;
   var MODEL_TIMEOUT_MS = 120000;
   var INFERENCE_TIMEOUT_MS = 90000;
