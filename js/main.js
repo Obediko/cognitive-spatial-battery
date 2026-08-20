@@ -11,6 +11,19 @@ function batteryText(key) {
   return window.BatteryLanguage ? window.BatteryLanguage.text(key) : key;
 }
 
+function showLanguageReloadMask(selectedLanguage) {
+  var existing = document.getElementById('language-reload-mask');
+  if (existing) return;
+  var isGerman = selectedLanguage === 'de';
+  var mask = document.createElement('div');
+  mask.id = 'language-reload-mask';
+  mask.setAttribute('role', 'status');
+  mask.setAttribute('aria-live', 'polite');
+  mask.innerHTML = '<div><span class="osr-kicker">' + (isGerman ? 'Deutsch' : 'English') + '</span>'
+    + '<h2>' + (isGerman ? 'Test wird geladen…' : 'Loading assessment…') + '</h2></div>';
+  document.body.appendChild(mask);
+}
+
 function makeLanguageSelectionTrial() {
   return {
     type: jsPsychHtmlButtonResponse,
@@ -18,17 +31,20 @@ function makeLanguageSelectionTrial() {
       + '<span class="osr-kicker">Language / Sprache</span>'
       + '<h1>Choose the assessment language<br><span lang="de">Testsprache wählen</span></h1>'
       + '<p>The selection applies to the full session.<br><span lang="de">Die Auswahl gilt für die gesamte Sitzung.</span></p>'
-      + '<div class="warning-box">The German parallel form is a pilot form. Cross-language psychometric equivalence has not yet been established.</div>'
       + '</div>',
-    choices: ['English', 'Deutsch'],
+    choices: ['🇺🇸 English', '🇩🇪 Deutsch'],
     data: { battery_phase: 'language_selection' },
     on_finish: function(data) {
       var selected = data.response === 1 ? 'de' : 'en';
+      showLanguageReloadMask(selected);
       window.BatteryLanguage.set(selected);
       window.BatteryData.language = selected;
       Object.assign(data, window.BatteryLanguage.metadata());
       sessionStorage.setItem('csb-language-confirmed', '1');
-      window.location.reload();
+      /* Allow the mask to paint before reloading language-bound task modules. */
+      window.requestAnimationFrame(function() {
+        window.setTimeout(function() { window.location.reload(); }, 30);
+      });
     }
   };
 }
@@ -129,11 +145,11 @@ function makeWelcomeTrials() {
       + (de
         ? '<p><strong>Zweck:</strong> Diese computerisierte Testbatterie erfasst kognitive und räumliche Ausgangsleistungen.</p>'
           + '<p><strong>Kein Diagnosetest:</strong> Die Ergebnisse dienen der Forschungscharakterisierung und nicht einer klinischen Diagnose.</p>'
-          + '<p><strong>Dauer:</strong> Etwa 28–38 Minuten für die vollständige Pilotbatterie.</p>'
+          + '<p><strong>Dauer:</strong> Etwa 30–45 Minuten für den ETI-Kern oder 45–65 Minuten für alle Aufgaben.</p>'
           + '<p><strong>Aufgaben:</strong> Geschichte erinnern &bull; Tiere nennen &bull; Gegenstände benennen &bull; komplexe Figur &bull; Zahlenspanne &bull; zusätzliche räumliche Aufgaben &bull; Trail-Vergleichsaufgaben</p>'
         : '<p><strong>What this is:</strong> A brief computerized baseline cognitive/spatial battery administered during the intake session to characterize individual differences relevant to spatial navigation performance.</p>'
           + '<p><strong>What this is NOT:</strong> This is not a stimulation-outcome task. Results will be used for participant characterization and may serve as covariates or exploratory moderators in analyses.</p>'
-          + '<p><strong>Duration:</strong> Approximately 28-38 minutes for the full pilot battery.</p>'
+          + '<p><strong>Duration:</strong> Approximately 30–45 minutes for the ETI core or 45–65 minutes for all tasks.</p>'
           + '<p><strong>Tasks included:</strong> Original Story Recall &bull; Animal Naming &bull; Original Visual Naming &bull; Original Complex Figure &bull; Number Span &bull; additional spatial tasks &bull; Trail comparators</p>')
       + '</div>'
       + '<p style="color:#8899aa;font-size:0.9rem;margin-top:1em">'
@@ -254,6 +270,50 @@ var BATTERY_TASK_GROUPS = {
   additional: ['olm', 'sp', 'vs']
 };
 
+/* Typical administration ranges, including instructions and transitions.
+   Delayed recall is interleaved with other ETI tasks, so the ETI-core estimate
+   is calibrated as a complete sequence rather than by naively adding delays. */
+var BATTERY_TASK_MINUTES = {
+  osr: [4, 6], asf: [2, 3], ovn: [6, 12], ocf: [6, 10],
+  ns: [5, 8], olm: [3, 5], sp: [4, 5], vs: [5, 9]
+};
+
+function estimateBatteryMinutes(taskIds) {
+  var ids = taskIds || [];
+  var hasFullEtiCore = BATTERY_TASK_GROUPS.eti_core.every(function(id) { return ids.indexOf(id) !== -1; });
+  var min = 0;
+  var max = 0;
+  ids.forEach(function(id) {
+    var range = BATTERY_TASK_MINUTES[id];
+    if (range) { min += range[0]; max += range[1]; }
+  });
+  /* Shared instructions and breaks add time, while interleaving absorbs much
+     of the story/figure delay. Use the observed protocol-level ETI range. */
+  if (hasFullEtiCore) {
+    min = 30;
+    max = 45;
+    BATTERY_TASK_GROUPS.additional.forEach(function(id) {
+      if (ids.indexOf(id) !== -1) {
+        min += BATTERY_TASK_MINUTES[id][0];
+        max += BATTERY_TASK_MINUTES[id][1];
+      }
+    });
+    if (BATTERY_TASK_GROUPS.additional.every(function(id) { return ids.indexOf(id) !== -1; })) {
+      min = 45;
+      max = 65;
+    }
+  } else if (ids.indexOf('osr') !== -1 || ids.indexOf('ocf') !== -1) {
+    min = Math.max(min, 12);
+    max = Math.max(max, 15);
+  }
+  return { min: min, max: max };
+}
+
+function formatBatteryEstimate(taskIds, de) {
+  var range = estimateBatteryMinutes(taskIds);
+  return (de ? 'Geschätzte Dauer: ' : 'Estimated time: ') + range.min + '–' + range.max + ' min';
+}
+
 function batteryTaskSelected(taskId) {
   if (Array.isArray(window._selectedBatteryTasks)) {
     return window._selectedBatteryTasks.indexOf(taskId) !== -1;
@@ -282,7 +342,7 @@ function makeTaskMenu(jsPsych) {
       + '<section class="battery-task-group eti-task-group"><div class="battery-group-heading">'
       + '<div><span class="osr-kicker">' + (de ? 'ETI-KERN' : 'ETI CORE') + '</span><h3>'
       + (de ? '8 Scores aus 5 Aufgabenfamilien' : '8 scores from 5 task families') + '</h3></div>'
-      + '<button class="battery-btn primary" id="btn-core" type="button">' + batteryText('core_only') + ' (~20–28 min)</button></div>'
+      + '<button class="battery-btn primary" id="btn-core" type="button">' + batteryText('core_only') + ' (~30–45 min)</button></div>'
       + '<div class="battery-score-grid">'
       + '<label><input class="task-check" type="checkbox" value="osr" checked><span><strong>' + (de ? 'Geschichte erinnern' : 'Original Story Recall') + '</strong><small>CRAFTVRS analogue + CRAFTDVR analogue</small></span></label>'
       + '<label><input class="task-check" type="checkbox" value="asf" checked><span><strong>' + (de ? 'Tiere nennen' : 'Animal Naming') + '</strong><small>ANIMALS analogue</small></span></label>'
@@ -300,10 +360,7 @@ function makeTaskMenu(jsPsych) {
       + '<button class="battery-btn" id="btn-select-all" type="button">' + (de ? 'Alle auswählen' : 'Select all tasks') + '</button>'
       + '<button class="battery-btn" id="btn-clear" type="button">' + (de ? 'Auswahl löschen' : 'Clear selection') + '</button>'
       + '<button class="battery-btn primary" id="btn-selected" type="button">' + (de ? 'Ausgewählte Aufgaben starten' : 'Run selected tasks') + '</button></div>'
-      + '<p id="battery-selection-status" class="osr-status" aria-live="polite"></p>'
-      + '<p style="color:#8899aa;font-size:0.8rem;margin-top:1.2em">'
-      + 'Pilot mode: set <code>window.PILOT_MODE = false</code> in utils.js for real sessions.'
-      + '</p></div>',
+      + '<p id="battery-selection-status" class="battery-time-estimate" aria-live="polite"></p></div>',
     choices: [],
     response_ends_trial: false,
     data: { battery_phase: 'task_menu' },
@@ -325,10 +382,18 @@ function makeTaskMenu(jsPsych) {
       var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.task-check'));
       function setChecked(ids) {
         checkboxes.forEach(function(box) { box.checked = ids.indexOf(box.value) !== -1; });
+        updateEstimate();
       }
       function selected() {
         return checkboxes.filter(function(box) { return box.checked; }).map(function(box) { return box.value; });
       }
+      function updateEstimate() {
+        var status = document.getElementById('battery-selection-status');
+        var tasks = selected();
+        status.textContent = tasks.length ? formatBatteryEstimate(tasks, de) : (de ? 'Keine Aufgabe ausgewählt.' : 'No tasks selected.');
+      }
+      checkboxes.forEach(function(box) { box.addEventListener('change', updateEstimate); });
+      updateEstimate();
       if (btnCore) btnCore.addEventListener('click', function() { finish('eti_core', BATTERY_TASK_GROUPS.eti_core); });
       document.getElementById('btn-select-core').addEventListener('click', function() { setChecked(BATTERY_TASK_GROUPS.eti_core); });
       document.getElementById('btn-select-all').addEventListener('click', function() { setChecked(BATTERY_TASK_GROUPS.eti_core.concat(BATTERY_TASK_GROUPS.additional)); });
