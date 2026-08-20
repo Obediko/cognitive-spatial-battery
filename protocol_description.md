@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-This is a supervised baseline research prototype for participant characterization, covariates, and exploratory moderation. It is not a diagnostic instrument, an intervention outcome, a NACC battery, or a norm-equivalent substitute for licensed tests. Estimated full administration time is approximately 28–38 minutes, with longer sessions possible when delayed-recall gates or examiner review require it.
+This is a supervised baseline research prototype for participant characterization, covariates, and exploratory moderation. It is not a diagnostic instrument, an intervention outcome, a NACC battery, or a norm-equivalent substitute for licensed tests. Estimated participant administration time is approximately 30–45 minutes for the ETI core and 45–65 minutes when all additional tasks are selected. Actual duration varies with response speed and delayed-recall gates.
 
 ## Administration
 
