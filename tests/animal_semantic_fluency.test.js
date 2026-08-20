@@ -69,4 +69,9 @@ assert.match(mainSource, /Continue without fullscreen/);
 assert.match(mainSource, /\.catch\(function\(error\)/);
 assert.match(mainSource, /fullscreen_granted:/);
 
+assert.match(source, /Start practice/);
+assert.match(source, /Finish practice/);
+assert.match(source, /The real task is about to begin/);
+assert.match(source, /startButton\.textContent = ASF_IS_GERMAN \? 'Stopp' : 'Stop'/);
+
 console.log('Fullscreen fallback guards passed.');
