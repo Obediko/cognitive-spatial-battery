@@ -51,7 +51,36 @@ window.BatteryReporting = (function() {
     ['SP_ACCURACY_100','Spatial Pointing bounded directional accuracy','score','0-100','Higher is better','100 × (1 - mean absolute error / 180); technical transform, not a normative score']
   ];
 
-  function compiled(summary) {
+  var TASK_MEASURES = {
+    original_story_recall: ['CRAFTVRS_ANALOGUE', 'CRAFTDVR_ANALOGUE', 'OSR_IMM_PARAPHRASE', 'OSR_DEL_PARAPHRASE'],
+    animal_semantic_fluency: ['ANIMALS_ANALOGUE'],
+    original_visual_naming: ['MINTTOTS_ANALOGUE', 'OVN_UNCUED'],
+    original_complex_figure: ['UDSBENTC_ANALOGUE', 'UDSBENTD_ANALOGUE', 'OCF_RECOG'],
+    number_span: ['DIGFORCT_ANALOGUE', 'DIGBACCT_ANALOGUE', 'NS_FWD_SPAN', 'NS_BWD_SPAN'],
+    visual_sequencing_set_shifting: ['TRAILA_TIME_SEC_ANALOGUE', 'TRAILA_ERRORS_ANALOGUE', 'TRAILA_CONNECTIONS_ANALOGUE',
+      'TRAILB_TIME_SEC_ANALOGUE', 'TRAILB_ERRORS_ANALOGUE', 'TRAILB_CONNECTIONS_ANALOGUE', 'VS_SHIFT_COST_SEC', 'VS_SHIFT_RATIO'],
+    object_location_memory: ['OLM_MEAN_ERROR_PX', 'OLM_MEAN_NORM_ERROR', 'OLM_ACCURACY_100'],
+    spatial_pointing: ['SP_MEAN_ABS_ERROR', 'SP_ACCURACY_100']
+  };
+
+  function administeredTasks(trials) {
+    var seen = {};
+    (trials || (window.BatteryData && window.BatteryData.trials) || []).forEach(function(row) {
+      if (row && row.task_name) seen[row.task_name] = true;
+    });
+    return seen;
+  }
+
+  function administeredMeasureSet(trials) {
+    var tasks = administeredTasks(trials);
+    var measures = {};
+    Object.keys(tasks).forEach(function(task) {
+      (TASK_MEASURES[task] || []).forEach(function(id) { measures[id] = true; });
+    });
+    return measures;
+  }
+
+  function compiled(summary, trials) {
     summary = summary || buildSummary();
     var sequenceSec = finite(summary.completion_time_sequencing_ms) ? round(summary.completion_time_sequencing_ms / 1000, 3) : null;
     var shiftSec = finite(summary.completion_time_set_shifting_ms) ? round(summary.completion_time_set_shifting_ms / 1000, 3) : null;
@@ -65,9 +94,9 @@ window.BatteryReporting = (function() {
       summary.ocf_copy_score, summary.ocf_delayed_score,
       summary.ns_forward_correct_trials, summary.ns_backward_correct_trials
     ];
-    return Object.assign({
+    var row = Object.assign({
       participant_id: summary.participant_id,
-      language: language(),
+      language: summary.administration_language || language(),
       language_form_version: languageMeta.language_form_version || null,
       language_equivalence_status: languageMeta.language_equivalence_status || null,
       session_start: summary.session_start,
@@ -103,11 +132,14 @@ window.BatteryReporting = (function() {
       SP_MEAN_ABS_ERROR: round(summary.sp_mean_absolute_angular_error_deg, 2),
       SP_ACCURACY_100: boundedAccuracy(summary.sp_mean_absolute_angular_error_deg, 180)
     }, languageMeta);
+    var included = administeredMeasureSet(trials);
+    DEFINITIONS.forEach(function(def) { if (!included[def[0]]) delete row[def[0]]; });
+    return row;
   }
 
-  function longRows(summary) {
-    var row = compiled(summary);
-    return DEFINITIONS.map(function(def) {
+  function longRows(summary, trials) {
+    var row = compiled(summary, trials);
+    return DEFINITIONS.filter(function(def) { return Object.prototype.hasOwnProperty.call(row, def[0]); }).map(function(def) {
       return {
         participant_id: row.participant_id,
         language: row.language,
@@ -150,6 +182,38 @@ window.BatteryReporting = (function() {
     exportAllJSON();
   }
 
+  function summaryFromCheckpoint(checkpoint) {
+    var previous = window.BatteryData;
+    window.BatteryData = {
+      participantId: checkpoint.participantId,
+      language: checkpoint.language || 'en',
+      sessionStart: checkpoint.sessionStart,
+      trials: checkpoint.trials || [],
+      taskSummaries: checkpoint.taskSummaries || {}
+    };
+    try { return buildSummary(); } finally { window.BatteryData = previous; }
+  }
+
+  function collectiveRows(checkpoints) {
+    var rows = (checkpoints || []).map(function(checkpoint) {
+      return compiled(summaryFromCheckpoint(checkpoint), checkpoint.trials || []);
+    });
+    var included = {};
+    DEFINITIONS.forEach(function(def) {
+      if (rows.some(function(row) { return Object.prototype.hasOwnProperty.call(row, def[0]); })) included[def[0]] = true;
+    });
+    return rows.map(function(row) {
+      DEFINITIONS.forEach(function(def) {
+        if (included[def[0]] && !Object.prototype.hasOwnProperty.call(row, def[0])) row[def[0]] = 'Not administered';
+      });
+      return row;
+    });
+  }
+
+  function exportCollectiveCSV(checkpoints) {
+    triggerDownload(toCSV(collectiveRows(checkpoints)), 'csb_collective_results.csv', 'text/csv');
+  }
+
   return {
     definitions: dictionaryRows,
     compiled: compiled,
@@ -158,6 +222,8 @@ window.BatteryReporting = (function() {
     exportCompiledCSV: exportCompiledCSV,
     exportTaskResultsCSV: exportTaskResultsCSV,
     exportScoreDictionaryCSV: exportScoreDictionaryCSV,
-    exportResearchPackage: exportResearchPackage
+    exportResearchPackage: exportResearchPackage,
+    collectiveRows: collectiveRows,
+    exportCollectiveCSV: exportCollectiveCSV
   };
 })();
