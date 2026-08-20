@@ -15,6 +15,11 @@
   window.OVNState = window.OVNState || { itemAudio: [], itemAudioUrls: [], deferredResponses: [] };
   var ovnImagePreloads = {};
 
+  function ovnEscape(value) {
+    return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
   var drawings = {
     cup: '<path d="M70 58h80v62c0 25-18 40-40 40s-40-15-40-40z"/><path d="M150 76h18c30 0 30 44 0 44h-18"/><path d="M58 166h106"/>',
     chair: '<path d="M78 30v92h78V30"/><path d="M78 72h78"/><path d="M88 122l-10 48M146 122l10 48"/>',
@@ -532,11 +537,18 @@
         var index = 0;
         var reviewed = [];
         var reviewToken = 0;
+        var priorByItem = {};
+        window.BatteryData.trials.forEach(function(row) {
+          if (row.task_name === 'original_visual_naming' && row.phase === 'deferred_examiner_review') priorByItem[row.item_id] = row;
+        });
 
         function finishReview() {
           var uncertain = reviewed.some(function(row) { return row.outcome === 'uncertain'; });
           var correct = reviewed.filter(function(row) { return row.outcome === 'uncued_correct'; }).length;
           window.OVNState.deferredResponses = reviewed;
+          window.BatteryData.trials = window.BatteryData.trials.filter(function(row) {
+            return !(row.task_name === 'original_visual_naming' && row.phase === 'deferred_examiner_review');
+          });
           window.BatteryData.addTrials(reviewed);
           window.BatteryData.setTaskSummary('original_visual_naming', {
             ovn_total_with_semantic: null,
@@ -579,6 +591,7 @@
         function showReview() {
           var token = ++reviewToken;
           var item = items[index];
+          var prior = priorByItem[item.id] || null;
           var audioUrl = window.OVNState.itemAudioUrls[index];
           var blob = window.OVNState.itemAudio[index];
           display.innerHTML = '<div class="ovn-shell"><div class="ovn-progress">Review item ' + (index + 1)
@@ -586,7 +599,7 @@
             + '<div class="ovn-layout"><div class="ovn-picture-card">' + ovnStimulusMarkup(item) + '</div>'
             + '<div class="ovn-examiner"><span class="osr-kicker">Examiner review</span>'
             + (audioUrl ? '<audio controls autoplay class="osr-audio-review" src="' + audioUrl + '"></audio>' : '<p class="osr-error">No item audio captured.</p>')
-            + '<label>Transcript<input id="ovn-review-transcript" autocomplete="off" placeholder="Enter manually or request a local Whisper suggestion"></label>'
+            + '<label>Transcript<input id="ovn-review-transcript" autocomplete="off" value="' + ovnEscape(prior && prior.transcript ? prior.transcript : '') + '" placeholder="Enter manually or request a local Whisper suggestion"></label>'
             + (blob && window.OSRTranscription
               ? '<button class="battery-btn" id="ovn-review-transcribe">Transcribe this recording</button>' : '')
             + '<p id="ovn-review-asr" class="osr-status" aria-live="polite">Whisper is optional and will not start automatically.</p>'
@@ -596,6 +609,11 @@
           document.getElementById('ovn-review-correct').onclick = function() { save('uncued_correct'); };
           document.getElementById('ovn-review-incorrect').onclick = function() { save('incorrect'); };
           document.getElementById('ovn-review-uncertain').onclick = function() { save('uncertain'); };
+          if (prior) {
+            var priorButton = prior.outcome === 'uncued_correct' ? 'ovn-review-correct'
+              : prior.outcome === 'incorrect' ? 'ovn-review-incorrect' : 'ovn-review-uncertain';
+            document.getElementById(priorButton).classList.add('selected');
+          }
           ovnPrepareStimulus(item, display);
 
           var status = document.getElementById('ovn-review-asr');
