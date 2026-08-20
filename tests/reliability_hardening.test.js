@@ -28,6 +28,7 @@ assert.ok(utils.includes('function installGamepadPointer(canvas, onSelect, optio
 assert.ok(utils.includes('battery-recovery-warning'));
 assert.ok(utils.includes('ocfCopyCompletedAt'));
 assert.ok(utils.includes('window.BatteryArtifactStore'));
+assert.ok(utils.includes('deleteParticipant: deleteParticipant'));
 assert.ok(utils.includes("['osr', 'immediate'], ['osr', 'delayed'], ['asf', 'main']"));
 assert.ok(utils.includes("jobs.push(['ovn', String(i)])"));
 assert.ok(utils.includes('function loadBatteryCheckpoint(participantId, options)'));
@@ -92,6 +93,9 @@ assert.ok(admin.includes('buildAnimalFluencyReviewTimeline()'));
 assert.ok(admin.includes('buildOriginalVisualNamingReviewTimeline()'));
 assert.ok(admin.includes('buildOCFReviewTimeline()'));
 assert.ok(admin.includes("sessionStatus = 'examiner_review_complete'"));
+assert.ok(admin.includes('Delete remote'));
+assert.ok(admin.includes('Delete local'));
+assert.ok(admin.includes('BatteryArtifactStore.deleteParticipant(participantId)'));
 
 assert.ok(olm.includes('installGamepadPointer'));
 assert.ok(olm.includes('(e.clientX - rect.left) * cW / rect.width'));
