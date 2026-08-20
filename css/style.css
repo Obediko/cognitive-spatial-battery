@@ -5,6 +5,22 @@
 /* Reset */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Author styles must never override the semantic hidden state. */
+[hidden] { display: none !important; }
+
+#language-reload-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  text-align: center;
+}
+#language-reload-mask h2 { margin-top: 0.65rem; }
+
 html, body {
   width: 100%;
   height: 100%;
@@ -172,6 +188,12 @@ code { background: #0d1b2a; padding: 0.15em 0.4em; border-radius: 3px; font-size
   align-items: center;
   gap: 0.25rem;
   margin-top: 1rem;
+}
+.battery-time-estimate {
+  margin: 0.85rem auto 0;
+  color: #f8d7da;
+  font-size: 1rem;
+  font-weight: 700;
 }
 @media (max-width: 720px) {
   .battery-group-heading { align-items: stretch; flex-direction: column; }
