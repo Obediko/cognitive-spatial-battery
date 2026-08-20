@@ -21,6 +21,20 @@
 }
 #language-reload-mask h2 { margin-top: 0.65rem; }
 
+.language-choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+}
+.language-flag {
+  width: 30px;
+  height: 18px;
+  flex: 0 0 auto;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
 html, body {
   width: 100%;
   height: 100%;
