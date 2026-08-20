@@ -382,7 +382,7 @@
           + '<p>Uncued correct: ' + (s.ovn_total_uncued == null ? 'N/A' : s.ovn_total_uncued)
           + ' · Semantic-cue correct: ' + (s.ovn_semantic_cues_correct || 0)
           + ' · Phonemic-cue correct: ' + (s.ovn_phonemic_cues_correct || 0) + '</p>'
-          + '<p class="osr-fineprint">Experimental pilot score; not a MINT score.</p></div>';
+          + '<p class="osr-fineprint">Original visual-naming measure; not a MINT score.</p></div>';
       },
       choices: ['Continue battery'],
       data: { task_name: 'original_visual_naming', phase: 'end', task_version: OVN_VERSION }
