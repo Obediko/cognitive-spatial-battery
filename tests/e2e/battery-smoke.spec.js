@@ -180,8 +180,9 @@ test('authenticated examiner checkpoint opens separately from the participant ti
   });
   await page.goto('/admin.html');
   await expect(page.getByRole('heading', { name: 'Scoring portal' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /ADMIN_E2E/ })).toBeVisible();
-  await page.getByRole('button', { name: /ADMIN_E2E/ }).click();
+  await expect(page.locator('.local-load')).toContainText('ADMIN_E2E');
+  await expect(page.locator('.local-delete')).toBeVisible();
+  await page.locator('.local-load').click();
   await expect(page.getByRole('heading', { name: 'Scoring checkpoint' })).toBeVisible();
   await page.getByRole('button', { name: 'Begin examiner review' }).click();
   await expect(page.getByRole('heading', { name: 'Review complete' })).toBeVisible();
