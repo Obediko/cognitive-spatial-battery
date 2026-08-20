@@ -119,24 +119,32 @@
       .catch(function(error) { status(error.message); });
   }
   function deleteRemote(id, participantId) {
-    if (!confirm('Delete the ongoing session for ' + participantId + ' and all of its remote recordings? This cannot be undone.')) return;
+    if (!confirm('Permanently delete the remote session for ' + participantId + ' and all of its uploaded recordings and drawings? This cannot be undone.')) return;
     var password = prompt('Re-enter the admin password to confirm deletion:');
     if (!password) return;
     api('/api/admin-sessions', { method: 'DELETE', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: id, password: password }) }).then(function() {
-        status('Ongoing session deleted.'); return refreshRemote();
+        status('Remote session and uploaded artifacts deleted.'); return refreshRemote();
       }).catch(function(error) { status(error.message); });
+  }
+  function deleteLocal(participantId) {
+    if (!confirm('Permanently delete the local session for ' + participantId + ' and all recordings stored in this browser? This cannot be undone.')) return;
+    status('Deleting local session…');
+    BatteryArtifactStore.deleteParticipant(participantId).then(function() {
+      localStorage.removeItem('csb-recovery-v1:' + encodeURIComponent(participantId));
+      status('Local session and browser artifacts deleted.');
+      renderLocal();
+    }).catch(function(error) { status('Local deletion failed: ' + error.message); });
   }
   function renderRemote() {
     var box = document.getElementById('admin-remote-session-list');
     if (!remoteSessions.length) { box.innerHTML = '<p class="osr-fineprint">No remote sessions found.</p>'; return; }
     box.innerHTML = remoteSessions.map(function(s) {
-      var ongoing = ['in_progress','examiner_review_in_progress','scoring_in_progress'].indexOf(s.sessionStatus) >= 0;
       return '<div style="display:flex;gap:.5rem;align-items:center;margin:.45rem 0;"><button class="battery-btn primary remote-load" data-id="'
         + escapeHtml(s.remoteId) + '" style="flex:1;display:flex;justify-content:space-between;"><strong>'
         + escapeHtml(s.participantId) + '</strong><span>' + escapeHtml(s.sessionStatus) + ' · ' + s.trialCount + ' rows</span></button>'
-        + (ongoing ? '<button class="battery-btn remote-delete" data-id="' + escapeHtml(s.remoteId)
-        + '" data-pid="' + escapeHtml(s.participantId) + '">Delete ongoing</button>' : '') + '</div>';
+        + '<button class="battery-btn remote-delete" data-id="' + escapeHtml(s.remoteId)
+        + '" data-pid="' + escapeHtml(s.participantId) + '">Delete remote</button></div>';
     }).join('');
     Array.prototype.forEach.call(document.querySelectorAll('.remote-load'), function(b) { b.onclick = function() { loadRemote(b.dataset.id); }; });
     Array.prototype.forEach.call(document.querySelectorAll('.remote-delete'), function(b) { b.onclick = function() { deleteRemote(b.dataset.id, b.dataset.pid); }; });
@@ -144,10 +152,13 @@
   function renderLocal() {
     var sessions = listBatteryCheckpoints(), box = document.getElementById('admin-local-session-list');
     if (!sessions.length) { box.innerHTML = '<p class="osr-fineprint">No local sessions found.</p>'; return; }
-    box.innerHTML = sessions.map(function(s) { return '<button class="battery-btn local-load" data-pid="' + escapeHtml(s.participantId)
-      + '" style="display:flex;width:100%;justify-content:space-between;margin:.4rem 0;"><strong>' + escapeHtml(s.participantId)
-      + '</strong><span>' + escapeHtml(s.sessionStatus) + ' · ' + s.trialCount + ' rows</span></button>'; }).join('');
+    box.innerHTML = sessions.map(function(s) { return '<div style="display:flex;gap:.5rem;align-items:center;margin:.45rem 0;">'
+      + '<button class="battery-btn local-load" data-pid="' + escapeHtml(s.participantId)
+      + '" style="display:flex;flex:1;justify-content:space-between;"><strong>' + escapeHtml(s.participantId)
+      + '</strong><span>' + escapeHtml(s.sessionStatus) + ' · ' + s.trialCount + ' rows</span></button>'
+      + '<button class="battery-btn local-delete" data-pid="' + escapeHtml(s.participantId) + '">Delete local</button></div>'; }).join('');
     Array.prototype.forEach.call(document.querySelectorAll('.local-load'), function(b) { b.onclick = function() { startLocal(b.dataset.pid); }; });
+    Array.prototype.forEach.call(document.querySelectorAll('.local-delete'), function(b) { b.onclick = function() { deleteLocal(b.dataset.pid); }; });
   }
   function refreshRemote() {
     return api('/api/admin-sessions').then(function(data) {
