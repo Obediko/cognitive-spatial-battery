@@ -103,19 +103,41 @@
 
   function asfPracticeTrial() {
     return {
-      type: jsPsychHtmlButtonResponse,
-      stimulus: ASF_IS_GERMAN
-        ? '<div class="osr-card"><span class="osr-kicker">Übung</span><h2>Versuchen Sie zuerst eine andere Kategorie</h2>'
-          + '<p class="osr-prompt">Nennen Sie laut zwei Dinge, die Menschen zum Schreiben benutzen.</p></div>'
-        : '<div class="osr-card"><span class="osr-kicker">Practice</span><h2>Try a different category first</h2>'
-          + '<p class="osr-prompt">Say aloud two things that people use for writing.</p></div>',
-      choices: [ASF_IS_GERMAN ? 'Ich habe zwei Antworten genannt' : 'I have said two answers'],
-      data: {
-        task_name: 'animal_semantic_fluency',
-        task_version: ASF_VERSION,
-        phase: 'practice',
-        practice_category: 'writing implements',
-        practice_self_administered: true
+      type: jsPsychCallFunction,
+      async: true,
+      func: function(done) {
+        var display = asfDisplay();
+        display.innerHTML = ASF_IS_GERMAN
+          ? '<div class="osr-card"><span class="osr-kicker">Übung</span><h2>Versuchen Sie zuerst eine andere Kategorie</h2>'
+            + '<p>Drücken Sie auf „Übung starten“. Nennen Sie danach laut zwei Dinge, die Menschen zum Schreiben benutzen.</p>'
+            + '<button class="battery-btn primary" id="asf-practice-action">Übung starten</button>'
+            + '<p id="asf-practice-status" class="osr-status" aria-live="polite"></p></div>'
+          : '<div class="osr-card"><span class="osr-kicker">Practice</span><h2>Try a different category first</h2>'
+            + '<p>Press “Start practice,” then say aloud two things that people use for writing.</p>'
+            + '<button class="battery-btn primary" id="asf-practice-action">Start practice</button>'
+            + '<p id="asf-practice-status" class="osr-status" aria-live="polite"></p></div>';
+        var button = document.getElementById('asf-practice-action');
+        var status = document.getElementById('asf-practice-status');
+        var startedAt = null;
+        button.addEventListener('click', function() {
+          if (!startedAt) {
+            startedAt = Date.now();
+            status.textContent = ASF_IS_GERMAN
+              ? 'Nennen Sie jetzt zwei Dinge, die Menschen zum Schreiben benutzen.'
+              : 'Now say two things that people use for writing.';
+            button.textContent = ASF_IS_GERMAN ? 'Übung beenden' : 'Finish practice';
+            return;
+          }
+          window.BatteryData.addTrials({
+            task_name: 'animal_semantic_fluency',
+            task_version: ASF_VERSION,
+            phase: 'practice',
+            practice_category: 'writing implements',
+            practice_duration_ms: Date.now() - startedAt,
+            practice_self_administered: true
+          });
+          done();
+        });
       }
     };
   }
@@ -126,9 +148,10 @@
       async: true,
       func: function(done) {
         var display = asfDisplay();
-        display.innerHTML = '<div class="osr-card"><span class="osr-kicker">Device check</span>'
-          + '<h2>Microphone access</h2><p>Allow microphone access when your browser asks.</p>'
-          + '<button class="battery-btn primary" id="asf-mic-check">Check microphone</button>'
+        display.innerHTML = '<div class="osr-card"><span class="osr-kicker">' + (ASF_IS_GERMAN ? 'Geräteprüfung' : 'Device check') + '</span>'
+          + '<h2>' + (ASF_IS_GERMAN ? 'Mikrofonzugriff' : 'Microphone access') + '</h2><p>'
+          + (ASF_IS_GERMAN ? 'Erlauben Sie den Mikrofonzugriff, wenn Ihr Browser danach fragt.' : 'Allow microphone access when your browser asks.') + '</p>'
+          + '<button class="battery-btn primary" id="asf-mic-check">' + (ASF_IS_GERMAN ? 'Mikrofon prüfen' : 'Check microphone') + '</button>'
           + '<p id="asf-mic-status" class="osr-status" aria-live="polite"></p></div>';
         var button = document.getElementById('asf-mic-check');
         var status = document.getElementById('asf-mic-status');
@@ -136,21 +159,21 @@
           button.disabled = true;
           if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
             window.ASFState.microphoneProblem = true;
-            status.innerHTML = '<span class="osr-error">Recording is not supported in this browser.</span>';
-            button.textContent = 'Continue with protocol flag';
+            status.innerHTML = '<span class="osr-error">' + (ASF_IS_GERMAN ? 'Dieser Browser unterstützt keine Aufnahme.' : 'Recording is not supported in this browser.') + '</span>';
+            button.textContent = ASF_IS_GERMAN ? 'Mit Protokollvermerk fortfahren' : 'Continue with protocol flag';
             button.disabled = false;
             button.onclick = function() { done(); };
             return;
           }
           window.BatteryReliability.requestMicrophone(12000).then(function(stream) {
             stream.getTracks().forEach(function(track) { track.stop(); });
-            status.innerHTML = '<span class="osr-success">Microphone is ready.</span>';
+            status.innerHTML = '<span class="osr-success">' + (ASF_IS_GERMAN ? 'Das Mikrofon ist bereit.' : 'Microphone is ready.') + '</span>';
             setTimeout(function() { done(); }, 500);
           }).catch(function(error) {
             window.ASFState.microphoneProblem = true;
-            status.innerHTML = '<span class="osr-error">Microphone unavailable: '
+            status.innerHTML = '<span class="osr-error">' + (ASF_IS_GERMAN ? 'Mikrofon nicht verfügbar: ' : 'Microphone unavailable: ')
               + asfEscape(error && error.message ? error.message : 'permission denied') + '</span>';
-            button.textContent = 'Continue with protocol flag';
+            button.textContent = ASF_IS_GERMAN ? 'Mit Protokollvermerk fortfahren' : 'Continue with protocol flag';
             button.disabled = false;
             button.onclick = function() { done(); };
           });
@@ -186,16 +209,16 @@
       func: function(done) {
         var display = asfDisplay();
         var totalSeconds = Math.round(ASF_TIME_LIMIT_MS / 1000);
-        display.innerHTML = '<div class="osr-card asf-main"><span class="osr-kicker">' + (ASF_IS_GERMAN ? 'Zeitaufgabe' : 'Timed task') + '</span>'
+        display.innerHTML = '<div class="osr-card asf-main"><span class="osr-kicker">' + (ASF_IS_GERMAN ? 'Die eigentliche Aufgabe' : 'The real task') + '</span>'
           + '<h2>' + (ASF_IS_GERMAN ? 'Nennen Sie verschiedene Tiere' : 'Name different animals') + '</h2>'
-          + '<p>' + (ASF_IS_GERMAN ? ('Sie haben ' + totalSeconds + ' Sekunden. Machen Sie weiter, bis die Zeit endet.') : ('You have ' + totalSeconds + ' seconds. Keep going until the timer stops.')) + '</p>'
+          + '<p>' + (ASF_IS_GERMAN ? ('Die eigentliche Aufgabe beginnt gleich. Sie haben ' + totalSeconds + ' Sekunden. Machen Sie weiter, bis die Zeit endet.') : ('The real task is about to begin. You have ' + totalSeconds + ' seconds. Keep going until the timer stops.')) + '</p>'
           + '<button class="battery-btn primary" id="asf-start">' + (ASF_IS_GERMAN ? 'Starten' : 'Start') + '</button>'
           + '<div id="asf-live" hidden><div class="asf-timer-ring" id="asf-timer-ring">'
           + '<strong id="asf-time">' + totalSeconds + '</strong><span>' + (ASF_IS_GERMAN ? 'Sekunden' : 'seconds') + '</span></div>'
-          + '<div class="osr-recording-indicator"><span class="osr-recording-dot"></span> Recording locally</div>'
+          + '<div class="osr-recording-indicator" id="asf-recording-indicator"><span class="osr-recording-dot"></span> ' + (ASF_IS_GERMAN ? 'Lokale Aufnahme läuft' : 'Recording locally') + '</div>'
           + '<label class="osr-examiner-flag"><input type="checkbox" id="asf-prompt-used"> '
-          + 'Examiner used the single neutral reminder</label>'
-          + '<button class="battery-btn asf-emergency" id="asf-end-early">Examiner: end early</button></div>'
+          + (ASF_IS_GERMAN ? 'Die Prüfperson verwendete die einmalige neutrale Erinnerung' : 'Examiner used the single neutral reminder') + '</label>'
+          + '<button class="battery-btn asf-emergency" id="asf-end-early">' + (ASF_IS_GERMAN ? 'Prüfperson: vorzeitig beenden' : 'Examiner: end early') + '</button></div>'
           + '<p id="asf-status" class="osr-status" aria-live="polite"></p></div>';
 
         var startButton = document.getElementById('asf-start');
@@ -203,6 +226,8 @@
         var timeText = document.getElementById('asf-time');
         var ring = document.getElementById('asf-timer-ring');
         var status = document.getElementById('asf-status');
+        var recordingIndicator = document.getElementById('asf-recording-indicator');
+        var earlyButton = document.getElementById('asf-end-early');
         var recorder = null;
         var stream = null;
         var chunks = [];
@@ -243,6 +268,8 @@
         function finishTrial(early) {
           if (finished) return;
           finished = true;
+          startButton.disabled = true;
+          earlyButton.disabled = true;
           clearInterval(timer);
           window.ASFState.endedEarly = !!early;
           var duration = startedAt ? Date.now() - startedAt : 0;
@@ -269,15 +296,22 @@
             if (event.data && event.data.size) chunks.push(event.data);
           };
           recorder.start(250);
-          startTimedPeriod();
+          startTimedPeriod(true);
         }
 
-        function startTimedPeriod() {
+        function startTimedPeriod(isRecording) {
           startedAt = Date.now();
           asfTone();
-          startButton.hidden = true;
+          startButton.disabled = false;
+          startButton.textContent = ASF_IS_GERMAN ? 'Stopp' : 'Stop';
+          startButton.classList.add('asf-stop');
           live.hidden = false;
-          status.textContent = 'Begin naming animals now.';
+          if (!isRecording) {
+            recordingIndicator.innerHTML = ASF_IS_GERMAN
+              ? 'Timer läuft; Audio wird nicht aufgenommen.'
+              : 'Timer running; audio is not being recorded.';
+          }
+          status.textContent = ASF_IS_GERMAN ? 'Beginnen Sie jetzt, Tiere zu nennen.' : 'Begin naming animals now.';
           timer = setInterval(function() {
             var elapsed = Date.now() - startedAt;
             var remaining = Math.max(0, ASF_TIME_LIMIT_MS - elapsed);
@@ -290,22 +324,26 @@
         }
 
         startButton.addEventListener('click', function() {
+          if (startedAt) {
+            finishTrial(true);
+            return;
+          }
           startButton.disabled = true;
           if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
             window.ASFState.microphoneProblem = true;
-            status.innerHTML = '<span class="osr-error">No audio recording; examiner must transcribe live.</span>';
-            startTimedPeriod();
+            status.innerHTML = '<span class="osr-error">' + (ASF_IS_GERMAN ? 'Keine Audioaufnahme; die Prüfperson muss live transkribieren.' : 'No audio recording; examiner must transcribe live.') + '</span>';
+            startTimedPeriod(false);
             return;
           }
           window.BatteryReliability.requestMicrophone(12000).then(beginWithStream).catch(function(error) {
             window.ASFState.microphoneProblem = true;
-            status.innerHTML = '<span class="osr-error">No audio recording; examiner must transcribe live.</span>';
-            startTimedPeriod();
+            status.innerHTML = '<span class="osr-error">' + (ASF_IS_GERMAN ? 'Keine Audioaufnahme; die Prüfperson muss live transkribieren.' : 'No audio recording; examiner must transcribe live.') + '</span>';
+            startTimedPeriod(false);
           });
         });
 
         document.getElementById('asf-end-early').addEventListener('click', function() {
-          if (window.confirm('End the timed task early and mark it incomplete?')) finishTrial(true);
+          if (window.confirm(ASF_IS_GERMAN ? 'Die Zeitaufgabe vorzeitig beenden und als unvollständig markieren?' : 'End the timed task early and mark it incomplete?')) finishTrial(true);
         });
       }
     };
@@ -514,12 +552,16 @@
   }
 
   function asfEndTrial() {
+    var completeHeading = ASF_IS_GERMAN ? 'Tiere nennen abgeschlossen' : 'Animal Naming complete';
+    var completeText = ASF_IS_GERMAN
+      ? 'Die Aufnahme und der Score bleiben lokal in dieser Browsersitzung.'
+      : 'The recording and score remain local to this browser session.';
     return {
       type: jsPsychHtmlButtonResponse,
       stimulus: '<div class="osr-card"><span class="osr-kicker">ETI Core</span>'
-        + '<h2>Animal Naming complete</h2><p>The recording and score remain local to this browser session.</p>'
-        + '<p class="osr-fineprint">Download all data and audio before closing the tab.</p></div>',
-      choices: ['Continue battery'],
+        + '<h2>' + completeHeading + '</h2><p>' + completeText + '</p>'
+        + '<p class="osr-fineprint">' + (ASF_IS_GERMAN ? 'Laden Sie alle Daten und Audiodateien herunter, bevor Sie den Tab schließen.' : 'Download all data and audio before closing the tab.') + '</p></div>',
+      choices: [ASF_IS_GERMAN ? 'Testbatterie fortsetzen' : 'Continue battery'],
       data: { task_name: 'animal_semantic_fluency', phase: 'end', task_version: ASF_VERSION }
     };
   }
