@@ -11,6 +11,7 @@
   var COPY_LIMIT_MS = 4 * 60 * 1000;
   var DELAY_MIN_MS = window.PILOT_MODE ? 10000 : 10 * 60 * 1000;
   var DELAY_MAX_MS = window.PILOT_MODE ? 30000 : 15 * 60 * 1000;
+  var OCF_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
 
   window.OCFState = {
     copyCompletedAt: null,
@@ -159,18 +160,18 @@
         var gpCursor = { x: 320, y: 240, drawing: false, last: 0 };
 
         display.innerHTML = '<div class="ocf-shell"><div class="ocf-heading"><div><span class="osr-kicker">Original Complex Figure</span>'
-          + '<h2>' + (showModel ? 'Copy the design' : 'Draw the design from memory') + '</h2></div>'
-          + '<div class="ocf-timer"><strong id="ocf-time">' + (showModel ? '4:00' : '4:00') + '</strong><span>remaining</span></div></div>'
-          + '<p>' + (showModel
-            ? 'Copy the design as accurately as possible. You may draw with touch, stylus, mouse or a connected gamepad.'
-            : 'Draw as much of the earlier design as you can remember. The original is not shown.') + '</p>'
+          + '<h2>' + (OCF_IS_GERMAN ? (showModel ? 'Kopieren Sie die Figur' : 'Zeichnen Sie die Figur aus dem Gedächtnis') : (showModel ? 'Copy the design' : 'Draw the design from memory')) + '</h2></div>'
+          + '<div class="ocf-timer"><strong id="ocf-time">4:00</strong><span>' + (OCF_IS_GERMAN ? 'verbleibend' : 'remaining') + '</span></div></div>'
+          + '<p>' + (OCF_IS_GERMAN
+            ? (showModel ? 'Kopieren Sie die Figur so genau wie möglich.' : 'Zeichnen Sie so viel wie möglich von der früheren Figur. Die Vorlage wird nicht gezeigt.')
+            : (showModel ? 'Copy the design as accurately as possible. You may draw with touch, stylus, mouse or a connected gamepad.' : 'Draw as much of the earlier design as you can remember. The original is not shown.')) + '</p>'
           + '<div class="ocf-workspace">' + (showModel ? '<div class="ocf-model-card">' + figureSvg(0, 'ocf-model') + '</div>' : '')
           + '<div class="ocf-canvas-wrap"><canvas id="ocf-canvas" width="640" height="480" aria-label="Drawing area"></canvas>'
           + '<div id="ocf-gamepad-cursor" class="ocf-gamepad-cursor" hidden></div></div></div>'
-          + '<div class="ocf-toolbar"><button class="battery-btn" id="ocf-undo">Undo stroke</button>'
-          + '<button class="battery-btn" id="ocf-clear">Start over</button>'
-          + '<button class="battery-btn primary" id="ocf-finish">Finish drawing</button>'
-          + '<button class="battery-btn ocf-incomplete" id="ocf-incomplete">Cannot complete</button></div>'
+          + '<div class="ocf-toolbar"><button class="battery-btn" id="ocf-undo">' + (OCF_IS_GERMAN ? 'Letzten Strich rückgängig' : 'Undo stroke') + '</button>'
+          + '<button class="battery-btn" id="ocf-clear">' + (OCF_IS_GERMAN ? 'Neu beginnen' : 'Start over') + '</button>'
+          + '<button class="battery-btn primary" id="ocf-finish">' + (OCF_IS_GERMAN ? 'Zeichnung beenden' : 'Finish drawing') + '</button>'
+          + '<button class="battery-btn ocf-incomplete" id="ocf-incomplete">' + (OCF_IS_GERMAN ? 'Nicht durchführbar' : 'Cannot complete') + '</button></div>'
           + '<p class="osr-fineprint">Gamepad: move with left stick or D-pad; hold the primary button to draw.</p></div>';
 
         var canvas = document.getElementById('ocf-canvas');
@@ -451,7 +452,8 @@
     return {
       type: jsPsychHtmlKeyboardResponse,
       stimulus: '<div class="osr-card">' + figureSvg(0, 'ocf-model ocf-memory-model')
-        + '<h2>Remember this design</h2><p>You will draw it again from memory later.</p></div>',
+        + '<h2>' + (OCF_IS_GERMAN ? 'Merken Sie sich diese Figur' : 'Remember this design') + '</h2><p>'
+        + (OCF_IS_GERMAN ? 'Sie werden sie später aus dem Gedächtnis zeichnen.' : 'You will draw it again from memory later.') + '</p></div>',
       choices: 'NO_KEYS',
       trial_duration: 5000,
       data: { task_name: 'original_complex_figure', phase: 'memory_warning', task_version: OCF_VERSION }
@@ -524,10 +526,10 @@
       func: function(done) {
         var display = displayElement();
         display.innerHTML = '<div class="ocf-recognition"><span class="osr-kicker">Recognition</span>'
-          + '<h2>Which design did you copy earlier?</h2><div class="ocf-foil-grid">'
+          + '<h2>' + (OCF_IS_GERMAN ? 'Welche Figur haben Sie zuvor kopiert?' : 'Which design did you copy earlier?') + '</h2><div class="ocf-foil-grid">'
           + order.map(function(variant, i) {
             return '<button class="ocf-foil" data-variant="' + variant + '" aria-label="Recognition option ' + (i + 1) + '">'
-              + figureSvg(variant, 'ocf-foil-svg') + '<span>Option ' + (i + 1) + '</span></button>';
+              + figureSvg(variant, 'ocf-foil-svg') + '<span>' + (OCF_IS_GERMAN ? 'Auswahl ' : 'Option ') + (i + 1) + '</span></button>';
           }).join('') + '</div></div>';
         Array.prototype.forEach.call(document.querySelectorAll('.ocf-foil'), function(button) {
           button.onclick = function() {
@@ -555,9 +557,10 @@
       {
         type: jsPsychHtmlButtonResponse,
         stimulus: '<div class="osr-card"><span class="osr-kicker">ETI Core · Visuoconstruction</span>'
-          + '<h2>Original Complex Figure</h2><p>Copy an abstract design using the drawing area.</p>'
+          + '<h2>' + (OCF_IS_GERMAN ? 'Komplexe Figur' : 'Original Complex Figure') + '</h2><p>'
+          + (OCF_IS_GERMAN ? 'Kopieren Sie eine abstrakte Figur in den Zeichenbereich.' : 'Copy an abstract design using the drawing area.') + '</p>'
           + '<p class="osr-fineprint">This is an original experimental figure, not the Benson figure.</p></div>',
-        choices: ['Begin copy'],
+        choices: [OCF_IS_GERMAN ? 'Kopieren beginnen' : 'Begin copy'],
         data: { task_name: 'original_complex_figure', phase: 'instructions', task_version: OCF_VERSION }
       },
       drawingTrial('copy', true),

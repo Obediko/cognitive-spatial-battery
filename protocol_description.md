@@ -1,4 +1,4 @@
-# Protocol Description — Experimental Eight-Task Battery
+# Protocol Description — ETI-Aligned Experimental Battery
 
 ## Status and purpose
 
@@ -14,22 +14,28 @@ This is a supervised baseline research prototype for participant characterizatio
 - Input modality, viewport, screen geometry, pixel ratio, and controller connection recorded
 - Do not pool input modalities until measurement equivalence has been established
 
-## The eight tasks and outcomes
+## ETI core: five test families and eight component scores
 
-1. **Original Story Recall (OSR-44):** original story, immediate and delayed recall, local audio recording, examiner-verified verbatim (0–44) and paraphrase scores. Automatic local transcription provides suggestions only.
-2. **Animal Semantic Fluency (ASF-60):** independently worded 60-second animal naming; valid unique total, repetitions, rule violations, uncertainty, prompt use.
-3. **Original Visual Naming (OVN-32):** original SVG line drawings; uncued and cue-assisted examiner scoring, with six-failure discontinuation. Not MINT.
-4. **Original Complex Figure (OCF-17):** original abstract figure; copy, 10–15 minute delayed recall, recognition, examiner element scoring. Not the Benson figure.
-5. **Number Span:** fixed `ons-controlled-form-a-1.0`; forward lengths 3–9, backward 2–8, two trials per length, discontinue after both items at a length fail.
-6. **Visual Sequencing and Set-Shifting:** custom numeric sequencing and alternating alphanumeric conditions; completion time, errors, cost, ratio. Not TMT.
-7. **Object-Location Memory:** practice plus three eight-object blocks; encoding, delay, location reconstruction; raw and normalized error.
-8. **2D Spatial Pointing:** six landmarks, practice, 18 main trials; absolute and signed angular error.
+1. **Original Story Recall:** immediate and delayed examiner-verified verbatim scores (two ETI inputs).
+2. **Animal Semantic Fluency:** valid unique animals in 60 seconds (one ETI input).
+3. **Original Visual Naming:** examiner-verified original-item naming total (one ETI input).
+4. **Original Complex Figure:** copy and delayed-recall element totals (two ETI inputs); recognition is secondary.
+5. **Number Span:** forward and backward correct-trial totals (two ETI inputs); longest spans are secondary.
+
+## Separate outcomes
+
+- **Trail comparators:** custom Trail A/B analogues, ending after 25 targets/24 connections or at 150/300 seconds. They are not ETI inputs.
+- **Additional spatial outcomes:** Object-Location Memory and 2D Spatial Pointing. They have no direct NACC C2 counterparts and are not ETI inputs.
 
 Detailed administration, stimuli, cueing, stopping, and scoring rules are in `docs/eti-core/` and the task modules.
 
 ## Task order
 
-The full-battery order is OSR immediate, OCF copy, visual sequencing/set-shifting, OSR delayed, animal fluency, visual naming, object-location memory, spatial pointing, number span, then OCF delayed recall/recognition. Delay gates enforce the task-specific minimum intervals; actual delay is saved.
+The full-battery order is story immediate, figure copy, animal fluency, visual naming, Number Span, figure delayed, story delayed, optional object-location and pointing measures, then Trail A/B last. Delay gates and actual delay metadata remain authoritative.
+
+## English and German forms
+
+Language is selected before participant identification and locked for the session. Every trial stores language and form versions. Whisper receives an explicit English/German language constraint. German story, naming lexicon and instructions are parallel pilot materials; measurement invariance and language-specific norms have not been established. German browser-generated story/digit audio is non-standardized until frozen recordings are added and validated.
 
 ## Scoring controls
 

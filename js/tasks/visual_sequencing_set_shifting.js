@@ -5,7 +5,7 @@ Computerized Visual Sequencing and Set-Shifting Task
 (NOT the Trail Making Test - do not label it as such)
 
 Condition A - Sequencing:   click 1 -> 2 -> 3 ... -> 25
-Condition B - Set-Shifting: click 1->A->2->B->3->C ... ->13->M
+Condition B - Set-Shifting: click 1->A->2->B->3->C ... ->12->L->13
 
 Practice:
   Sequencing  1-8 (with feedback)
@@ -24,6 +24,7 @@ const VS_RADIUS      = 26;   // target circle radius in px
 const VS_MIN_DIST    = 72;   // minimum centre-to-centre distance in px
 const VS_EDGE_MARGIN = 55;   // minimum distance from canvas edge in px
 const VS_ERROR_MS    = 600;  // duration of error flash
+const VS_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
 
 /* ── Helper: get jsPsych display area without destroying its wrapper ── */
 function vsGetDisplayEl() {
@@ -39,9 +40,10 @@ function vsSeqNumbers(count) {
 }
 function vsSeqSetShifting() {
   var nums = Array.from({ length: 13 }, function(_, i) { return String(i + 1); });
-  var lets = 'ABCDEFGHIJKLM'.split('');
+  var lets = 'ABCDEFGHIJKL'.split('');
   var out  = [];
-  for (var i = 0; i < 13; i++) { out.push(nums[i]); out.push(lets[i]); }
+  for (var i = 0; i < 12; i++) { out.push(nums[i]); out.push(lets[i]); }
+  out.push('13');
   return out;
 }
 
@@ -89,13 +91,13 @@ function buildVSTrial(opts) {
         'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
         'width:100%;height:100%;font-family:Segoe UI,Arial,sans-serif;';
 
-      var condLabel = condition === 'sequencing'
-        ? (trial_type === 'practice' ? 'Practice - Sequencing'   : 'Sequencing')
-        : (trial_type === 'practice' ? 'Practice - Set-Shifting' : 'Set-Shifting');
+      var condLabel = VS_IS_GERMAN
+        ? (condition === 'sequencing' ? (trial_type === 'practice' ? 'Übung – Zahlenfolge' : 'Zahlenfolge') : (trial_type === 'practice' ? 'Übung – Wechseln' : 'Wechseln'))
+        : (condition === 'sequencing' ? (trial_type === 'practice' ? 'Practice - Sequencing' : 'Sequencing') : (trial_type === 'practice' ? 'Practice - Set-Shifting' : 'Set-Shifting'));
 
       var statusBar = document.createElement('div');
       statusBar.className   = 'vs-status-bar';
-      statusBar.innerHTML   = '<strong>' + condLabel + '</strong> &nbsp;|&nbsp; Click targets in correct order.';
+      statusBar.innerHTML   = '<strong>' + condLabel + '</strong> &nbsp;|&nbsp; ' + (VS_IS_GERMAN ? 'Klicken Sie die Ziele in der richtigen Reihenfolge an.' : 'Click targets in correct order.');
 
       var canvas   = document.createElement('div');
       canvas.className      = 'vs-container';
@@ -116,6 +118,50 @@ function buildVSTrial(opts) {
       var trialRows     = [];
       var trialStart    = performance.now();
       var lastClickTime = trialStart;
+      var finished = false;
+      var timeLimitMs = trial_type === 'main'
+        ? (condition === 'sequencing' ? 150000 : 300000)
+        : 120000;
+
+      function finishTrial(timedOut) {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timeoutHandle);
+        var completionTime = Math.min(Math.round(performance.now() - trialStart), timeLimitMs);
+        trialRows.forEach(function(r) {
+          r.completion_time_ms = completionTime;
+          r.total_errors = totalErrors;
+          r.timed_out = !!timedOut;
+          r.correct_connections = Math.max(0, nextIdx - 1);
+        });
+        if (trialRows.length) window.BatteryData.addTrials(trialRows);
+        else window.BatteryData.addTrials({
+          task_name: 'visual_sequencing_set_shifting', condition: condition,
+          trial_type: trial_type, phase: 'timeout', completion_time_ms: completionTime,
+          total_errors: totalErrors, timed_out: true, correct_connections: 0
+        });
+
+        var existing = window.BatteryData.taskSummaries.visual_sequencing_set_shifting || {};
+        if (condition === 'sequencing') {
+          existing.completion_time_sequencing_ms = completionTime;
+          existing.errors_sequencing = totalErrors;
+          existing.correct_connections_sequencing = Math.max(0, nextIdx - 1);
+          existing.traila_timed_out = !!timedOut;
+        } else {
+          existing.completion_time_set_shifting_ms = completionTime;
+          existing.errors_set_shifting = totalErrors;
+          existing.correct_connections_set_shifting = Math.max(0, nextIdx - 1);
+          existing.trailb_timed_out = !!timedOut;
+          if (existing.completion_time_sequencing_ms != null) {
+            existing.set_shifting_cost_ms = completionTime - existing.completion_time_sequencing_ms;
+            existing.set_shifting_ratio = +(completionTime / existing.completion_time_sequencing_ms).toFixed(4);
+          }
+        }
+        window.BatteryData.setTaskSummary('visual_sequencing_set_shifting', existing);
+        setTimeout(function() { done(); }, 350);
+      }
+
+      var timeoutHandle = setTimeout(function() { finishTrial(true); }, timeLimitMs);
 
       /* ── Create target circles ── */
       sequence.forEach(function(label, idx) {
@@ -162,29 +208,7 @@ function buildVSTrial(opts) {
             nextIdx++;
 
             if (nextIdx >= sequence.length) {
-              var completionTime = Math.round(performance.now() - trialStart);
-              trialRows.forEach(function(r) {
-                r.completion_time_ms = completionTime;
-                r.total_errors       = totalErrors;
-              });
-
-              window.BatteryData.addTrials(trialRows);
-
-              var existing = window.BatteryData.taskSummaries['visual_sequencing_set_shifting'] || {};
-              if (condition === 'sequencing') {
-                existing.completion_time_sequencing_ms = completionTime;
-                existing.errors_sequencing             = totalErrors;
-              } else {
-                existing.completion_time_set_shifting_ms = completionTime;
-                existing.errors_set_shifting             = totalErrors;
-                if (existing.completion_time_sequencing_ms != null) {
-                  existing.set_shifting_cost_ms = completionTime - existing.completion_time_sequencing_ms;
-                  existing.set_shifting_ratio   = +(completionTime / existing.completion_time_sequencing_ms).toFixed(4);
-                }
-              }
-              window.BatteryData.setTaskSummary('visual_sequencing_set_shifting', existing);
-
-              setTimeout(function() { done(); }, 350);
+              finishTrial(false);
             }
 
           } else {
@@ -211,6 +235,18 @@ function buildVSTrial(opts) {
 
 /* ── Instruction screens ──────────────────────────────────── */
 function vsFullInstructions() {
+  if (VS_IS_GERMAN) {
+    return {
+      type: jsPsychInstructions,
+      pages: ['<div style="max-width:700px;margin:0 auto;text-align:left"><h2 style="color:#a8d8ea">Visuelle Reihenfolge und Aufgabenwechsel</h2>'
+        + '<p>Diese Aufgabe besteht aus zwei Teilen.</p><p><strong>Teil A – Zahlenfolge:</strong> Klicken Sie die Kreise 1 bis 25 in aufsteigender Reihenfolge an.</p>'
+        + '<p><strong>Teil B – Wechseln:</strong> Wechseln Sie zwischen Zahlen und Buchstaben: <strong>1 → A → 2 → B → … → 12 → L → 13</strong>.</p>'
+        + '<p>Arbeiten Sie so schnell und genau wie möglich. Nach einem Fehler fahren Sie beim letzten richtigen Ziel fort.</p></div>'],
+      show_clickable_nav: true,
+      button_label_next: 'Weiter →',
+      data: { task_name: 'visual_sequencing_set_shifting', phase: 'instructions' }
+    };
+  }
   return {
     type: jsPsychInstructions,
     pages: [
@@ -224,7 +260,7 @@ function vsFullInstructions() {
       + '<p><strong>Part B - Set-Shifting</strong><br>'
       + 'Circles containing <em>both numbers and letters</em> will appear. '
       + 'Click them in <em>alternating</em> order: '
-      + '<strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; 3 &rarr; C &hellip; &rarr; 13 &rarr; M</strong>.</p>'
+      + '<strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; 3 &rarr; C &hellip; &rarr; 12 &rarr; L &rarr; 13</strong>.</p>'
       + '<p>If you click the wrong target, a brief message will appear. '
       + '<strong>Do not stop</strong> - keep going from the last correct target.</p>'
       + '<p>We will start with a short practice for each part. Press <strong>Next</strong> to begin.</p>'
@@ -237,15 +273,15 @@ function vsFullInstructions() {
 }
 
 function vsReadyScreen(condition, isPractice) {
-  var label = condition === 'sequencing' ? 'Sequencing' : 'Set-Shifting';
-  var kind  = isPractice ? 'Practice' : 'Main Trial';
+  var label = VS_IS_GERMAN ? (condition === 'sequencing' ? 'Zahlenfolge' : 'Wechseln') : (condition === 'sequencing' ? 'Sequencing' : 'Set-Shifting');
+  var kind  = VS_IS_GERMAN ? (isPractice ? 'Übung' : 'Hauptaufgabe') : (isPractice ? 'Practice' : 'Main Trial');
   var desc  = condition === 'sequencing'
     ? (isPractice
         ? 'Click circles <strong>1 &rarr; 2 &rarr; &hellip; &rarr; 8</strong> in order.'
         : 'Click circles <strong>1 &rarr; 2 &rarr; &hellip; &rarr; 25</strong> in order.')
     : (isPractice
         ? 'Click in order: <strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; 3 &rarr; C &rarr; 4 &rarr; D</strong>.'
-        : 'Click in order: <strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; &hellip; &rarr; 13 &rarr; M</strong>.');
+        : 'Click in order: <strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; &hellip; &rarr; 12 &rarr; L &rarr; 13</strong>.');
   return {
     type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="max-width:600px;margin:0 auto;text-align:center">'
@@ -256,7 +292,7 @@ function vsReadyScreen(condition, isPractice) {
                 : '<p style="color:#8899aa">No feedback during the main trial. Keep going if you make an error.</p>')
             + '<p style="color:#8899aa;font-size:0.85rem">Click <strong>Start</strong> when ready.</p>'
             + '</div>',
-    choices: ['Start'],
+    choices: [VS_IS_GERMAN ? 'Starten' : 'Start'],
     data: { task_name: 'visual_sequencing_set_shifting', phase: isPractice ? 'practice_ready' : 'main_ready', condition: condition }
   };
 }
@@ -296,10 +332,10 @@ function buildVisualSequencingTimeline(randomizeOrder) {
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="max-width:600px;margin:0 auto;text-align:center">'
-            + '<h3 style="color:#a8d8ea">Visual Sequencing Task Complete</h3>'
-            + '<p style="color:#8899aa">You may download the data for this task now, or wait until the end of the full battery.</p>'
+            + '<h3 style="color:#a8d8ea">' + (VS_IS_GERMAN ? 'Trail-Vergleichsaufgaben abgeschlossen' : 'Visual Sequencing Task Complete') + '</h3>'
+            + '<p style="color:#8899aa">' + (VS_IS_GERMAN ? 'Die Daten können jetzt oder am Ende der Batterie heruntergeladen werden.' : 'You may download the data for this task now, or wait until the end of the full battery.') + '</p>'
             + '</div>',
-    choices: ['Download Task CSV', 'Continue Battery'],
+    choices: [VS_IS_GERMAN ? 'Aufgaben-CSV herunterladen' : 'Download Task CSV', VS_IS_GERMAN ? 'Batterie fortsetzen' : 'Continue Battery'],
     data: { task_name: 'visual_sequencing_set_shifting', phase: 'end' },
     on_finish: function(data) {
       if (data.response === 0) exportTaskCSV('visual_sequencing_set_shifting');
@@ -308,3 +344,10 @@ function buildVisualSequencingTimeline(randomizeOrder) {
 
   return timeline;
 }
+
+window.VSProtocol = {
+  sequenceA: function() { return vsSeqNumbers(25); },
+  sequenceB: function() { return vsSeqSetShifting(); },
+  trailaLimitMs: 150000,
+  trailbLimitMs: 300000
+};

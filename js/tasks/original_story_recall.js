@@ -127,6 +127,43 @@
     'She went home'
   ];
 
+  var OSR_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
+  if (OSR_IS_GERMAN) {
+    OSR_DICTIONARY_VERSION = 'osr44-de-0.1-pilot';
+    OSR_STORY_FORM = 'osr44-library-wallet-a-de-0.1-pilot';
+    OSR_STORY_TEXT = 'Am Donnerstagmorgen nahm Elena den Bus um sieben Uhr fünfzehn zur Bibliothek. Sie gab drei Bücher zurück und druckte ein Bewerbungsformular aus. Im Obergeschoss fand sie neben einem Fenster eine blaue Brieftasche. Darin waren eine Identitätskarte und zwei Fahrkarten. Elena gab sie der Bibliothekarin, die den Besitzer anrief. Zwanzig Minuten später kam ein älterer Mann, dankte Elena und bot ihr Kaffee an. Sie lehnte ab und fuhr mit dem Bus um elf Uhr nach Hause.';
+    OSR_AUDIO_FILES = {
+      story: OSR_AUDIO_BASE + 'osr44_library_wallet_a_de_pilot_missing.wav',
+      instruction: OSR_AUDIO_BASE + 'osr_instruction_de_pilot_missing.wav',
+      immediatePrompt: OSR_AUDIO_BASE + 'osr_immediate_prompt_de_pilot_missing.wav',
+      delayedPrompt: OSR_AUDIO_BASE + 'osr_delayed_prompt_de_pilot_missing.wav',
+      neutralPrompt: OSR_AUDIO_BASE + 'osr_neutral_prompt_de_pilot_missing.wav'
+    };
+    OSR_VERBATIM_UNITS = [
+      ['Donnerstag','Donnerstag'],['morgen','Morgen'],['Elena','Elena'],['nahm','nahm / nehmen'],
+      ['sieben Uhr fünfzehn','7:15 / sieben Uhr fünfzehn'],['Bus','Bus'],['Bibliothek','Bibliothek'],
+      ['gab zurück','gab zurück / zurückgeben'],['drei','drei / 3'],['Bücher','Buch / Bücher'],
+      ['druckte','druckte / drucken'],['Bewerbung','Bewerbung'],['Formular','Formular'],['Obergeschoss','Obergeschoss / oben'],
+      ['fand','fand / finden'],['blaue','blau / blaue'],['Brieftasche','Brieftasche / Portemonnaie / Geldbörse'],
+      ['neben','neben'],['Fenster','Fenster'],['darin','darin / innen'],['Identität','Identitätskarte / Ausweis'],
+      ['Karte','Identitätskarte / Karte'],['zwei','zwei / 2'],['Fahr','Fahrkarten / Zug'],['karten','Fahrkarte / Fahrkarten'],
+      ['Elena','Elena'],['gab','gab / geben'],['Bibliothekarin','Bibliothekarin / Bibliothekar'],
+      ['anrief','anrief / anrufen'],['Besitzer','Besitzer / Eigentümer'],['zwanzig','zwanzig / 20'],
+      ['Minuten später','Minute(n) später'],['älterer','alt / älter'],['Mann','Mann'],['kam','kam / kommen'],
+      ['dankte','dankte / danken'],['Elena','Elena'],['bot an','bot an / anbieten'],['Kaffee','Kaffee'],
+      ['lehnte ab','lehnte ab / ablehnen'],['fuhr','fuhr / fahren'],['elf Uhr','11 Uhr / elf Uhr'],['Bus','Bus'],['nach Hause','Hause / heim']
+    ];
+    OSR_PARAPHRASE_UNITS = [
+      'Das Ereignis fand am Donnerstagmorgen statt','Die Hauptperson hieß Elena','Sie nahm um 7:15 Uhr einen Bus',
+      'Sie fuhr zu einer Bibliothek','Sie gab drei Bücher zurück','Sie druckte ein Formular','Das Formular betraf eine Bewerbung',
+      'Sie ging in ein Obergeschoss','Sie fand oder bemerkte eine Brieftasche','Die Brieftasche war blau','Sie lag neben einem Fenster',
+      'Sie enthielt eine Identitätskarte','Sie enthielt zwei Fahrkarten','Elena gab die Brieftasche einer Bibliothekarin',
+      'Die Bibliothekarin rief jemanden an','Die angerufene Person war der Besitzer','Etwa zwanzig Minuten vergingen',
+      'Ein älterer Mann kam','Der ältere Mann war der Besitzer','Er dankte Elena','Er bot Elena Kaffee an',
+      'Elena lehnte das Angebot ab','Elena nahm später einen weiteren Bus','Dieser Bus fuhr um 11 Uhr','Sie fuhr nach Hause'
+    ];
+  }
+
   window.OSRState = {
     version: OSR_VERSION,
     dictionaryVersion: OSR_DICTIONARY_VERSION,
@@ -180,19 +217,18 @@
   function osrInstructionTrial() {
     return {
       type: jsPsychHtmlButtonResponse,
-      stimulus: '<div class="osr-card">'
-        + '<span class="osr-kicker">ETI Core · Verbal memory</span>'
-        + '<h2>Original Story Recall</h2>'
-        + '<p>You will hear a short story once. Listen carefully because, when it ends, '
-        + 'you will be asked to tell the whole story back in as much detail as you can.</p>'
-        + '<div class="info-box"><p>You may use your own words.</p>'
-        + '<p>Do not write anything down and do not use another device.</p>'
-        + '<p>Your response will be recorded locally for scoring.</p></div>'
-        + '<p class="osr-fineprint">The recording stays in this browser session and is not uploaded.</p>'
-        + '<button class="battery-btn" id="osr-replay-instructions" type="button">Replay instructions audio</button>'
+      stimulus: '<div class="osr-card"><span class="osr-kicker">ETI Core · Verbal memory</span>'
+        + '<h2>' + (OSR_IS_GERMAN ? 'Geschichte erinnern' : 'Original Story Recall') + '</h2>'
+        + '<p>' + (OSR_IS_GERMAN
+          ? 'Sie hören einmal eine kurze Geschichte. Hören Sie genau zu. Anschließend sollen Sie die gesamte Geschichte mit möglichst vielen Einzelheiten wiedergeben.'
+          : 'You will hear a short story once. Listen carefully because, when it ends, you will be asked to tell the whole story back in as much detail as you can.') + '</p>'
+        + '<div class="info-box"><p>' + (OSR_IS_GERMAN ? 'Sie dürfen eigene Worte verwenden.' : 'You may use your own words.') + '</p>'
+        + '<p>' + (OSR_IS_GERMAN ? 'Schreiben Sie nichts auf und verwenden Sie kein anderes Gerät.' : 'Do not write anything down and do not use another device.') + '</p>'
+        + '<p>' + (OSR_IS_GERMAN ? 'Ihre Antwort wird für die Auswertung aufgezeichnet.' : 'Your response will be recorded locally for scoring.') + '</p></div>'
+        + '<button class="battery-btn" id="osr-replay-instructions" type="button">' + (OSR_IS_GERMAN ? 'Anweisung erneut abspielen' : 'Replay instructions audio') + '</button>'
         + '<p id="osr-instruction-audio-status" class="osr-status" aria-live="polite"></p>'
         + '</div>',
-      choices: ['Continue to microphone check'],
+      choices: [OSR_IS_GERMAN ? 'Weiter zur Mikrofonprüfung' : 'Continue to microphone check'],
       data: { task_name: 'original_story_recall', phase: 'instructions', task_version: OSR_VERSION },
       on_load: function() {
         var button = document.getElementById('osr-replay-instructions');
@@ -229,9 +265,10 @@
       async: true,
       func: function(done) {
         var display = osrDisplay();
-        display.innerHTML = '<div class="osr-card"><span class="osr-kicker">Device check</span>'
-          + '<h2>Microphone access</h2><p>Allow microphone access when your browser asks.</p>'
-          + '<button class="battery-btn primary" id="osr-mic-check">Check microphone</button>'
+        display.innerHTML = '<div class="osr-card"><span class="osr-kicker">' + (OSR_IS_GERMAN ? 'Geräteprüfung' : 'Device check') + '</span>'
+          + '<h2>' + (OSR_IS_GERMAN ? 'Mikrofonzugriff' : 'Microphone access') + '</h2><p>'
+          + (OSR_IS_GERMAN ? 'Erlauben Sie den Mikrofonzugriff, wenn der Browser danach fragt.' : 'Allow microphone access when your browser asks.') + '</p>'
+          + '<button class="battery-btn primary" id="osr-mic-check">' + (OSR_IS_GERMAN ? 'Mikrofon prüfen' : 'Check microphone') + '</button>'
           + '<p id="osr-mic-status" class="osr-status" aria-live="polite"></p></div>';
         var button = document.getElementById('osr-mic-check');
         var status = document.getElementById('osr-mic-status');
@@ -268,9 +305,10 @@
       async: true,
       func: function(done) {
         var display = osrDisplay();
-        display.innerHTML = '<div class="osr-card osr-listening"><span class="osr-kicker">Listen once</span>'
+        display.innerHTML = '<div class="osr-card osr-listening"><span class="osr-kicker">' + (OSR_IS_GERMAN ? 'Einmal anhören' : 'Listen once') + '</span>'
           + '<div class="osr-soundmark" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>'
-          + '<h2>The story is playing</h2><p>Please listen. The text will not appear on screen.</p>'
+          + '<h2>' + (OSR_IS_GERMAN ? 'Die Geschichte wird abgespielt' : 'The story is playing') + '</h2><p>'
+          + (OSR_IS_GERMAN ? 'Hören Sie zu. Der Text wird nicht auf dem Bildschirm angezeigt.' : 'Please listen. The text will not appear on screen.') + '</p>'
           + '<p id="osr-play-status" class="osr-status" aria-live="polite">Preparing audio…</p></div>';
 
         function finishTrial(extra) {
@@ -293,11 +331,12 @@
 
           var utterance = new SpeechSynthesisUtterance(OSR_STORY_TEXT);
           var voices = window.speechSynthesis.getVoices();
-          var voice = voices.find(function(v) { return /^en(-|_)/i.test(v.lang) && /female|samantha|zira|serena/i.test(v.name); })
-            || voices.find(function(v) { return /^en(-|_)/i.test(v.lang); })
+          var languagePattern = OSR_IS_GERMAN ? /^de(-|_)/i : /^en(-|_)/i;
+          var voice = voices.find(function(v) { return languagePattern.test(v.lang) && /female|samantha|zira|serena|anna|petra|vicki/i.test(v.name); })
+            || voices.find(function(v) { return languagePattern.test(v.lang); })
             || voices[0] || null;
           if (voice) utterance.voice = voice;
-          utterance.lang = voice ? voice.lang : 'en-GB';
+          utterance.lang = voice ? voice.lang : (OSR_IS_GERMAN ? 'de-DE' : 'en-GB');
           utterance.rate = 0.88;
           utterance.pitch = 1;
           utterance.volume = 1;
@@ -375,16 +414,20 @@
       async: true,
       func: function(done) {
         var display = osrDisplay();
-        var prompt = condition === 'immediate'
-          ? 'Please tell me the story now. Include as many details as you can remember.'
-          : 'Earlier, you heard a short story. Please tell me that story again, including as many details as you can remember.';
+        var prompt = OSR_IS_GERMAN
+          ? (condition === 'immediate'
+            ? 'Bitte erzählen Sie mir jetzt die Geschichte. Nennen Sie so viele Einzelheiten, wie Sie erinnern.'
+            : 'Sie haben vorhin eine kurze Geschichte gehört. Bitte erzählen Sie diese Geschichte erneut und nennen Sie so viele Einzelheiten, wie Sie erinnern.')
+          : (condition === 'immediate'
+            ? 'Please tell me the story now. Include as many details as you can remember.'
+            : 'Earlier, you heard a short story. Please tell me that story again, including as many details as you can remember.');
         display.innerHTML = '<div class="osr-card"><span class="osr-kicker">'
           + (condition === 'immediate' ? 'Immediate recall' : 'Delayed recall') + '</span>'
-          + '<h2>Tell the story back</h2><p class="osr-prompt">' + prompt + '</p>'
-          + '<button class="battery-btn" id="osr-replay-prompt" type="button">Replay prompt audio</button>'
+          + '<h2>' + (OSR_IS_GERMAN ? 'Erzählen Sie die Geschichte' : 'Tell the story back') + '</h2><p class="osr-prompt">' + prompt + '</p>'
+          + '<button class="battery-btn" id="osr-replay-prompt" type="button">' + (OSR_IS_GERMAN ? 'Aufforderung erneut abspielen' : 'Replay prompt audio') + '</button>'
           + '<p id="osr-prompt-audio-status" class="osr-status" aria-live="polite"></p>'
-          + '<button class="battery-btn primary" id="osr-start-recording">Start recording</button>'
-          + '<button class="battery-btn" id="osr-stop-recording" disabled>Finish response</button>'
+          + '<button class="battery-btn primary" id="osr-start-recording">' + (OSR_IS_GERMAN ? 'Aufnahme starten' : 'Start recording') + '</button>'
+          + '<button class="battery-btn" id="osr-stop-recording" disabled>' + (OSR_IS_GERMAN ? 'Antwort beenden' : 'Finish response') + '</button>'
           + '<div id="osr-recording-indicator" class="osr-recording-indicator" hidden>'
           + '<span class="osr-recording-dot"></span> Recording <strong id="osr-recording-time">00:00</strong></div>'
           + '<button class="battery-btn" id="osr-play-neutral-prompt" type="button">Play neutral prompt</button>'
@@ -750,7 +793,8 @@
           osr_delay_out_of_window: delay == null || delay < OSR_MIN_DELAY_MS || delay > OSR_MAX_DELAY_MS,
           osr_story_audio_standardized: window.OSRState.storyAudioStandardized,
           osr_task_version: OSR_VERSION,
-          osr_dictionary_version: OSR_DICTIONARY_VERSION
+          osr_dictionary_version: OSR_DICTIONARY_VERSION,
+          osr_story_form: OSR_STORY_FORM
         });
       }
     };

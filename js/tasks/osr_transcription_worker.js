@@ -67,7 +67,12 @@ self.onmessage = function(event) {
     var audioData = message.audioData instanceof Float32Array
       ? message.audioData : new Float32Array(message.audioData);
     return bounded(
-      asr(audioData, { chunk_length_s: 30, stride_length_s: 5 }),
+      asr(audioData, {
+        chunk_length_s: 30,
+        stride_length_s: 5,
+        language: message.language === 'de' ? 'german' : 'english',
+        task: 'transcribe'
+      }),
       INFERENCE_TIMEOUT_MS,
       'Whisper transcription'
     );

@@ -69,7 +69,9 @@ assert.ok(ocf.includes('decimateStroke(stroke, 0.0025, 1200)'));
 
 const timelineStart = main.indexOf('var timeline = welcomeTrials.concat');
 const participantTimeline = main.slice(timelineStart);
-assert.ok(participantTimeline.indexOf('ocfDelayedTimeline') < participantTimeline.indexOf('asfTimeline'));
+assert.ok(participantTimeline.indexOf('asfTimeline') < participantTimeline.indexOf('ocfDelayedTimeline'));
+assert.ok(participantTimeline.indexOf('ocfDelayedTimeline') < participantTimeline.indexOf('osrDelayedTimeline'));
+assert.ok(participantTimeline.indexOf('spTimeline') < participantTimeline.indexOf('vsTimeline'));
 assert.ok(main.includes('showRecoverableRuntimeError'));
 const participantArrayEnd = participantTimeline.indexOf(']);');
 const participantArray = participantTimeline.slice(0, participantArrayEnd);

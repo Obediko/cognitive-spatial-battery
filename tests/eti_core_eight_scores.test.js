@@ -9,6 +9,7 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const main = fs.readFileSync(path.join(root, 'js', 'main.js'), 'utf8');
 const admin = fs.readFileSync(path.join(root, 'js', 'admin.js'), 'utf8');
 const utils = fs.readFileSync(path.join(root, 'js', 'utils.js'), 'utf8');
+const reporting = fs.readFileSync(path.join(root, 'js', 'reporting.js'), 'utf8');
 
 const modules = [
   'original_story_recall.js',
@@ -37,21 +38,23 @@ modules.forEach((file) => {
   'buildSpatialPointingTimeline'
 ].forEach((builder) => assert.ok(main.includes("'" + builder + "'"), builder + ' must be load-checked'));
 
-[
-  'osr_immediate_verbatim',
-  'asf_total_valid_unique',
-  'ovn_total_with_semantic',
-  'ocf_copy_score',
-  'ns_forward_span',
-  'completion_time_sequencing_ms',
-  'olm_mean_euclidean_error_px',
-  'sp_mean_absolute_angular_error_deg'
-].forEach((score) => assert.ok(utils.includes(score), score + ' must be exported in the summary'));
+const eightInputs = [
+  'CRAFTVRS_ANALOGUE', 'CRAFTDVR_ANALOGUE', 'ANIMALS_ANALOGUE', 'MINTTOTS_ANALOGUE',
+  'UDSBENTC_ANALOGUE', 'UDSBENTD_ANALOGUE', 'DIGFORCT_ANALOGUE', 'DIGBACCT_ANALOGUE'
+];
+eightInputs.forEach((score) => assert.ok(reporting.includes(score), score + ' must be exported'));
+assert.equal(new Set(eightInputs).size, 8);
+assert.ok(reporting.includes("eti_value_status: 'not_computed_normative_parameters_required'"));
+assert.ok(reporting.includes('TRAILB_TIME_SEC_ANALOGUE'));
+assert.ok(reporting.includes('Digital Trail B analogue; manuscript comparator, not an ETI input'));
+assert.ok(reporting.includes('OLM_MEAN_ERROR_PX'));
+assert.ok(reporting.includes('no NACC counterpart'));
 
 assert.ok(!main.includes('Original Visual Naming (with semantic cue)'), 'participant completion must not display examiner scoring');
 assert.ok(admin.includes('Visual Naming uncued'));
-assert.ok(admin.includes('Number Span forward / backward'));
-assert.ok(admin.includes('Sequencing / set-shifting time'));
+assert.ok(admin.includes('Number Span correct trials'));
+assert.ok(admin.includes('Trail comparators (not ETI inputs)'));
+assert.ok(admin.includes('Additional spatial outcomes (not ETI inputs)'));
 assert.ok(admin.includes('Object-Location Memory mean error'));
 assert.ok(admin.includes('Spatial Pointing mean absolute error'));
 console.log('eti_core_eight_scores.test.js: all assertions passed');

@@ -9,6 +9,8 @@
   var OVN_VERSION = '0.2.0-pilot';
   var OVN_STIMULUS_SET = 'ovn32-en-0.1';
   var RESPONSE_LIMIT_MS = 20000;
+  var OVN_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
+  if (OVN_IS_GERMAN) OVN_STIMULUS_SET = 'ovn32-de-0.1-pilot';
   window.OVN_DEFER_EXAMINER_REVIEW = window.OVN_DEFER_EXAMINER_REVIEW !== false;
   window.OVNState = window.OVNState || { itemAudio: [], itemAudioUrls: [], deferredResponses: [] };
   var ovnImagePreloads = {};
@@ -82,11 +84,14 @@
     ['trellis','trellis',[],'a framework that supports climbing plants','trel',3],
     ['weather_vane','weather vane',['wind vane'],'an instrument that turns to show wind direction','wea',3]
   ].map(function(row, index) {
+    var languageNames = window.BatteryLexicons
+      ? window.BatteryLexicons.naming.forItem(row[0], row[1], row[2])
+      : { target: row[1], alternatives: row[2] };
     return {
       id: 'ovn_' + String(index + 1).padStart(2, '0'),
       art: row[0],
-      target: row[1],
-      alternatives: row[2],
+      target: languageNames.target,
+      alternatives: languageNames.alternatives,
       semanticCue: row[3],
       phonemicCue: row[4],
       provisionalDifficulty: row[5]
@@ -169,6 +174,7 @@
   }
 
   function ovnNormalise(value) {
+    if (window.BatteryLanguage) return window.BatteryLanguage.normalise(value);
     return String(value || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
   }
 
@@ -468,12 +474,12 @@
           recorder = null;
           stimulusLoad = null;
           itemStartedAt = 0;
-          display.innerHTML = '<div class="ovn-shell ovn-participant"><div class="ovn-progress">Item ' + (index + 1)
-            + ' of ' + items.length + '<span id="ovn-response-prompt">Please wait for the image</span></div>'
+          display.innerHTML = '<div class="ovn-shell ovn-participant"><div class="ovn-progress">' + (OVN_IS_GERMAN ? 'Bild ' : 'Item ') + (index + 1)
+            + (OVN_IS_GERMAN ? ' von ' : ' of ') + items.length + '<span id="ovn-response-prompt">' + (OVN_IS_GERMAN ? 'Bitte warten Sie auf das Bild' : 'Please wait for the image') + '</span></div>'
             + '<div class="ovn-picture-card">' + ovnStimulusMarkup(item)
-            + '<div class="ovn-clock"><strong id="ovn-time">20</strong><span>seconds after image appears</span></div></div>'
-            + '<button class="battery-btn primary" id="ovn-deferred-next" disabled>Answer given — next item</button>'
-            + '<p class="osr-fineprint">The response clock and recording start only after the stimulus is visible.</p></div>';
+            + '<div class="ovn-clock"><strong id="ovn-time">20</strong><span>' + (OVN_IS_GERMAN ? 'Sekunden nach Erscheinen des Bildes' : 'seconds after image appears') + '</span></div></div>'
+            + '<button class="battery-btn primary" id="ovn-deferred-next" disabled>' + (OVN_IS_GERMAN ? 'Antwort gegeben — nächstes Bild' : 'Answer given — next item') + '</button>'
+            + '<p class="osr-fineprint">' + (OVN_IS_GERMAN ? 'Zeitmessung und Aufnahme beginnen erst, wenn das Bild sichtbar ist.' : 'The response clock and recording start only after the stimulus is visible.') + '</p></div>';
 
           var nextButton = document.getElementById('ovn-deferred-next');
           nextButton.onclick = endItem;
@@ -482,7 +488,7 @@
             stimulusLoad = loadInfo;
             itemStartedAt = Date.now();
             var prompt = document.getElementById('ovn-response-prompt');
-            if (prompt) prompt.textContent = 'Speak one answer clearly';
+            if (prompt) prompt.textContent = OVN_IS_GERMAN ? 'Sagen Sie eine Antwort deutlich' : 'Speak one answer clearly';
             nextButton.disabled = false;
             if (stream && typeof MediaRecorder !== 'undefined') {
               try {
@@ -629,10 +635,14 @@
     return [
       {
         type: jsPsychHtmlButtonResponse,
-        stimulus: '<div class="osr-card"><span class="osr-kicker">Visual naming</span>'
-          + '<h2>Name each object</h2><p>Say one name clearly for each object, then continue to the next item.</p>'
-          + '<p class="osr-fineprint">This deferred protocol measures uncued naming only; no semantic or phonemic cues are administered.</p></div>',
-        choices: ['Begin'],
+        stimulus: OVN_IS_GERMAN
+          ? '<div class="osr-card"><span class="osr-kicker">Visuelles Benennen</span><h2>Benennen Sie jeden Gegenstand</h2>'
+            + '<p>Sagen Sie zu jedem Gegenstand deutlich einen Namen und gehen Sie dann zum nächsten Bild weiter.</p>'
+            + '<p class="osr-fineprint">In diesem Protokoll werden während der Testung keine Hinweise gegeben.</p></div>'
+          : '<div class="osr-card"><span class="osr-kicker">Visual naming</span><h2>Name each object</h2>'
+            + '<p>Say one name clearly for each object, then continue to the next item.</p>'
+            + '<p class="osr-fineprint">This deferred protocol measures uncued naming only; no semantic or phonemic cues are administered.</p></div>',
+        choices: [OVN_IS_GERMAN ? 'Beginnen' : 'Begin'],
         data: { task_name: 'original_visual_naming', phase: 'instructions', protocol_mode: 'deferred_uncued', task_version: OVN_VERSION },
         on_load: function() {
           ovnPreloadStimulus(items[0]);

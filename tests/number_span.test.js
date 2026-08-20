@@ -12,6 +12,9 @@ vm.runInContext(source, context);
 const scoring = context.window.NSScoring;
 
 assert.ok(scoring);
+assert.ok(!source.includes("Examiner: enter participant\\'s response"));
+assert.ok(source.includes('id="ns-digit-pad"'));
+assert.ok(source.includes('Submit response'));
 assert.equal(scoring.sequenceVersion, 'ons-controlled-form-a-1.0');
 assert.equal(scoring.expectedResponse('forward', [1,2,3]), '123');
 assert.equal(scoring.expectedResponse('backward', [1,2,3]), '321');

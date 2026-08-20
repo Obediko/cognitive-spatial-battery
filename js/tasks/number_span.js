@@ -11,6 +11,7 @@
   var NS_ONSET_INTERVAL_MS = 1000; // nominal onset spacing; actual onsets are recorded
   var NS_AUDIO_LOAD_TIMEOUT_MS = 8000;
   var NS_POST_SEQUENCE_BUFFER_MS = 600; // extra pause after the last digit before responding
+  var NS_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
 
   var NS_FORWARD_MIN_LENGTH = 3;
   var NS_FORWARD_MAX_LENGTH = 9;
@@ -29,7 +30,7 @@
 
   window.NSState = {
     version: NS_VERSION,
-    audioStandardized: true, // flipped to false the first time any file fails to load/play
+    audioStandardized: !NS_IS_GERMAN, // German recordings are not yet validated or bundled
     digitBlobUrls: {},       // digit -> object URL (preloaded once)
     playbackOnsets: [],     // planned and observed audio starts for timing QA
     discontinued: { forward: false, backward: false },
@@ -84,6 +85,7 @@
   // affected digit(s)/instruction(s) and NSState.audioStandardized is set to
   // false so the session can be flagged for review.
   function nsPreloadAudio() {
+    if (NS_IS_GERMAN) return Promise.resolve();
     var jobs = [];
     for (var d = 0; d <= 9; d++) {
       (function(digit) {
@@ -118,6 +120,7 @@
       }
       var settled = false;
       var utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = NS_IS_GERMAN ? 'de-DE' : 'en-GB';
       var timer = setTimeout(function() {
         if (settled) return;
         settled = true;
@@ -155,17 +158,25 @@
       el.addEventListener('ended', finish, { once: true });
       el.addEventListener('error', function() {
         if (statusEl) statusEl.textContent = 'Standardized audio unavailable, using fallback voice…';
-        nsSpeakFallback(direction === 'forward'
-          ? 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in the same order.'
-          : 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in reverse order.'
+        nsSpeakFallback(NS_IS_GERMAN
+          ? (direction === 'forward'
+            ? 'Sie hören eine Ziffernfolge. Wiederholen Sie die Ziffern anschließend in derselben Reihenfolge.'
+            : 'Sie hören eine Ziffernfolge. Wiederholen Sie die Ziffern anschließend in umgekehrter Reihenfolge.')
+          : (direction === 'forward'
+            ? 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in the same order.'
+            : 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in reverse order.')
         ).then(finish);
       }, { once: true });
       el.play().catch(function() { finish(); });
     } else {
       if (statusEl) statusEl.textContent = 'Standardized audio unavailable, using fallback voice…';
-      nsSpeakFallback(direction === 'forward'
-        ? 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in the same order.'
-        : 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in reverse order.'
+      nsSpeakFallback(NS_IS_GERMAN
+        ? (direction === 'forward'
+          ? 'Sie hören eine Ziffernfolge. Wiederholen Sie die Ziffern anschließend in derselben Reihenfolge.'
+          : 'Sie hören eine Ziffernfolge. Wiederholen Sie die Ziffern anschließend in umgekehrter Reihenfolge.')
+        : (direction === 'forward'
+          ? 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in the same order.'
+          : 'You will hear a series of digits, one digit at a time. When the sequence ends, repeat the digits in reverse order.')
       ).then(finish);
     }
   }
@@ -174,9 +185,10 @@
     return {
       type: jsPsychHtmlButtonResponse,
       stimulus: '<div class="osr-card"><span class="osr-kicker">ETI Core · Working memory</span>'
-        + '<h2>' + (direction === 'forward' ? 'Number Span — Forward' : 'Number Span — Backward') + '</h2>'
-        + '<p>You will hear a series of digits, one at a time. When the sequence ends, repeat the digits '
-        + (direction === 'forward' ? 'in the same order.' : 'in reverse order.') + '</p>'
+        + '<h2>' + (NS_IS_GERMAN ? (direction === 'forward' ? 'Zahlenspanne — vorwärts' : 'Zahlenspanne — rückwärts') : (direction === 'forward' ? 'Number Span — Forward' : 'Number Span — Backward')) + '</h2>'
+        + '<p>' + (NS_IS_GERMAN
+          ? ('Sie hören einzelne Ziffern. Wiederholen Sie die Ziffern anschließend ' + (direction === 'forward' ? 'in derselben Reihenfolge.' : 'in umgekehrter Reihenfolge.'))
+          : ('You will hear a series of digits, one at a time. When the sequence ends, repeat the digits ' + (direction === 'forward' ? 'in the same order.' : 'in reverse order.'))) + '</p>'
         + '<button class="battery-btn" id="ns-replay-instructions" type="button">Replay instructions audio</button>'
         + '<p id="ns-instruction-status" class="osr-status" aria-live="polite"></p></div>',
       choices: ['Continue'],
@@ -281,10 +293,10 @@
         var display = nsDisplay();
         var sequence = nsControlledSequence(direction, length, trialIndex);
         display.innerHTML = '<div class="osr-card osr-listening"><span class="osr-kicker">'
-          + (direction === 'forward' ? 'Forward span' : 'Backward span') + ' · length ' + length
-          + ' · trial ' + trialIndex + '</span>'
+          + (NS_IS_GERMAN ? (direction === 'forward' ? 'Vorwärts' : 'Rückwärts') : (direction === 'forward' ? 'Forward span' : 'Backward span')) + ' · ' + (NS_IS_GERMAN ? 'Länge ' : 'length ') + length
+          + ' · ' + (NS_IS_GERMAN ? 'Durchgang ' : 'trial ') + trialIndex + '</span>'
           + '<div class="osr-soundmark" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>'
-          + '<h2>Listen for the digits</h2><p id="ns-play-status" class="osr-status" aria-live="polite">Preparing audio…</p></div>';
+          + '<h2>' + (NS_IS_GERMAN ? 'Hören Sie auf die Ziffern' : 'Listen for the digits') + '</h2><p id="ns-play-status" class="osr-status" aria-live="polite">...</p></div>';
 
         var status = document.getElementById('ns-play-status');
         if (status) status.textContent = 'Playing…';
@@ -292,19 +304,31 @@
         nsPlaySequence(sequence).then(function() {
           var expected = nsExpectedResponse(direction, sequence);
           display.innerHTML = '<div class="osr-card"><span class="osr-kicker">'
-            + (direction === 'forward' ? 'Forward span' : 'Backward span') + ' · length ' + length
-            + ' · trial ' + trialIndex + '</span>'
-            + '<h2>Examiner: enter participant\'s response</h2>'
-            + '<p class="osr-fineprint">Enter your answer using digits only, in the order requested.</p>'
+            + (NS_IS_GERMAN ? (direction === 'forward' ? 'Vorwärts' : 'Rückwärts') : (direction === 'forward' ? 'Forward span' : 'Backward span')) + ' · ' + (NS_IS_GERMAN ? 'Länge ' : 'length ') + length
+            + ' · ' + (NS_IS_GERMAN ? 'Durchgang ' : 'trial ') + trialIndex + '</span>'
+            + '<h2>' + (NS_IS_GERMAN ? 'Geben Sie die erinnerten Ziffern ein' : 'Enter the digits you remember') + '</h2>'
+            + '<p class="osr-fineprint">' + (NS_IS_GERMAN ? 'Verwenden Sie nur Ziffern und die verlangte Reihenfolge.' : 'Use digits only and enter them in the requested order.') + '</p>'
             + '<input type="text" id="ns-response-input" inputmode="numeric" pattern="[0-9]*" '
             + 'style="font-size:1.4rem;letter-spacing:0.15em;text-align:center;width:100%;max-width:320px;padding:0.5em;margin:0.6em 0" '
-            + 'placeholder="Digits only" autocomplete="off">'
-            + '<button class="battery-btn primary" id="ns-score-trial" type="button">Score &amp; continue</button>'
+            + 'placeholder="' + (NS_IS_GERMAN ? 'Nur Ziffern' : 'Digits only') + '" autocomplete="off">'
+            + '<div id="ns-digit-pad" style="display:grid;grid-template-columns:repeat(5,minmax(48px,1fr));gap:.4rem;max-width:420px;margin:.5rem auto">'
+            + [1,2,3,4,5,6,7,8,9,0].map(function(digit) { return '<button class="battery-btn ns-digit-key" type="button" data-digit="' + digit + '">' + digit + '</button>'; }).join('')
+            + '<button class="battery-btn" id="ns-delete" type="button" style="grid-column:span 2">' + (NS_IS_GERMAN ? 'Löschen' : 'Delete') + '</button></div>'
+            + '<button class="battery-btn primary" id="ns-score-trial" type="button">' + (NS_IS_GERMAN ? 'Antwort senden' : 'Submit response') + '</button>'
             + '<p id="ns-score-status" class="osr-status" aria-live="polite"></p></div>';
 
           var input = document.getElementById('ns-response-input');
           var scoreButton = document.getElementById('ns-score-trial');
           if (input) input.focus();
+          Array.prototype.forEach.call(document.querySelectorAll('.ns-digit-key'), function(button) {
+            button.addEventListener('click', function() {
+              if (input) input.value += button.getAttribute('data-digit');
+            });
+          });
+          var deleteButton = document.getElementById('ns-delete');
+          if (deleteButton) deleteButton.addEventListener('click', function() {
+            if (input) input.value = input.value.slice(0, -1);
+          });
 
           function scoreTrial() {
             var response = (input ? input.value : '').replace(/[^0-9]/g, '');

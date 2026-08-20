@@ -8,6 +8,8 @@
   var ASF_VERSION = '0.2.0-pilot';
   var ASF_DICTIONARY_VERSION = 'asf60-en-0.1';
   var ASF_TIME_LIMIT_MS = window.PILOT_MODE ? 15000 : 60000;
+  var ASF_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
+  if (ASF_IS_GERMAN) ASF_DICTIONARY_VERSION = 'asf60-de-0.1-pilot';
 
   window.ASFState = {
     audio: null,
@@ -31,6 +33,7 @@
   }
 
   function asfNormalise(value) {
+    if (window.BatteryLanguage) return window.BatteryLanguage.normalise(value);
     return String(value || '').trim().toLocaleLowerCase('en').replace(/[.?!]+$/g, '');
   }
 
@@ -84,14 +87,16 @@
   function asfInstructionTrial() {
     return {
       type: jsPsychHtmlButtonResponse,
-      stimulus: '<div class="osr-card"><span class="osr-kicker">ETI Core · Semantic fluency</span>'
-        + '<h2>Animal Naming</h2>'
-        + '<p>You will name as many different animals as you can before the one-minute timer ends.</p>'
-        + '<div class="info-box"><p>Say each response clearly.</p>'
-        + '<p>Keep going until the timer stops, even if you pause.</p>'
-        + '<p>Your response will be recorded locally for examiner scoring.</p></div>'
-        + '<p class="osr-fineprint">No recording or response is uploaded.</p></div>',
-      choices: ['Continue to practice'],
+      stimulus: ASF_IS_GERMAN
+        ? '<div class="osr-card"><span class="osr-kicker">ETI-Kern · Semantische Wortflüssigkeit</span><h2>Tiere nennen</h2>'
+          + '<p>Nennen Sie innerhalb einer Minute so viele verschiedene Tiere wie möglich.</p>'
+          + '<div class="info-box"><p>Sprechen Sie jedes Wort deutlich aus.</p><p>Machen Sie bis zum Ende weiter, auch wenn Sie kurz stocken.</p>'
+          + '<p>Ihre Antwort wird für die spätere Auswertung aufgezeichnet.</p></div></div>'
+        : '<div class="osr-card"><span class="osr-kicker">ETI Core · Semantic fluency</span>'
+          + '<h2>Animal Naming</h2><p>You will name as many different animals as you can before the one-minute timer ends.</p>'
+          + '<div class="info-box"><p>Say each response clearly.</p><p>Keep going until the timer stops, even if you pause.</p>'
+          + '<p>Your response will be recorded locally for examiner scoring.</p></div></div>',
+      choices: [ASF_IS_GERMAN ? 'Weiter zur Übung' : 'Continue to practice'],
       data: { task_name: 'animal_semantic_fluency', phase: 'instructions', task_version: ASF_VERSION }
     };
   }
@@ -99,11 +104,12 @@
   function asfPracticeTrial() {
     return {
       type: jsPsychHtmlButtonResponse,
-      stimulus: '<div class="osr-card"><span class="osr-kicker">Practice</span>'
-        + '<h2>Try a different category first</h2>'
-        + '<p class="osr-prompt">Say aloud two things that people use for writing.</p>'
-        + '<p>When you have said two answers, continue. Both answers should belong to the requested group.</p></div>',
-      choices: ['I have said two answers'],
+      stimulus: ASF_IS_GERMAN
+        ? '<div class="osr-card"><span class="osr-kicker">Übung</span><h2>Versuchen Sie zuerst eine andere Kategorie</h2>'
+          + '<p class="osr-prompt">Nennen Sie laut zwei Dinge, die Menschen zum Schreiben benutzen.</p></div>'
+        : '<div class="osr-card"><span class="osr-kicker">Practice</span><h2>Try a different category first</h2>'
+          + '<p class="osr-prompt">Say aloud two things that people use for writing.</p></div>',
+      choices: [ASF_IS_GERMAN ? 'Ich habe zwei Antworten genannt' : 'I have said two answers'],
       data: {
         task_name: 'animal_semantic_fluency',
         task_version: ASF_VERSION,
@@ -180,12 +186,12 @@
       func: function(done) {
         var display = asfDisplay();
         var totalSeconds = Math.round(ASF_TIME_LIMIT_MS / 1000);
-        display.innerHTML = '<div class="osr-card asf-main"><span class="osr-kicker">Timed task</span>'
-          + '<h2>Name different animals</h2>'
-          + '<p>You have ' + totalSeconds + ' seconds. Keep going until the timer stops.</p>'
-          + '<button class="battery-btn primary" id="asf-start">Start</button>'
+        display.innerHTML = '<div class="osr-card asf-main"><span class="osr-kicker">' + (ASF_IS_GERMAN ? 'Zeitaufgabe' : 'Timed task') + '</span>'
+          + '<h2>' + (ASF_IS_GERMAN ? 'Nennen Sie verschiedene Tiere' : 'Name different animals') + '</h2>'
+          + '<p>' + (ASF_IS_GERMAN ? ('Sie haben ' + totalSeconds + ' Sekunden. Machen Sie weiter, bis die Zeit endet.') : ('You have ' + totalSeconds + ' seconds. Keep going until the timer stops.')) + '</p>'
+          + '<button class="battery-btn primary" id="asf-start">' + (ASF_IS_GERMAN ? 'Starten' : 'Start') + '</button>'
           + '<div id="asf-live" hidden><div class="asf-timer-ring" id="asf-timer-ring">'
-          + '<strong id="asf-time">' + totalSeconds + '</strong><span>seconds</span></div>'
+          + '<strong id="asf-time">' + totalSeconds + '</strong><span>' + (ASF_IS_GERMAN ? 'Sekunden' : 'seconds') + '</span></div>'
           + '<div class="osr-recording-indicator"><span class="osr-recording-dot"></span> Recording locally</div>'
           + '<label class="osr-examiner-flag"><input type="checkbox" id="asf-prompt-used"> '
           + 'Examiner used the single neutral reminder</label>'
@@ -344,10 +350,13 @@
         var normalise = asfNormalise;
 
         function makeRow(response) {
+          var classified = window.BatteryLexicons
+            ? window.BatteryLexicons.animals.classify(response, null, window.BatteryData.language)
+            : { canonical: normalise(response), decision: 'unreviewed' };
           var row = document.createElement('div');
           row.className = 'asf-response-row';
           row.innerHTML = '<input class="asf-verbatim" aria-label="Verbatim response" value="' + asfEscape(response || '') + '">'
-            + '<input class="asf-canonical" aria-label="Canonical label" value="' + asfEscape(normalise(response)) + '">'
+            + '<input class="asf-canonical" aria-label="Canonical label" value="' + asfEscape(classified.canonical || normalise(response)) + '">'
             + '<select class="asf-decision" aria-label="Scoring decision">'
             + '<option value="unreviewed">Unreviewed</option><option value="valid">Valid</option>'
             + '<option value="repetition">Repetition</option><option value="rule_violation">Rule violation</option>'
@@ -363,6 +372,7 @@
             control.addEventListener('change', updateCounts);
           });
           body.appendChild(row);
+          if (response) row.querySelector('.asf-decision').value = classified.decision || 'unreviewed';
         }
 
         function rowObjects() {
