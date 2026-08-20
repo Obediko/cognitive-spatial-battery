@@ -479,7 +479,29 @@ window.BatteryArtifactStore = (function() {
       .catch(function() { return null; });
   }
 
-  return { put: put, get: get };
+  function deleteParticipant(participantId) {
+    var prefix = 'battery/' + String(participantId || '') + '/';
+    if (!participantId) return Promise.resolve(false);
+    return open().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction(STORE_NAME, 'readwrite');
+        var store = tx.objectStore(STORE_NAME);
+        var request = store.openCursor();
+        request.onsuccess = function() {
+          var cursor = request.result;
+          if (!cursor) return;
+          if (String(cursor.key).indexOf(prefix) === 0) cursor.delete();
+          cursor.continue();
+        };
+        request.onerror = function() { reject(request.error || new Error('Artifact deletion failed')); };
+        tx.oncomplete = function() { db.close(); resolve(true); };
+        tx.onerror = function() { db.close(); reject(tx.error || new Error('Artifact deletion failed')); };
+        tx.onabort = function() { db.close(); reject(tx.error || new Error('Artifact deletion aborted')); };
+      });
+    });
+  }
+
+  return { put: put, get: get, deleteParticipant: deleteParticipant };
 })();
 
 function batteryArtifactKey(participantId, task, slot) {
