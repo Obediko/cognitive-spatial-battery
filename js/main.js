@@ -24,6 +24,27 @@ function showLanguageReloadMask(selectedLanguage) {
   document.body.appendChild(mask);
 }
 
+function languageFlagSvg(country) {
+  if (country === 'de') {
+    return '<svg class="language-flag" viewBox="0 0 30 18" aria-hidden="true" focusable="false">'
+      + '<rect width="30" height="6" y="0" fill="#000"/>'
+      + '<rect width="30" height="6" y="6" fill="#dd0000"/>'
+      + '<rect width="30" height="6" y="12" fill="#ffce00"/></svg>';
+  }
+  return '<svg class="language-flag" viewBox="0 0 30 18" aria-hidden="true" focusable="false">'
+    + '<rect width="30" height="18" fill="#fff"/>'
+    + '<path stroke="#b22234" stroke-width="1.385" d="M0 .692h30M0 3.462h30M0 6.231h30M0 9h30M0 11.769h30M0 14.538h30M0 17.308h30"/>'
+    + '<rect width="12.5" height="9.7" fill="#3c3b6e"/>'
+    + '<g fill="#fff"><circle cx="1.4" cy="1.35" r=".45"/><circle cx="4.2" cy="1.35" r=".45"/>'
+    + '<circle cx="7" cy="1.35" r=".45"/><circle cx="9.8" cy="1.35" r=".45"/>'
+    + '<circle cx="2.8" cy="3.25" r=".45"/><circle cx="5.6" cy="3.25" r=".45"/>'
+    + '<circle cx="8.4" cy="3.25" r=".45"/><circle cx="11.2" cy="3.25" r=".45"/>'
+    + '<circle cx="1.4" cy="5.15" r=".45"/><circle cx="4.2" cy="5.15" r=".45"/>'
+    + '<circle cx="7" cy="5.15" r=".45"/><circle cx="9.8" cy="5.15" r=".45"/>'
+    + '<circle cx="2.8" cy="7.05" r=".45"/><circle cx="5.6" cy="7.05" r=".45"/>'
+    + '<circle cx="8.4" cy="7.05" r=".45"/><circle cx="11.2" cy="7.05" r=".45"/></g></svg>';
+}
+
 function makeLanguageSelectionTrial() {
   return {
     type: jsPsychHtmlButtonResponse,
@@ -32,7 +53,10 @@ function makeLanguageSelectionTrial() {
       + '<h1>Choose the assessment language<br><span lang="de">Testsprache wählen</span></h1>'
       + '<p>The selection applies to the full session.<br><span lang="de">Die Auswahl gilt für die gesamte Sitzung.</span></p>'
       + '</div>',
-    choices: ['🇺🇸 English', '🇩🇪 Deutsch'],
+    choices: [
+      '<span class="language-choice">' + languageFlagSvg('us') + '<span>English</span></span>',
+      '<span class="language-choice">' + languageFlagSvg('de') + '<span>Deutsch</span></span>'
+    ],
     data: { battery_phase: 'language_selection' },
     on_finish: function(data) {
       var selected = data.response === 1 ? 'de' : 'en';
