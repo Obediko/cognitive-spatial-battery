@@ -39,8 +39,8 @@ Use a different output for each variable, then trigger a fresh deploy.
 2. Complete a short pilot task with microphone capture.
 3. Keep the completion screen open until it reports that synchronization finished.
 4. On another device, open `/admin.html`, sign in, and confirm the checkpoint and audio load.
-5. Create a disposable **in-progress** session and verify deletion requires both confirmation and password re-entry.
-6. Confirm completed or examiner-verified sessions do not show the ongoing-session delete action.
+5. Create a disposable session and verify remote deletion requires both confirmation and password re-entry.
+6. Confirm local deletion removes the browser checkpoint and its locally stored recordings and drawings.
 7. Confirm the consent/ethics documentation explicitly covers remote storage of pseudonymous responses, drawings, and voice recordings, access control, retention, and deletion.
 
 ## Data protection notes
@@ -49,5 +49,5 @@ Use a different output for each variable, then trigger a fresh deploy.
 - Participant upload credentials are random per session and are not examiner passwords.
 - Examiner login uses a secure, HTTP-only, same-site cookie.
 - Failed login attempts are rate-limited.
-- Deletion is limited to actively ongoing sessions and creates a non-identifying audit event.
+- Remote deletion requires password re-entry and creates a non-identifying audit event.
 - Netlify Blobs encrypts data in transit and at rest, but Netlify does not present Blobs as a HIPAA-compliant offering. Use only under the approved research governance and retention plan.
