@@ -36,7 +36,7 @@ window.BatteryLanguage = (function() {
       break_title: 'Machen Sie bei Bedarf eine kurze Pause', next_task: 'Nächste Aufgabe',
       participant_complete: 'Testsitzung abgeschlossen', thank_you: 'Vielen Dank',
       scoring_separate: 'Die Auswertung erfolgt getrennt und unterbricht diese Sitzung nicht.',
-      german_warning: 'Deutsche Parallelform: Pilotversion. Sprachliche und psychometrische Gleichwertigkeit mit der englischen Form ist noch nicht nachgewiesen.'
+      german_warning: ''
     }
   };
 
