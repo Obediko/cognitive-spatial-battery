@@ -43,7 +43,7 @@ assert.ok(trails.includes('trailbLimitMs: 300000'));
 const timelineStart = main.indexOf('var timeline = welcomeTrials.concat([');
 const timeline = main.slice(timelineStart, main.indexOf(']);', timelineStart));
 assert.ok(timeline.lastIndexOf('vsTimeline') > timeline.lastIndexOf('spTimeline'), 'Trail A/B must be last');
-assert.ok(timeline.indexOf('ocfDelayedTimeline') < timeline.indexOf('osrDelayedTimeline'));
+assert.ok(timeline.indexOf('osrDelayedTimeline') < timeline.indexOf('ocfDelayedTimeline'));
 assert.ok(main.includes("eti_core: ['osr', 'asf', 'ovn', 'ocf', 'ns']"));
 assert.ok(main.includes("additional: ['olm', 'sp', 'vs']"));
 assert.ok(main.includes("finish('custom', tasks)"));
