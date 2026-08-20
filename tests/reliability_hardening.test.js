@@ -43,6 +43,8 @@ assert.ok(asr.includes('transcriptionWorker.terminate()'));
 assert.ok(asr.includes('worker.postMessage({'));
 assert.ok(asrWorker.includes("pipeline('automatic-speech-recognition'"));
 assert.ok(asrWorker.includes("self.postMessage({ type: 'progress'"));
+assert.ok(asrWorker.includes('asr(audioData, generationOptions)'));
+assert.ok(asrWorker.includes("if (message.language === 'de')"));
 
 assert.ok(osr.includes('requestMicrophone(12000)'));
 assert.ok(osr.includes('stopRecorder(recorder, chunks, 3000)'));
