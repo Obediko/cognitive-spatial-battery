@@ -51,8 +51,9 @@ assert.ok(reporting.includes('OLM_MEAN_ERROR_PX'));
 assert.ok(reporting.includes('no NACC counterpart'));
 
 assert.ok(!main.includes('Original Visual Naming (with semantic cue)'), 'participant completion must not display examiner scoring');
-assert.ok(admin.includes('Visual Naming uncued'));
-assert.ok(admin.includes('Number Span correct trials'));
+assert.ok(admin.includes('Visual Naming analogue: total correct without a cue'));
+assert.ok(admin.includes('Number Span forward analogue: number of correct trials'));
+assert.ok(admin.includes('Number Span backward analogue: number of correct trials'));
 assert.ok(admin.includes('Trail comparators (not ETI inputs)'));
 assert.ok(admin.includes('Additional spatial outcomes (not ETI inputs)'));
 assert.ok(admin.includes('Object-Location Memory mean error'));
