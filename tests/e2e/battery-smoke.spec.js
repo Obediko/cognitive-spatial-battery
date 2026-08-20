@@ -2,10 +2,16 @@ const { test, expect } = require('@playwright/test');
 
 async function openEnglishBattery(page) {
   await page.goto('/');
-  const english = page.getByRole('button', { name: 'English' });
+  const english = page.getByRole('button', { name: /English/ });
   if (await english.isVisible()) await english.click();
   await expect(page.getByRole('heading', { name: /Baseline Cognitive/ })).toBeVisible();
 }
+
+test('language selection shows US and German flags', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: /🇺🇸 English/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /🇩🇪 Deutsch/ })).toBeVisible();
+});
 
 test('battery clearly separates the eight ETI scores and supports custom task selection', async ({ page }) => {
   const errors = [];
@@ -20,10 +26,14 @@ test('battery clearly separates the eight ETI scores and supports custom task se
   await expect(page.getByRole('button', { name: /Run ETI core: all 8 scores/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: '8 scores from 5 task families' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Not part of the 8 ETI scores' })).toBeVisible();
+  await expect(page.locator('.eti-task-group')).toHaveCSS('border-top-color', 'rgb(91, 192, 222)');
+  await expect(page.getByText('Estimated time: 30–45 min')).toBeVisible();
+  await expect(page.getByText(/Pilot mode:/)).toHaveCount(0);
   await expect(page.locator('.task-check')).toHaveCount(8);
   await expect(page.locator('.task-check:checked')).toHaveCount(5);
   await page.getByRole('button', { name: 'Select all tasks' }).click();
   await expect(page.locator('.task-check:checked')).toHaveCount(8);
+  await expect(page.getByText('Estimated time: 45–65 min')).toBeVisible();
   await page.getByRole('button', { name: 'Select ETI core' }).click();
   await expect(page.locator('.task-check:checked')).toHaveCount(5);
   expect(errors).toEqual([]);
@@ -107,6 +117,43 @@ test('visual naming starts its clock only after the image is available', async (
   releaseImage();
   await expect(next).toBeEnabled({ timeout: 5000 });
   await expect(page.getByText('Speak one answer clearly')).toBeVisible();
+});
+
+test('animal naming requires practice and changes Start to Stop during the timed task', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: () => Promise.reject(new Error('test permission denial')) }
+    });
+  });
+  await openEnglishBattery(page);
+  await page.getByRole('button', { name: 'Begin Setup' }).click();
+  await page.locator('input[type="text"]').fill('E2E_ASF_FLOW');
+  await page.getByRole('button', { name: 'Confirm ID' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('button', { name: 'Continue without fullscreen' }).click();
+  await page.getByRole('button', { name: 'Clear selection' }).click();
+  await page.locator('.task-check[value="asf"]').check();
+  await page.getByRole('button', { name: 'Run selected tasks' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('button', { name: 'Continue to practice' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Try a different category first' })).toBeVisible();
+  await page.getByRole('button', { name: 'Start practice' }).click();
+  await expect(page.getByText('Now say two things that people use for writing.')).toBeVisible();
+  await page.waitForTimeout(250);
+  await page.getByRole('button', { name: 'Finish practice' }).click();
+
+  await page.getByRole('button', { name: 'Check microphone' }).click();
+  await expect(page.getByRole('button', { name: 'Continue with protocol flag' })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue with protocol flag' }).click();
+  await expect(page.getByText('The real task is about to begin.', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
+  await expect(page.getByText('Timer running; audio is not being recorded.')).toBeVisible();
+  await expect(page.locator('#asf-time')).not.toHaveText('60');
+  await page.getByRole('button', { name: 'Stop', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Animal Naming complete' })).toBeVisible();
 });
 
 
