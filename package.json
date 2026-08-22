@@ -11,5 +11,14 @@
   },
   "dependencies": {
     "@netlify/blobs": "10.7.12"
-  }
+  },
+  "version": "1.0.0",
+  "description": "Research-only bilingual browser-based cognitive and spatial battery with original experimental tasks.",
+  "author": "Apochi Obed and Nikolai Axmacher",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Obediko/cognitive-spatial-battery.git"
+  },
+  "homepage": "https://github.com/Obediko/cognitive-spatial-battery"
 }

@@ -1,4 +1,6 @@
-# Cognitive Spatial Battery
+# CognitiveBA3: Cognitive Spatial Battery
+
+**Authors:** Apochi Obed and Nikolai Axmacher
 
 Browser-based research prototype for baseline cognitive and spatial characterization. It uses original stimuli and task designs; it does **not** reproduce licensed NACC forms, MINT drawings, the Benson figure, Craft Story text, or Trail Making Test materials.
 
@@ -99,8 +101,14 @@ CI checks JavaScript syntax, task scoring, the eight-input ETI analogue contract
 
 ## Citation and naming
 
+Preferred citation:
+
+> Apochi, O., & Axmacher, N. (2026). *CognitiveBA3: A Bilingual Browser-Based Cognitive and Spatial Research Battery* (Version 1.0.0) [Computer software]. Zenodo.
+
+The DOI will be inserted after Zenodo mints the release record. Machine-readable metadata is provided in `CITATION.cff`.
+
 Describe the software as a custom jsPsych cognitive/spatial battery with original experimental tasks. Do not call any task Craft Story, MINT, Benson Figure, Trail Making Test, or a NACC form. Cite the inspiration at the construct/procedure level only, subject to supervisor and ethics review.
 
 ## Licence
 
-Code is MIT licensed. Stimulus provenance and reuse status are tracked separately in `assets/stimulus_manifest.json` and the item-level visual-naming manifest. A code licence does not override third-party rights.
+Code is MIT licensed. Stimulus provenance and reuse status are tracked separately in `assets/stimulus_manifest.json`, the item-level visual-naming manifest, and `THIRD_PARTY_NOTICE.md`. A code licence does not override third-party rights. Files whose provenance remains unresolved must not be redistributed or reused until clearance is documented.

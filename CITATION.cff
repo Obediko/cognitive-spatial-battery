@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: >-
+  Please cite this software when its code, task framework, or research
+  workflow contributes to a publication or scholarly output.
+type: software
+title: "CognitiveBA3: A Bilingual Browser-Based Cognitive and Spatial Research Battery"
+authors:
+  - family-names: "Apochi"
+    given-names: "Obed"
+    affiliation: "Ruhr University Bochum, Germany"
+    website: "https://github.com/Obediko"
+  - family-names: "Axmacher"
+    given-names: "Nikolai"
+    affiliation: "Ruhr University Bochum, Germany"
+version: 1.0.0
+date-released: 2026-08-22
+repository-code: "https://github.com/Obediko/cognitive-spatial-battery"
+url: "https://github.com/Obediko/cognitive-spatial-battery"
+abstract: >-
+  Research-only browser software implementing original English and German
+  pilot tasks for cognitive and spatial assessment, pseudonymous participant
+  administration, data export, and separated examiner review. Its outputs are
+  experimental analogues. They are not validated clinical measures, official
+  source instruments, or norm-equivalent scores.
+license: MIT
+keywords:
+  - cognitive assessment
+  - spatial cognition
+  - neuropsychology
+  - bilingual research software
+  - jsPsych
+  - research prototype
