@@ -25,7 +25,9 @@ abstract: >-
   pilot tasks for cognitive and spatial assessment, pseudonymous participant
   administration, data export, and separated examiner review. Its outputs are
   experimental analogues. They are not validated clinical measures, official
-  source instruments, or norm-equivalent scores.
+  source instruments, or norm-equivalent scores. The MIT licence applies to
+  project code; stimulus images, synthetic voices, and other third-party
+  materials can have separate or unresolved reuse conditions.
 license: MIT
 keywords:
   - cognitive assessment
@@ -34,3 +36,8 @@ keywords:
   - bilingual research software
   - jsPsych
   - research prototype
+  - reproducible research
+  - research data governance
+  - psychometric validation
+  - episodic memory
+  - semantic fluency

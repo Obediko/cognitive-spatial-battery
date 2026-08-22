@@ -1,83 +1,97 @@
-# CognitiveBA3: Cognitive Spatial Battery
+# CognitiveBA3: A Bilingual Cognitive and Spatial Research Battery
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22059989.svg)](https://doi.org/10.5281/zenodo.22059989)
 
-**Authors:** Apochi Obed and Nikolai Axmacher
+**Authors:** Apochi Obed and Nikolai Axmacher  
+**Affiliation:** Ruhr University Bochum, Germany  
+**Archived software release:** v1.0.0  
+**Status:** research prototype; empirical validation and release-gate approval remain incomplete.
 
-Browser-based research prototype for baseline cognitive and spatial characterization. It uses original stimuli and task designs; it does **not** reproduce licensed NACC forms, MINT drawings, the Benson figure, Craft Story text, or Trail Making Test materials.
+CognitiveBA3 is browser-based research software for characterizing verbal episodic memory, semantic retrieval, visual naming, visuoconstruction, visual memory, working memory, and selected spatial abilities. It administers independently developed tasks in English or German, records reproducible task and language metadata, separates participant administration from examiner review, and exports trial-level and summary-level research data.
 
-## ETI-aligned architecture
+The project is not a diagnostic device, a validated clinical assessment, an official National Alzheimer's Coordinating Center (NACC) instrument, or a norm-equivalent replacement for any established neuropsychological test. Publishing software with a DOI does not establish measurement validity, ethical approval, or readiness for confirmatory participant research.
 
-ETI uses eight component scores produced by five test families—not eight separately administered tasks:
+## Scientific rationale
 
-| ETI-ready analogue field | Original measure |
-|---|---|
-| `CRAFTVRS_ANALOGUE` | Story immediate verbatim, 0–44 |
-| `CRAFTDVR_ANALOGUE` | Story delayed verbatim, 0–44 |
-| `ANIMALS_ANALOGUE` | Valid unique animals in 60 seconds |
-| `MINTTOTS_ANALOGUE` | Original visual naming total, 0–32 |
-| `UDSBENTC_ANALOGUE` | Original complex-figure copy, 0–17 |
-| `UDSBENTD_ANALOGUE` | Original complex-figure delayed recall, 0–17 |
-| `DIGFORCT_ANALOGUE` | Number Span forward correct trials, 0–14 |
-| `DIGBACCT_ANALOGUE` | Number Span backward correct trials, 0–14 |
+The battery combines complementary cognitive domains because verbal memory, semantic retrieval, naming, visuoconstruction, visual delayed recall, and working memory capture different aspects of cognition. The design is informed by the structure of the NACC Uniform Data Set version 3 neuropsychological battery, which assesses several of these domains through separate task families (Weintraub et al., 2018; NACC, 2015). CognitiveBA3 uses original task materials and experimental analogue outputs rather than reproducing or claiming equivalence to source instruments.
 
-Visual Sequencing/Set-Shifting is retained as a Trail A/B conceptual comparator and runs last. Object-Location Memory and Spatial Pointing are optional additional spatial outcomes. None of those three modules is an ETI input.
+Optional object-location and spatial-pointing tasks extend the battery to spatial association and directional judgment. Human studies support the relevance of medial temporal and entorhinal systems to spatial memory and navigation (Doeller et al., 2010; Laczó et al., 2022). That background motivates the constructs only. It does not show that these particular tasks isolate an anatomical structure, diagnose disease, or predict a clinical outcome.
 
-At session start, the primary action runs only the ETI core. A custom battery builder allows any combination of the five ETI task families and three additional modules. The interface displays the eight ETI outputs separately from non-ETI measures, and the Trail A/B comparator remains last whenever selected.
+The application uses jsPsych 7.3.4. Browser-based experiments can support reproducible administration, but device, browser, input method, audio hardware, and display timing must be measured rather than assumed equivalent (de Leeuw et al., 2023; Anwyl-Irvine et al., 2021). Complete references appear in [`REFERENCES.md`](REFERENCES.md) and [`REFERENCES.bib`](REFERENCES.bib).
 
-All scores are experimental pilot scores. They are not NACC scores and are not norm-equivalent to the source instruments whose principles motivated the designs.
+## Task architecture and research outputs
 
-## Research status
+The cognitive core consists of five task families and eight experimental outputs:
 
-This repository is suitable for software testing and supervised piloting only. It is **not cleared for inferential data collection** until the gates in [the validation plan](docs/validation/validation_plan.md) are signed off. German is an explicitly unvalidated parallel pilot form. Frozen German story, prompt and digit recordings are bundled, but still require native-listener approval and cross-device validation before research use.
+| Task family | Cognitive construct | Primary analogue output | Range | Examiner review |
+|---|---|---|---|---|
+| Original Story Recall | Immediate verbal episodic recall | `CRAFTVRS_ANALOGUE` | 0-44 | Required |
+| Original Story Recall | Delayed verbal episodic recall | `CRAFTDVR_ANALOGUE` | 0-44 | Required |
+| Animal Semantic Fluency | Semantic retrieval and verbal generation | `ANIMALS_ANALOGUE` | 0-77 reference range | Required |
+| Original Visual Naming | Confrontation naming | `MINTTOTS_ANALOGUE` | 0-32 | Required |
+| Original Complex Figure | Visuoconstruction | `UDSBENTC_ANALOGUE` | 0-17 | Required |
+| Original Complex Figure | Delayed visual recall | `UDSBENTD_ANALOGUE` | 0-17 | Required |
+| Number Span | Forward auditory span | `DIGFORCT_ANALOGUE` | 0-14 | Rule-based |
+| Number Span | Backward auditory span | `DIGBACCT_ANALOGUE` | 0-14 | Rule-based |
 
-## Running locally
+Three optional modules produce separate, non-ETI outcomes: Object-Location Memory, Spatial Pointing, and Visual Sequencing/Set-Shifting. The sequencing comparator runs last whenever selected.
 
-Serve the repository over HTTP; direct `file://` opening is not supported because audio/model loading uses `fetch` and dynamic imports.
+The eight fields are **structural analogues**, not NACC administrations or validated ETI inputs. The software deliberately sets `eti_value` to `null` and `eti_value_status` to `not_computed_normative_parameters_required`. An ETI value cannot be calculated or interpreted without an authorized, versioned definition; appropriate normative parameters; and empirical evidence that these original task forms support the intended computation.
+
+## Administration and timing
+
+At session start, select English or German, enter a pseudonymous participant identifier, and choose either the five-family cognitive core or a custom combination of modules. The session language is locked and recorded in the exports. Research staff remain responsible for supervision and subsequent examiner scoring.
+
+- Cognitive core: approximately 30-45 minutes.
+- All available modules: approximately 45-65 minutes.
+- Actual duration depends on response speed, review workflow, selected modules, technical events, and delayed-recall gates. These are planning estimates, not measured normative administration times.
+
+The standard full-battery order is story immediate recall, figure copy, animal fluency, visual naming, Number Span, story delayed recall, figure delayed recall, selected spatial modules, and the sequencing/set-shifting comparator last. Actual retention intervals are recorded and must be reviewed. Development-only shortened timings must never be combined with research administrations.
+
+Detailed procedures are in [`protocol_description.md`](protocol_description.md), the task-specific specifications under [`docs/eti-core/`](docs/eti-core/), and [`pilot_checklist.md`](pilot_checklist.md).
+
+## English and German forms
+
+Both language forms include frozen, versioned story, instruction, and digit recordings. English stimulus audio was generated with Kokoro; the German pilot recordings were generated offline with Piper and the Thorsten High voice. Frozen audio means that files are fixed and reproducible. It does not mean pronunciation, intelligibility, cross-device playback, or language-form equivalence has been established.
+
+English and German use language-specific story materials, response dictionaries, instructions, and accepted naming terms. German is labeled `pilot_unvalidated`; the English form is the internal reference form, not a validated clinical standard. Translation review, native-listener agreement, item-level equivalence, scorer agreement, and measurement properties require separate evaluation before cross-language comparisons.
+
+## Data flow, privacy, and governance
+
+Participant identifiers must be pseudonymous. Never enter names, email addresses, dates of birth, student numbers, or other direct identifiers. Voice recordings may nevertheless be identifiable personal data even when linked only to a study code.
+
+There are two deployment situations:
+
+1. **Local or unconfigured deployment:** trials and summaries are checkpointed in the browser; recordings and drawings remain in browser-controlled local recovery unless the configured synchronization endpoint accepts them. The app may still request front-end libraries or a local speech-recognition model over the network.
+2. **Configured Netlify deployment:** pseudonymous checkpoints and eligible response recordings are transmitted to same-origin Netlify Functions and stored in private Netlify Blobs for approved examiner access from another device. Drawings are included in checkpoint data. This is remote processing and storage; it must never be described as local-only.
+
+Remote synchronization requires documented ethics and data-protection approval, participant information covering voice and drawings, server-side secrets, authenticated examiner access, a retention schedule, deletion procedures, and verification of the actual hosting configuration. See [`docs/remote-sync-setup.md`](docs/remote-sync-setup.md). Browser requests for libraries and model files do not themselves send recorded audio to those providers; the configured Netlify synchronization path can transmit participant data to the research deployment.
+
+Never commit participant exports, response recordings, administrator credentials, API keys, or session secrets to GitHub or Zenodo.
+
+## Exports and scoring
+
+The application provides trial CSV, full-session JSON, summary JSON, compiled reference-oriented reports, and separately retained response audio when available. Examiner review is performed through `admin.html` and does not interrupt participant administration.
+
+Missing, incomplete, unadministered, and unreviewed outcomes must remain distinguishable. Do not replace missing scores with zero, interpret a 0-100 technical transformation as a percentile, or treat automatically generated transcription as an approved examiner decision.
+
+The consolidated variable definitions, units, accepted ranges, missingness rules, and data-sensitivity classifications are documented in [`docs/data_dictionary.md`](docs/data_dictionary.md). Reference mappings and their limitations are documented in [`docs/nacc-reference-reporting.md`](docs/nacc-reference-reporting.md).
+
+## Validation and release readiness
+
+The implementation remains empirically unvalidated. The validation protocol specifies prespecified feasibility targets, independent scoring, inter-rater and test-retest reliability, cross-language review, timing and device checks, data-governance controls, and explicit stop/go decisions. See [`docs/validation/validation_plan.md`](docs/validation/validation_plan.md).
+
+Current unresolved issues include object-location image provenance, primary licensing confirmation for BOSS-derived images, native-listener and language-equivalence evidence, scoring reliability, device/input equivalence, and institutional approval. A successful automated test run does not close any empirical or governance gate.
+
+## Running and testing
+
+Serve the repository over HTTP. Opening `index.html` directly through `file://` is unsupported because stimulus and model loading require web requests.
 
 ```bash
 python3 -m http.server 8080
-# open http://localhost:8080
 ```
 
-Use a current Chromium, Firefox, or Safari browser on a laptop or sufficiently large tablet. Mouse, trackpad, touch, keyboard, and a standard gamepad are supported. Input modality and controller connection are recorded for every trial; modalities must be analysed separately until equivalence is demonstrated.
-
-## Privacy and networking
-
-- Collect only a pseudonymous participant ID. Never enter names, email addresses, dates of birth, student numbers, or other direct identifiers.
-- Trial data, drawings and audio are retained locally for recovery and, when the Netlify synchronization deployment is configured, synchronized to private Netlify Blobs for approved cross-device examiner access.
-- The page makes network requests for jsPsych from unpkg and, when automatic OSR transcription is used, a pinned Transformers.js bundle plus a Whisper model. Recorded audio is processed locally and is not sent to those services.
-- For an offline or higher-assurance deployment, vendor and integrity-check all dependencies and model files before participant use.
-- Never commit real participant data to this repository.
-
-## Examiner scoring checkpoint
-
-Participant administration ends immediately after the last selected task. Story Recall, Animal Fluency, Visual Naming and Complex Figure review run separately from `admin.html`.
-
-The examiner portal uses password-authenticated, HTTP-only sessions when the Netlify secrets described in [remote sync setup](docs/remote-sync-setup.md) are configured. Local recovery remains available. Deployment still requires approved consent, retention/deletion rules and institutional data-protection/ethics review.
-
-## Standardized stimulus audio
-
-English and German story prompts, story playback, digit instructions, and digits use frozen repository WAV files generated with synthetic voices. The English form uses Kokoro and the German pilot uses Piper with the Thorsten High voice. A successful file load is recorded separately from scientific validation. The files remain **pilot-only** until intelligibility, pronunciation, duration, clipping, silence, loudness, and listener-equivalence checks pass. Browser speech synthesis is never substituted for missing standardized stimulus audio; the affected task pauses and offers a retry.
-
-See [the stimulus manifest](assets/stimulus_manifest.json) and task specifications under `docs/eti-core/`.
-
-## Number Span form control
-
-Number Span uses the fixed, versioned `ons-controlled-form-a-1.0` sequence table. All participants receive the same two items per length unless a separately validated and versioned form is introduced. Playback records planned and observed onset times; a one-second interval is a target, not an unsupported claim of hardware-perfect timing.
-
-## Data and recovery
-
-The completion screen exports:
-
-- combined trial CSV;
-- full JSON (trials, summaries, derived summary);
-- summary JSON;
-- separate OSR immediate/delayed and ASF response audio when recorded.
-
-Participant completion does not display or run examiner scoring. The separate local examiner checkpoint restores trials, summaries, drawings and locally retained OSR/ASF/OVN audio using the same pseudonymous ID on the same browser profile and site origin. It does not resume inside a partially completed trial.
-
-## Tests
+Open `http://localhost:8080` in a current Chromium, Firefox, or Safari browser on a laptop or sufficiently large tablet. The recommended minimum viewport is 900 x 600 pixels; 1280 x 800 pixels is preferred. Supported input methods include mouse, trackpad, touch, keyboard, and gamepad, but they must not be pooled before equivalence is demonstrated.
 
 ```bash
 npm install
@@ -86,29 +100,30 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-CI checks JavaScript syntax, task scoring, the eight-input ETI analogue contract, bilingual metadata, Trail termination/structure, synchronization security and a Chromium smoke test.
+Continuous integration checks JavaScript behavior, scoring logic, the eight-output contract, bilingual metadata, sequencing termination, synchronization security, and browser execution. These are software verification checks, not clinical or psychometric validation.
 
-## Repository map
+## Documentation map
 
-- `index.html` — application entry point and pinned browser dependencies
-- `js/main.js` — participant-only battery orchestration and completion
-- `admin.html` / `js/admin.js` — separate same-origin examiner scoring checkpoint
-- `js/utils.js` — data, recovery, export, summary, and controller navigation
-- `js/tasks/` — eight task modules and local transcription support
-- `docs/eti-core/` — task-specific specifications
-- `docs/validation/` — release gates and empirical validation plan
-- `assets/stimulus_manifest.json` — provenance and validation status
-- `assets/images/visual-naming/manifest.json` — item-level photo provenance, licences, and attribution
-- `tests/` — unit, integration, and browser checks
+- [`protocol_description.md`](protocol_description.md): scientific scope, administration, task order, data flow, and interpretation boundaries.
+- [`pilot_checklist.md`](pilot_checklist.md): operational checks for the current five-family core, optional modules, scoring, export, and synchronization.
+- [`docs/data_dictionary.md`](docs/data_dictionary.md): trial, summary, compiled-report, and sensitivity definitions.
+- [`docs/validation/validation_plan.md`](docs/validation/validation_plan.md): measurable validation and governance gates.
+- [`docs/eti-core/`](docs/eti-core/): task-specific instructions and scoring specifications.
+- [`docs/nacc-reference-reporting.md`](docs/nacc-reference-reporting.md): NACC-reference fields and limits on ETI interpretation.
+- [`assets/stimulus_manifest.json`](assets/stimulus_manifest.json): stimulus provenance and validation status.
+- [`assets/images/objects/provenance_ledger.csv`](assets/images/objects/provenance_ledger.csv): object-image inventory and unresolved rights status.
+- [`assets/images/visual-naming/manifest.json`](assets/images/visual-naming/manifest.json): item-level visual-naming attribution and licence claims.
+- [`REFERENCES.md`](REFERENCES.md) and [`REFERENCES.bib`](REFERENCES.bib): academic and technical references.
+- [`THIRD_PARTY_NOTICE.md`](THIRD_PARTY_NOTICE.md): code licence and third-party rights boundaries.
 
-## Citation and naming
+## Preferred citation
 
-Preferred citation:
+> Apochi, O., & Axmacher, N. (2026). *CognitiveBA3: A Bilingual Browser-Based Cognitive and Spatial Research Battery* (Version v1.0.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.22059989
 
-> Apochi, O., & Axmacher, N. (2026). *CognitiveBA3: A Bilingual Browser-Based Cognitive and Spatial Research Battery* (Version 1.0.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.22059989 Machine-readable metadata is provided in `CITATION.cff`.
+Machine-readable citation metadata is provided in [`CITATION.cff`](CITATION.cff). The DOI identifies the archived v1.0.0 software snapshot; documentation subsequently updated on `main` is not part of that immutable archive unless a later release is published.
 
-Describe the software as a custom jsPsych cognitive/spatial battery with original experimental tasks. Do not call any task Craft Story, MINT, Benson Figure, Trail Making Test, or a NACC form. Cite the inspiration at the construct/procedure level only, subject to supervisor and ethics review.
+## Licence and third-party materials
 
-## Licence
+Project code and original documentation are MIT-licensed. Third-party photographs, voice resources, assessment materials, and other external assets retain their own rights and attribution requirements. The public archive uses a mixed-rights notice because the MIT licence does not apply uniformly to every included file.
 
-Code is MIT licensed. Stimulus provenance and reuse status are tracked separately in `assets/stimulus_manifest.json`, the item-level visual-naming manifest, and `THIRD_PARTY_NOTICE.md`. A code licence does not override third-party rights. Files whose provenance remains unresolved must not be redistributed or reused until clearance is documented.
+Twenty-four object-location photographs are inventoried by immutable Git blob identifier, but their creator, source, licence, and redistribution permissions have not been established. Inventory is not rights clearance. Do not redistribute or reuse those photographs until the rightsholder permissions are documented or the files are replaced with cleared alternatives.

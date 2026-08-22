@@ -65,9 +65,11 @@
     {
       "group": "olm_objects",
       "path": "assets/images/objects/*",
-      "creator_method": "mixed project assets; inspect individual files",
-      "licence_review": "blocked_pending_per_file_ledger",
-      "validation": "pending_visual_and_cultural_review"
+      "creator_method": "24 actively configured JPEG object photographs; creator and source not established",
+      "licence_review": "blocked_pending_item_level_creator_source_licence_and_permission",
+      "validation": "pending_visual_cultural_review_and_rightsholder_clearance",
+      "provenance_ledger": "assets/images/objects/provenance_ledger.csv",
+      "configured_image_count": 24
     }
   ],
   "researcher_attestation": {
@@ -98,5 +100,6 @@
       "digit RMS spread <= 3 dB"
     ],
     "limitation": "The cited Actions artifact covers the original 17 English files. Combined English/German-v2 CI confirmation and full-set German native-listener review remain pending. File QA does not establish cross-device playback or language-form equivalence."
-  }
+  },
+  "documentation_reviewed_on": "2026-08-22"
 }

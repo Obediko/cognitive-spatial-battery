@@ -1,52 +1,46 @@
-OBJECT STIMULI FOLDER
-======================
+OBJECT-LOCATION STIMULUS RIGHTS AND CONFIGURATION
+=================================================
 
-This folder (assets/images/objects/) is for object image files used in the
-Object-Location Memory Task.
+CURRENT IMPLEMENTATION
+----------------------
+The Object-Location Memory module currently references 24 JPEG files in this
+directory. These photographs are actively configured in
+js/tasks/object_location_memory.js. They are not merely unused placeholders.
 
-DEFAULT BEHAVIOUR
------------------
-By default, the task uses coloured placeholder shapes (emoji + label) instead
-of real images. These are rendered in JavaScript and require no files in this folder.
+The file provenance_ledger.csv lists each configured photograph together with
+its immutable Git blob identifier and current review status. The creator,
+original source URL, licence, and redistribution permissions are unknown for all
+24 files at the time of this documentation update.
 
-REPLACING PLACEHOLDER STIMULI WITH REAL IMAGES
------------------------------------------------
-1. Obtain approved, neutral everyday object images.
-   - Preferred format: PNG with transparent background; JPEG is also supported
-   - Minimum resolution: 200 x 200 pixels
-   - Must be: neutral, non-emotional, no faces, no brand logos
-   - Must be approved under your study's ethics agreement
-   - Must not be copyrighted material (use open-licensed stimuli or bespoke photographs)
+IMPORTANT RIGHTS LIMITATION
+---------------------------
+A public repository, a Zenodo record, and an MIT licence for project code do not
+establish permission to copy, adapt, redistribute, or reuse these photographs.
+Do not represent the images as MIT-licensed or otherwise cleared. Do not reuse
+or redistribute them until appropriate rightsholder evidence is documented.
 
-2. Name each file clearly:
-   clock.png, lamp.png, book.png, key.png, cup.png, chair.png, etc.
-   JPEG files may use the same clear names with .jpg.
+The ledger is an inventory, not a licence grant. The Git blob identifier fixes
+the identity of the reviewed image but does not identify its author or source.
+Primary documentation must record, for every file:
 
-3. Place files in this folder: assets/images/objects/
+1. The creator or rightsholder.
+2. The original source URL or acquisition record.
+3. The specific licence or written permission.
+4. Attribution and modification requirements.
+5. Whether public redistribution and research use are authorized.
+6. Reviewer identity, review date, and the final clearance decision.
 
-4. In js/tasks/object_location_memory.js, add imagePath to the OLM_OBJECTS entry:
-   
-   { id: 'clock', label: 'Clock', emoji: '\u23F0', color: '#5c6bc0',
-     imagePath: 'assets/images/objects/clock.png' }
+FALLBACK AND REPLACEMENT OPTIONS
+--------------------------------
+The task supports programmatic object placeholders using an emoji, a text
+label, and a background color when imagePath is absent or an image cannot be
+loaded. That fallback is available technically, but changing from photographs
+to placeholders changes the stimulus form and requires a new version and
+targeted research validation.
 
-   For JPEG files, use the matching extension:
+Alternatively, replace the photographs with documented original photographs or
+properly licensed images, record the complete item-level provenance, update the
+task and stimulus manifests, and repeat the relevant validation checks.
 
-   { id: 'clock', label: 'Clock', emoji: '\u23F0', color: '#5c6bc0',
-     imagePath: 'assets/images/objects/clock.jpg' }
-   
-   If imagePath is present, the real image is shown instead of the placeholder shape.
-   If imagePath is absent or the file is missing, the placeholder shape is used as fallback.
-
-STIMULUS BANKS
---------------
-Suggested open-licensed sources:
-- BOSS (Bank of Standardized Stimuli): https://sites.google.com/site/bosstimuli/
-- THINGS dataset: https://osf.io/jum2f/
-- OpenGameArt.org (CC0 licensed objects)
-- Your own photographs (check ethics approval)
-
-IMPORTANT
----------
-- Do NOT commit licensed or copyrighted images to a public GitHub repository.
-- Keep a local copy of image files outside the repo if they cannot be publicly shared.
-- Document stimulus provenance in your study protocol.
+No protected participant records, direct identifiers, or unpublished study
+parameters belong in this directory.
