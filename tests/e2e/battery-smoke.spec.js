@@ -7,11 +7,47 @@ async function openEnglishBattery(page) {
   await expect(page.getByRole('heading', { name: /Baseline Cognitive/ })).toBeVisible();
 }
 
+async function openGermanBattery(page) {
+  await page.goto('/');
+  const german = page.getByRole('button', { name: /Deutsch/ });
+  if (await german.isVisible()) await german.click();
+  await expect(page.getByRole('heading', { name: /Kognitive und räumliche Testbatterie/ })).toBeVisible();
+}
+
 test('language selection shows US and German flags', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('button', { name: 'English' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Deutsch' })).toBeVisible();
   await expect(page.locator('.language-flag')).toHaveCount(2);
+});
+
+test('German administration reaches the German task menu and German visual naming flow', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: () => Promise.reject(new Error('test permission denial')) }
+    });
+  });
+  await openGermanBattery(page);
+  await page.getByRole('button', { name: 'Einrichtung beginnen' }).click();
+  await page.locator('input[type="text"]').fill('E2E_DE_PARITY');
+  await page.getByRole('button', { name: 'ID bestätigen' }).click();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await page.getByRole('button', { name: 'Ohne Vollbild fortfahren' }).click();
+  await expect(page.getByRole('heading', { name: 'Testauswahl' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '8 Scores aus 5 Aufgabenfamilien' })).toBeVisible();
+  await page.getByRole('button', { name: 'Auswahl löschen' }).click();
+  await page.locator('.task-check[value="ovn"]').check();
+  await page.getByRole('button', { name: 'Ausgewählte Aufgaben starten' }).click();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByRole('heading', { name: 'Benennen Sie jeden Gegenstand' })).toBeVisible();
+  await expect(page.getByText('In diesem Protokoll werden während der Testung keine Hinweise gegeben.')).toBeVisible();
+  await page.getByRole('button', { name: 'Beginnen' }).click();
+  await expect(page.getByText('Bitte warten Sie auf das Bild')).toBeVisible();
+  await expect(page.getByText('Preparing image…')).toHaveCount(0);
+  expect(errors).toEqual([]);
 });
 
 test('battery clearly separates the eight ETI scores and supports custom task selection', async ({ page }) => {
@@ -48,6 +84,39 @@ test('desktop workspace uses the available screen width', async ({ page }) => {
   expect(width).toBeGreaterThan(1300);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
+});
+
+test('participant IDs reject characters that would break remote synchronization', async ({ page }) => {
+  await openEnglishBattery(page);
+  await page.getByRole('button', { name: 'Begin Setup' }).click();
+  const input = page.locator('input[type="text"]');
+  await input.fill('P 5/DE@example');
+  await expect(input).toHaveValue('P5DEexample');
+  await expect(input).toHaveAttribute('maxlength', '64');
+  await expect(input).toHaveAttribute('pattern', '[A-Za-z0-9_-]{1,64}');
+});
+
+test('Number Span displays a readable digit five and accepts keypad input', async ({ page }) => {
+  await openEnglishBattery(page);
+  await page.getByRole('button', { name: 'Begin Setup' }).click();
+  await page.locator('input[type="text"]').fill('E2E_DIGIT_5');
+  await page.getByRole('button', { name: 'Confirm ID' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('button', { name: 'Continue without fullscreen' }).click();
+  await page.getByRole('button', { name: 'Clear selection' }).click();
+  await page.locator('.task-check[value="ns"]').check();
+  await page.getByRole('button', { name: 'Run selected tasks' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('heading', { name: 'Number Span — Forward' })).toBeVisible({ timeout: 15000 });
+  await page.getByRole('button', { name: 'Continue' }).click();
+  const five = page.getByRole('button', { name: 'Digit 5' });
+  await expect(five).toBeVisible({ timeout: 10000 });
+  const bounds = await five.boundingBox();
+  expect(bounds.width).toBeGreaterThanOrEqual(44);
+  expect(bounds.height).toBeGreaterThanOrEqual(44);
+  await five.click();
+  await expect(page.locator('#ns-response-input')).toHaveValue('5');
+  await expect(page.getByText('1 of 3 digits entered')).toBeVisible();
 });
 
 
@@ -186,4 +255,66 @@ test('authenticated examiner checkpoint opens separately from the participant ti
   await expect(page.getByRole('heading', { name: 'Scoring checkpoint' })).toBeVisible();
   await page.getByRole('button', { name: 'Begin examiner review' }).click();
   await expect(page.getByRole('heading', { name: 'Review complete' })).toBeVisible();
+});
+
+test('completed German sessions reopen directly without losing verified status', async ({ page }) => {
+  await page.route('**/api/admin-sessions', async route => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ sessions: [] }) });
+  });
+  await page.addInitScript(() => {
+    if (localStorage.getItem('csb-recovery-v1:ADMIN_DE')) return;
+    localStorage.setItem('csb-recovery-v1:ADMIN_DE', JSON.stringify({
+      saved_at: '2026-08-20T10:35:00.000Z',
+      participantId: 'ADMIN_DE',
+      language: 'de',
+      sessionStart: '2026-08-20T10:00:00.000Z',
+      participantCompletedAt: '2026-08-20T10:30:00.000Z',
+      trials: [],
+      taskSummaries: {},
+      sessionStatus: 'examiner_review_complete',
+      taskState: {}
+    }));
+  });
+  await page.goto('/admin.html');
+  await page.locator('.local-load').click();
+  await expect(page.getByRole('heading', { name: 'Review complete' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Review and rescore session' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+  const state = await page.evaluate(() => ({
+    language: window.BatteryLanguage.get(),
+    status: window.BatteryData.sessionStatus,
+    end: buildSummary().session_end
+  }));
+  expect(state).toEqual({ language: 'de', status: 'examiner_review_complete', end: '2026-08-20T10:30:00.000Z' });
+});
+
+test('collective reports preserve each session language and identify selected ETI subsets', async ({ page }) => {
+  await page.goto('/');
+  const rows = await page.evaluate(() => window.BatteryReporting.collectiveRows([{
+    participantId: 'COLLECTIVE_DE',
+    language: 'de',
+    sessionStart: '2026-08-20T10:00:00.000Z',
+    participantCompletedAt: '2026-08-20T10:20:00.000Z',
+    sessionStatus: 'examiner_review_complete',
+    trials: [{ task_name: 'number_span' }],
+    taskSummaries: { number_span: { ns_forward_correct_trials: 5, ns_backward_correct_trials: 4 } }
+  }, {
+    participantId: 'COLLECTIVE_EN',
+    language: 'en',
+    sessionStart: '2026-08-20T11:00:00.000Z',
+    participantCompletedAt: '2026-08-20T11:15:00.000Z',
+    sessionStatus: 'participant_complete',
+    trials: [{ task_name: 'number_span' }],
+    taskSummaries: { number_span: { ns_forward_correct_trials: 3, ns_backward_correct_trials: 2 } }
+  }]).map(row => ({
+    participant: row.participant_id,
+    language: row.administration_language,
+    form: row.language_form_version,
+    status: row.session_status,
+    eti: row.eti_input_status
+  })));
+  expect(rows).toEqual([
+    { participant: 'COLLECTIVE_DE', language: 'de', form: 'csb-de-1.0', status: 'examiner_review_complete', eti: 'selected_subset_only' },
+    { participant: 'COLLECTIVE_EN', language: 'en', form: 'csb-en-1.0', status: 'participant_complete', eti: 'selected_subset_only' }
+  ]);
 });

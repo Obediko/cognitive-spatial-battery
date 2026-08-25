@@ -31,6 +31,16 @@
     ['bottom_step','Lower step','Three-segment step or notch','Outside and below the lower-central frame region'],
     ['right_fork','Right fork','Stem ending in three rays','Outside and attached to the middle-right frame edge']
   ];
+  var elementsDe = [
+    ['frame','Sechseckiger Außenrahmen','Erkennbares geschlossenes sechseckiges Polygon','Großer aufrechter Rahmen, mittig auf der Seite'],
+    ['diagonals','Sich kreuzende Diagonalen','Zwei Linien schneiden sich innerhalb des Rahmens','Linien verbinden gegenüberliegende Rahmenbereiche und kreuzen sich nahe der Mitte'],
+    ['circle','Kreis oben links','Erkennbar runde geschlossene Form','Im oberen linken Bereich, ohne den Rahmen zu berühren'],
+    ['diamond','Raute unten rechts','Vierseitige rautenähnliche Form','Im unteren rechten Bereich, ohne den Rahmen zu berühren'],
+    ['left_arc','Äußerer Bogen links','Ein einzelner glatter, nach außen gerichteter Bogen','An oder sehr nahe an der mittleren linken Rahmenkante'],
+    ['top_flag','Fähnchen oben','Senkrechter Stab mit dreieckigem Fähnchen','Außerhalb und oberhalb des oberen Rahmenbereichs'],
+    ['bottom_step','Stufe unten','Dreiteilige Stufe oder Einkerbung','Außerhalb und unterhalb des unteren mittleren Rahmenbereichs'],
+    ['right_fork','Gabel rechts','Stiel, der in drei Strahlen endet','Außerhalb und an der mittleren rechten Rahmenkante befestigt']
+  ];
 
   function figureParts(variant) {
     var circle = variant === 1 ? '<path d="M320 210l24 24-24 24-24-24z"/>' : '<circle cx="180" cy="125" r="24"/>';
@@ -159,20 +169,20 @@
         var raf = null;
         var gpCursor = { x: 320, y: 240, drawing: false, last: 0 };
 
-        display.innerHTML = '<div class="ocf-shell"><div class="ocf-heading"><div><span class="osr-kicker">Original Complex Figure</span>'
+        display.innerHTML = '<div class="ocf-shell"><div class="ocf-heading"><div><span class="osr-kicker">' + (OCF_IS_GERMAN ? 'Komplexe Figur' : 'Original Complex Figure') + '</span>'
           + '<h2>' + (OCF_IS_GERMAN ? (showModel ? 'Kopieren Sie die Figur' : 'Zeichnen Sie die Figur aus dem Gedächtnis') : (showModel ? 'Copy the design' : 'Draw the design from memory')) + '</h2></div>'
           + '<div class="ocf-timer"><strong id="ocf-time">4:00</strong><span>' + (OCF_IS_GERMAN ? 'verbleibend' : 'remaining') + '</span></div></div>'
           + '<p>' + (OCF_IS_GERMAN
             ? (showModel ? 'Kopieren Sie die Figur so genau wie möglich.' : 'Zeichnen Sie so viel wie möglich von der früheren Figur. Die Vorlage wird nicht gezeigt.')
             : (showModel ? 'Copy the design as accurately as possible. You may draw with touch, stylus, mouse or a connected gamepad.' : 'Draw as much of the earlier design as you can remember. The original is not shown.')) + '</p>'
           + '<div class="ocf-workspace">' + (showModel ? '<div class="ocf-model-card">' + figureSvg(0, 'ocf-model') + '</div>' : '')
-          + '<div class="ocf-canvas-wrap"><canvas id="ocf-canvas" width="640" height="480" aria-label="Drawing area"></canvas>'
+          + '<div class="ocf-canvas-wrap"><canvas id="ocf-canvas" width="640" height="480" aria-label="' + (OCF_IS_GERMAN ? 'Zeichenfläche' : 'Drawing area') + '"></canvas>'
           + '<div id="ocf-gamepad-cursor" class="ocf-gamepad-cursor" hidden></div></div></div>'
           + '<div class="ocf-toolbar"><button class="battery-btn" id="ocf-undo">' + (OCF_IS_GERMAN ? 'Letzten Strich rückgängig' : 'Undo stroke') + '</button>'
           + '<button class="battery-btn" id="ocf-clear">' + (OCF_IS_GERMAN ? 'Neu beginnen' : 'Start over') + '</button>'
           + '<button class="battery-btn primary" id="ocf-finish">' + (OCF_IS_GERMAN ? 'Zeichnung beenden' : 'Finish drawing') + '</button>'
           + '<button class="battery-btn ocf-incomplete" id="ocf-incomplete">' + (OCF_IS_GERMAN ? 'Nicht durchführbar' : 'Cannot complete') + '</button></div>'
-          + '<p class="osr-fineprint">Gamepad: move with left stick or D-pad; hold the primary button to draw.</p></div>';
+          + '<p class="osr-fineprint">' + (OCF_IS_GERMAN ? 'Gamepad: Mit dem linken Stick oder Steuerkreuz bewegen. Zum Zeichnen die Haupttaste gedrückt halten.' : 'Gamepad: move with left stick or D-pad; hold the primary button to draw.') + '</p></div>';
 
         var canvas = document.getElementById('ocf-canvas');
         var ctx = canvas.getContext('2d');
@@ -315,6 +325,8 @@
             stroke_data: JSON.stringify(strokes),
             stroke_count: strokes.length,
             drawing_duration_ms: duration,
+            drawing_started_at: new Date(startedAt).toISOString(),
+            drawing_completed_at: new Date().toISOString(),
             input_pointer_supported: typeof PointerEvent !== 'undefined',
             input_gamepad_seen: !cursorEl.hidden,
             incomplete: !!incomplete
@@ -327,7 +339,7 @@
           redraw();
         };
         document.getElementById('ocf-clear').onclick = function() {
-          if (window.confirm('Clear the entire drawing and start again?')) {
+          if (window.confirm(OCF_IS_GERMAN ? 'Die gesamte Zeichnung löschen und neu beginnen?' : 'Clear the entire drawing and start again?')) {
             strokes = [];
             current = null;
             activePointerId = null;
@@ -336,7 +348,7 @@
         };
         document.getElementById('ocf-finish').onclick = function() { finish(false); };
         document.getElementById('ocf-incomplete').onclick = function() {
-          if (window.confirm('End this phase and mark it incomplete?')) finish(true);
+          if (window.confirm(OCF_IS_GERMAN ? 'Diesen Abschnitt beenden und als unvollständig markieren?' : 'End this phase and mark it incomplete?')) finish(true);
         };
 
         var timeEl = document.getElementById('ocf-time');
@@ -368,21 +380,30 @@
         var display = displayElement();
         var strokes = phase === 'copy' ? window.OCFState.copyStrokes : window.OCFState.delayedStrokes;
         var incomplete = phase === 'copy' ? window.OCFState.copyIncomplete : window.OCFState.delayedIncomplete;
-        var rows = elements.map(function(e, i) {
+        var priorScore = window.BatteryData.trials.slice().reverse().find(function(row) {
+          return row.task_name === 'original_complex_figure' && row.phase === phase + '_scoring';
+        }) || null;
+        var priorElements = [];
+        if (priorScore && priorScore.element_scores) {
+          try { priorElements = JSON.parse(priorScore.element_scores); } catch (error) { priorElements = []; }
+        }
+        var scoringElements = OCF_IS_GERMAN ? elementsDe : elements;
+        var rows = scoringElements.map(function(e, i) {
+          var previous = priorElements.find(function(item) { return item.element_id === e[0]; }) || {};
           return '<div class="ocf-score-row" data-index="' + i + '"><div><strong>' + (i + 1) + '. ' + e[1] + '</strong>'
             + '<small>A: ' + e[2] + '<br>P: ' + e[3] + '</small></div>'
-            + '<label><input type="checkbox" class="ocf-accuracy"> Accuracy</label>'
-            + '<label><input type="checkbox" class="ocf-placement"> Placement</label></div>';
+            + '<label><input type="checkbox" class="ocf-accuracy"' + (previous.accuracy ? ' checked' : '') + '> ' + (OCF_IS_GERMAN ? 'Genauigkeit' : 'Accuracy') + '</label>'
+            + '<label><input type="checkbox" class="ocf-placement"' + (previous.placement ? ' checked' : '') + '> ' + (OCF_IS_GERMAN ? 'Position' : 'Placement') + '</label></div>';
         }).join('');
-        display.innerHTML = '<div class="ocf-score-shell"><div><span class="osr-kicker">Examiner only</span>'
-          + '<h2>' + (phase === 'copy' ? 'Copy' : 'Delayed recall') + ' scoring</h2></div>'
+        display.innerHTML = '<div class="ocf-score-shell"><div><span class="osr-kicker">' + (OCF_IS_GERMAN ? 'Nur für die Prüfperson' : 'Examiner only') + '</span>'
+          + '<h2>' + (OCF_IS_GERMAN ? (phase === 'copy' ? 'Kopie auswerten' : 'Verzögerte Wiedergabe auswerten') : (phase === 'copy' ? 'Copy scoring' : 'Delayed recall scoring')) + '</h2></div>'
           + '<div class="ocf-score-layout"><div class="ocf-replay-card">' + replaySvg(strokes) + '</div>'
           + '<div class="ocf-score-panel">' + rows
-          + '<button class="battery-btn" id="ocf-suggest-score">Generate provisional computer suggestions</button>'
-          + '<p class="osr-fineprint">Experimental aid only. The examiner must inspect and confirm every box; this is not a validated automatic score.</p>'
-          + '<label class="ocf-bonus"><input type="checkbox" id="ocf-bonus"> Global bonus: all elements accurate, correctly placed and proportionate</label>'
-          + '<div class="ocf-live-score">Current score <strong id="ocf-total">0</strong> / 17</div>'
-          + '<button class="battery-btn primary" id="ocf-save-score">Save score</button></div></div></div>';
+          + '<button class="battery-btn" id="ocf-suggest-score">' + (OCF_IS_GERMAN ? 'Vorläufige Computer-Vorschläge erzeugen' : 'Generate provisional computer suggestions') + '</button>'
+          + '<p class="osr-fineprint">' + (OCF_IS_GERMAN ? 'Nur experimentelle Hilfe. Die Prüfperson muss jedes Kästchen prüfen und bestätigen; dies ist kein validierter automatischer Score.' : 'Experimental aid only. The examiner must inspect and confirm every box; this is not a validated automatic score.') + '</p>'
+          + '<label class="ocf-bonus"><input type="checkbox" id="ocf-bonus"' + (priorScore && priorScore.bonus ? ' checked' : '') + '> ' + (OCF_IS_GERMAN ? 'Globaler Bonus: alle Elemente genau, richtig positioniert und proportional' : 'Global bonus: all elements accurate, correctly placed and proportionate') + '</label>'
+          + '<div class="ocf-live-score">' + (OCF_IS_GERMAN ? 'Aktueller Score ' : 'Current score ') + '<strong id="ocf-total">0</strong> / 17</div>'
+          + '<button class="battery-btn primary" id="ocf-save-score">' + (OCF_IS_GERMAN ? 'Score speichern' : 'Save score') + '</button></div></div></div>';
 
         function collect() {
           return Array.prototype.map.call(document.querySelectorAll('.ocf-score-row'), function(row, i) {
@@ -400,6 +421,7 @@
         Array.prototype.forEach.call(document.querySelectorAll('input'), function(input) {
           input.addEventListener('change', update);
         });
+        update();
         var suggestionUsed = false;
         var suggestionRows = null;
         document.getElementById('ocf-suggest-score').onclick = function() {
@@ -415,6 +437,9 @@
         document.getElementById('ocf-save-score').onclick = function() {
           var rowsData = collect();
           var score = scoreElements(rowsData, document.getElementById('ocf-bonus').checked, incomplete);
+          window.BatteryData.trials = window.BatteryData.trials.filter(function(row) {
+            return !(row.task_name === 'original_complex_figure' && row.phase === phase + '_scoring');
+          });
           window.BatteryData.addTrials({
             task_name: 'original_complex_figure',
             task_version: OCF_VERSION,
@@ -438,8 +463,16 @@
           previous.ocf_task_version = OCF_VERSION;
           previous.ocf_stimulus_version = OCF_STIMULUS_VERSION;
           if (phase === 'delayed') {
-            previous.ocf_delay_duration_ms = window.OCFState.copyCompletedAt
-              ? Date.now() - window.OCFState.copyCompletedAt : null;
+            var delayedDrawing = window.BatteryData.trials.slice().reverse().find(function(row) {
+              return row.task_name === 'original_complex_figure' && row.phase === 'delayed_drawing';
+            });
+            var delayedStartedAt = delayedDrawing && delayedDrawing.drawing_started_at
+              ? Date.parse(delayedDrawing.drawing_started_at)
+              : delayedDrawing && delayedDrawing.timestamp
+                ? Date.parse(delayedDrawing.timestamp) - (delayedDrawing.drawing_duration_ms || 0) : null;
+            previous.ocf_delay_duration_ms = window.OCFState.copyCompletedAt && delayedStartedAt
+              ? delayedStartedAt - window.OCFState.copyCompletedAt
+              : previous.ocf_delay_duration_ms ?? null;
           }
           window.BatteryData.setTaskSummary('original_complex_figure', previous);
           done();
@@ -468,10 +501,10 @@
         var display = displayElement();
         var timer = null;
         if (!window.OCFState.copyCompletedAt) {
-          display.innerHTML = '<div class="osr-card"><span class="osr-kicker">Delayed figure recall</span>'
-            + '<h2>Copy timestamp unavailable</h2>'
-            + '<p class="osr-error">The retention interval cannot be verified. Delayed recall must not be scored as protocol-valid.</p>'
-            + '<button class="battery-btn primary" id="ocf-delay-unavailable">Continue and mark unavailable</button></div>';
+          display.innerHTML = '<div class="osr-card"><span class="osr-kicker">' + (OCF_IS_GERMAN ? 'Verzögerte Figurenwiedergabe' : 'Delayed figure recall') + '</span>'
+            + '<h2>' + (OCF_IS_GERMAN ? 'Zeitpunkt der Kopie nicht verfügbar' : 'Copy timestamp unavailable') + '</h2>'
+            + '<p class="osr-error">' + (OCF_IS_GERMAN ? 'Das Erinnerungsintervall kann nicht überprüft werden. Die verzögerte Wiedergabe darf nicht als protokollgültig gewertet werden.' : 'The retention interval cannot be verified. Delayed recall must not be scored as protocol-valid.') + '</p>'
+            + '<button class="battery-btn primary" id="ocf-delay-unavailable">' + (OCF_IS_GERMAN ? 'Fortfahren und als nicht verfügbar markieren' : 'Continue and mark unavailable') + '</button></div>';
           document.getElementById('ocf-delay-unavailable').onclick = function() {
             window.BatteryData.addTrials({
               task_name: 'original_complex_figure',
@@ -492,13 +525,13 @@
           var ready = elapsed >= DELAY_MIN_MS;
           var late = elapsed > DELAY_MAX_MS;
           var remaining = Math.max(0, DELAY_MIN_MS - elapsed);
-          display.innerHTML = '<div class="osr-card"><span class="osr-kicker">Delayed figure recall</span>'
-            + '<h2>' + (ready ? 'Ready for delayed drawing' : 'Retention interval in progress') + '</h2>'
-            + '<p>Elapsed time: <strong>' + (elapsed / 60000).toFixed(1) + ' minutes</strong></p>'
-            + (!ready ? '<p>This task requires at least 10 minutes between copy and delayed recall. Time remaining: <strong>'
-              + Math.ceil(remaining / 1000) + ' seconds</strong>.</p>' : '')
-            + (late ? '<p class="osr-error">The planned 10–15 minute window has been exceeded; the deviation will be recorded.</p>' : '')
-            + '<button class="battery-btn primary" id="ocf-delay-ready" ' + (ready ? '' : 'disabled') + '>Begin delayed recall</button></div>';
+          display.innerHTML = '<div class="osr-card"><span class="osr-kicker">' + (OCF_IS_GERMAN ? 'Verzögerte Figurenwiedergabe' : 'Delayed figure recall') + '</span>'
+            + '<h2>' + (ready ? (OCF_IS_GERMAN ? 'Bereit für die verzögerte Zeichnung' : 'Ready for delayed drawing') : (OCF_IS_GERMAN ? 'Erinnerungsintervall läuft' : 'Retention interval in progress')) + '</h2>'
+            + '<p>' + (OCF_IS_GERMAN ? 'Vergangene Zeit: <strong>' : 'Elapsed time: <strong>') + (elapsed / 60000).toFixed(1) + (OCF_IS_GERMAN ? ' Minuten</strong></p>' : ' minutes</strong></p>')
+            + (!ready ? '<p>' + (OCF_IS_GERMAN ? 'Zwischen Kopie und verzögerter Wiedergabe müssen mindestens 10 Minuten liegen. Verbleibende Zeit: <strong>' : 'This task requires at least 10 minutes between copy and delayed recall. Time remaining: <strong>')
+              + Math.ceil(remaining / 1000) + (OCF_IS_GERMAN ? ' Sekunden</strong>.</p>' : ' seconds</strong>.</p>') : '')
+            + (late ? '<p class="osr-error">' + (OCF_IS_GERMAN ? 'Das vorgesehene Zeitfenster von 10 bis 15 Minuten wurde überschritten. Die Abweichung wird dokumentiert.' : 'The planned 10–15 minute window has been exceeded; the deviation will be recorded.') + '</p>' : '')
+            + '<button class="battery-btn primary" id="ocf-delay-ready" ' + (ready ? '' : 'disabled') + '>' + (OCF_IS_GERMAN ? 'Verzögerte Wiedergabe beginnen' : 'Begin delayed recall') + '</button></div>';
           var button = document.getElementById('ocf-delay-ready');
           button.onclick = function() {
             clearInterval(timer);
@@ -525,7 +558,7 @@
       async: true,
       func: function(done) {
         var display = displayElement();
-        display.innerHTML = '<div class="ocf-recognition"><span class="osr-kicker">Recognition</span>'
+        display.innerHTML = '<div class="ocf-recognition"><span class="osr-kicker">' + (OCF_IS_GERMAN ? 'Wiedererkennen' : 'Recognition') + '</span>'
           + '<h2>' + (OCF_IS_GERMAN ? 'Welche Figur haben Sie zuvor kopiert?' : 'Which design did you copy earlier?') + '</h2><div class="ocf-foil-grid">'
           + order.map(function(variant, i) {
             return '<button class="ocf-foil" data-variant="' + variant + '" aria-label="Recognition option ' + (i + 1) + '">'
@@ -577,11 +610,11 @@
         type: jsPsychHtmlButtonResponse,
         stimulus: function() {
           var s = window.BatteryData.taskSummaries.original_complex_figure || {};
-          return '<div class="osr-card"><h2>Complex Figure responses captured</h2>'
-            + '<p>The copy, delayed drawing and recognition response have been saved.</p>'
-            + '<p class="osr-fineprint">Drawing scores will be reviewed after participant testing.</p></div>';
+          return '<div class="osr-card"><h2>' + (OCF_IS_GERMAN ? 'Antworten zur komplexen Figur wurden gespeichert' : 'Complex Figure responses captured') + '</h2>'
+            + '<p>' + (OCF_IS_GERMAN ? 'Die Kopie, die verzögerte Zeichnung und die Wiedererkennungsantwort wurden gespeichert.' : 'The copy, delayed drawing and recognition response have been saved.') + '</p>'
+            + '<p class="osr-fineprint">' + (OCF_IS_GERMAN ? 'Die Zeichnungen werden nach Abschluss der Testsitzung ausgewertet.' : 'Drawing scores will be reviewed after participant testing.') + '</p></div>';
         },
-        choices: ['Continue battery'],
+        choices: [OCF_IS_GERMAN ? 'Testbatterie fortsetzen' : 'Continue battery'],
         data: { task_name: 'original_complex_figure', phase: 'end', task_version: OCF_VERSION }
       }
     ];
@@ -591,9 +624,9 @@
     return [
       {
         type: jsPsychHtmlButtonResponse,
-        stimulus: '<div class="osr-card"><span class="osr-kicker">Examiner review</span>'
-          + '<h2>Complex Figure scoring</h2><p>Score the saved copy and delayed drawing. The participant is no longer required.</p></div>',
-        choices: ['Begin figure review'],
+        stimulus: '<div class="osr-card"><span class="osr-kicker">' + (OCF_IS_GERMAN ? 'Auswertung durch die Prüfperson' : 'Examiner review') + '</span>'
+          + '<h2>' + (OCF_IS_GERMAN ? 'Komplexe Figur auswerten' : 'Complex Figure scoring') + '</h2><p>' + (OCF_IS_GERMAN ? 'Bewerten Sie die gespeicherte Kopie und die verzögerte Zeichnung. Die teilnehmende Person wird nicht mehr benötigt.' : 'Score the saved copy and delayed drawing. The participant is no longer required.') + '</p></div>',
+        choices: [OCF_IS_GERMAN ? 'Figurenbewertung beginnen' : 'Begin figure review'],
         data: { task_name: 'original_complex_figure', phase: 'review_intro', task_version: OCF_VERSION }
       },
       scoringTrial('copy'),

@@ -83,6 +83,9 @@ window.BatteryRemoteSync = (function() {
     uploadArtifact: uploadArtifact,
     flush: function() { return pending; },
     getStatus: function() { return lastState; },
+    clearIdentity: function(participantId) {
+      if (participantId && window.localStorage) localStorage.removeItem(identityKey(participantId));
+    },
     setAdminRemoteId: function(value) { adminRemoteId = value || null; },
     enabled: active
   };

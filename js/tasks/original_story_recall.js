@@ -141,8 +141,8 @@
 
   var OSR_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
   if (OSR_IS_GERMAN) {
-    OSR_DICTIONARY_VERSION = 'osr44-de-0.2-pilot';
-    OSR_STORY_FORM = 'osr44-library-wallet-a-de-0.2-pilot';
+    OSR_DICTIONARY_VERSION = 'osr44-de-1.0';
+    OSR_STORY_FORM = 'osr44-library-wallet-a-de-1.0';
     OSR_STORY_TEXT = 'Am Donnerstagmorgen nahm Elena den Bus um sieben Uhr fünfzehn zur Bibliothek. Sie gab drei Bücher zurück und druckte ein Bewerbungsformular aus. Im Obergeschoss fand sie neben einem Fenster eine blaue Brieftasche. Darin waren eine Identitätskarte und zwei Fahrkarten. Elena gab sie der Bibliothekarin, die den Besitzer anrief. Zwanzig Minuten später kam ein älterer Mann, dankte Elena und bot ihr Kaffee an. Sie lehnte ab und fuhr mit dem Bus um elf Uhr nach Hause.';
     OSR_AUDIO_FILES = {
       story: OSR_AUDIO_BASE + 'osr44_library_wallet_a_de_v2.wav',
@@ -229,7 +229,7 @@
   function osrInstructionTrial() {
     return {
       type: jsPsychHtmlButtonResponse,
-      stimulus: '<div class="osr-card"><span class="osr-kicker">ETI Core · Verbal memory</span>'
+      stimulus: '<div class="osr-card"><span class="osr-kicker">' + (OSR_IS_GERMAN ? 'ETI-Kern · Verbales Gedächtnis' : 'ETI Core · Verbal memory') + '</span>'
         + '<h2>' + (OSR_IS_GERMAN ? 'Geschichte erinnern' : 'Original Story Recall') + '</h2>'
         + '<p>' + (OSR_IS_GERMAN
           ? 'Sie hören einmal eine kurze Geschichte. Hören Sie genau zu. Anschließend sollen Sie die gesamte Geschichte mit möglichst vielen Einzelheiten wiedergeben.'
@@ -249,7 +249,7 @@
 
         function playInstructionAudio() {
           if (button) { button.disabled = true; }
-          if (status) status.textContent = 'Playing…';
+          if (status) status.textContent = OSR_IS_GERMAN ? 'Wiedergabe läuft…' : 'Playing…';
           osrLoadAudio(OSR_AUDIO_FILES.instruction).then(function(audioEl) {
             currentAudio = audioEl;
             return osrPlayLoadedAudio(audioEl);
@@ -288,21 +288,21 @@
           button.disabled = true;
           if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
             window.OSRState.protocolFlags.microphone_problem = true;
-            status.innerHTML = '<span class="osr-error">Audio recording is not supported in this browser.</span>';
-            button.textContent = 'Continue with protocol flag';
+            status.innerHTML = '<span class="osr-error">' + (OSR_IS_GERMAN ? 'Dieser Browser unterstützt keine Audioaufnahme.' : 'Audio recording is not supported in this browser.') + '</span>';
+            button.textContent = OSR_IS_GERMAN ? 'Mit Protokollvermerk fortfahren' : 'Continue with protocol flag';
             button.disabled = false;
             button.onclick = function() { done({ microphone_available: false }); };
             return;
           }
           window.BatteryReliability.requestMicrophone(12000).then(function(stream) {
             stream.getTracks().forEach(function(track) { track.stop(); });
-            status.innerHTML = '<span class="osr-success">Microphone is ready.</span>';
+            status.innerHTML = '<span class="osr-success">' + (OSR_IS_GERMAN ? 'Das Mikrofon ist bereit.' : 'Microphone is ready.') + '</span>';
             setTimeout(function() { done({ microphone_available: true }); }, 600);
           }).catch(function(error) {
             window.OSRState.protocolFlags.microphone_problem = true;
-            status.innerHTML = '<span class="osr-error">Microphone unavailable: '
+            status.innerHTML = '<span class="osr-error">' + (OSR_IS_GERMAN ? 'Mikrofon nicht verfügbar: ' : 'Microphone unavailable: ')
               + osrEscape(error && error.message ? error.message : 'permission denied') + '</span>';
-            button.textContent = 'Continue with protocol flag';
+            button.textContent = OSR_IS_GERMAN ? 'Mit Protokollvermerk fortfahren' : 'Continue with protocol flag';
             button.disabled = false;
             button.onclick = function() { done({ microphone_available: false }); };
           });
@@ -337,7 +337,7 @@
 
         osrLoadAudio(OSR_AUDIO_FILES.story).then(function(audioEl) {
           return osrPlayLoadedAudio(audioEl, function() {
-            if (status) status.textContent = 'Playing…';
+            if (status) status.textContent = OSR_IS_GERMAN ? 'Wiedergabe läuft…' : 'Playing…';
           });
         }).then(function() {
           window.OSRState.storyAudioStandardized = true;
@@ -360,7 +360,7 @@
           if (retry) retry.addEventListener('click', function() {
             retry.disabled = true;
             osrLoadAudio(OSR_AUDIO_FILES.story).then(function(audioEl) {
-              return osrPlayLoadedAudio(audioEl, function() { status.textContent = 'Playing…'; });
+              return osrPlayLoadedAudio(audioEl, function() { status.textContent = OSR_IS_GERMAN ? 'Wiedergabe läuft…' : 'Playing…'; });
             }).then(function() {
               window.OSRState.storyAudioStandardized = true;
               finishTrial({ story_audio_standardized: true, audio_retry_used: true });
@@ -388,17 +388,17 @@
             ? 'Please tell me the story now. Include as many details as you can remember.'
             : 'Earlier, you heard a short story. Please tell me that story again, including as many details as you can remember.');
         display.innerHTML = '<div class="osr-card"><span class="osr-kicker">'
-          + (condition === 'immediate' ? 'Immediate recall' : 'Delayed recall') + '</span>'
+          + (condition === 'immediate' ? (OSR_IS_GERMAN ? 'Sofortige Wiedergabe' : 'Immediate recall') : (OSR_IS_GERMAN ? 'Verzögerte Wiedergabe' : 'Delayed recall')) + '</span>'
           + '<h2>' + (OSR_IS_GERMAN ? 'Erzählen Sie die Geschichte' : 'Tell the story back') + '</h2><p class="osr-prompt">' + prompt + '</p>'
           + '<button class="battery-btn" id="osr-replay-prompt" type="button">' + (OSR_IS_GERMAN ? 'Aufforderung erneut abspielen' : 'Replay prompt audio') + '</button>'
           + '<p id="osr-prompt-audio-status" class="osr-status" aria-live="polite"></p>'
           + '<button class="battery-btn primary" id="osr-start-recording">' + (OSR_IS_GERMAN ? 'Aufnahme starten' : 'Start recording') + '</button>'
           + '<button class="battery-btn" id="osr-stop-recording" disabled>' + (OSR_IS_GERMAN ? 'Antwort beenden' : 'Finish response') + '</button>'
           + '<div id="osr-recording-indicator" class="osr-recording-indicator" hidden>'
-          + '<span class="osr-recording-dot"></span> Recording <strong id="osr-recording-time">00:00</strong></div>'
-          + '<button class="battery-btn" id="osr-play-neutral-prompt" type="button">Play neutral prompt</button>'
+          + '<span class="osr-recording-dot"></span> ' + (OSR_IS_GERMAN ? 'Aufnahme ' : 'Recording ') + '<strong id="osr-recording-time">00:00</strong></div>'
+          + '<button class="battery-btn" id="osr-play-neutral-prompt" type="button">' + (OSR_IS_GERMAN ? 'Neutrale Aufforderung abspielen' : 'Play neutral prompt') + '</button>'
           + '<label class="osr-examiner-flag"><input type="checkbox" id="osr-neutral-prompt"> '
-          + 'Examiner used the single neutral prompt</label>'
+          + (OSR_IS_GERMAN ? 'Prüfperson hat die einmalige neutrale Aufforderung verwendet' : 'Examiner used the single neutral prompt') + '</label>'
           + '<p id="osr-record-status" class="osr-status" aria-live="polite"></p></div>';
 
         (function() {
@@ -410,7 +410,7 @@
 
           function playFile(file, statusEl, triggerButton) {
             if (triggerButton) triggerButton.disabled = true;
-            if (statusEl) statusEl.textContent = 'Playing…';
+            if (statusEl) statusEl.textContent = OSR_IS_GERMAN ? 'Wiedergabe läuft…' : 'Playing…';
             osrLoadAudio(file).then(function(audioEl) {
               return osrPlayLoadedAudio(audioEl);
             }).then(function() {
@@ -479,9 +479,9 @@
         startButton.addEventListener('click', function() {
           startButton.disabled = true;
           if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
-            status.innerHTML = '<span class="osr-error">Recording unavailable.</span>';
+            status.innerHTML = '<span class="osr-error">' + (OSR_IS_GERMAN ? 'Aufnahme nicht verfügbar.' : 'Recording unavailable.') + '</span>';
             stopButton.disabled = false;
-            stopButton.textContent = 'Continue without audio';
+            stopButton.textContent = OSR_IS_GERMAN ? 'Ohne Audio fortfahren' : 'Continue without audio';
             stopButton.onclick = function() { finishWithoutAudio('MediaRecorder unavailable'); };
             return;
           }
@@ -534,15 +534,16 @@
             if (condition === 'delayed') window.OSRState.delayedStartMs = startMs;
             indicator.hidden = false;
             stopButton.disabled = false;
-            status.textContent = 'Speak naturally. Press Finish response when you are done.';
+            status.textContent = OSR_IS_GERMAN ? 'Sprechen Sie natürlich. Drücken Sie anschließend auf „Antwort beenden“.'
+              : 'Speak naturally. Press Finish response when you are done.';
             timerId = setInterval(function() {
               timerText.textContent = elapsedLabel(Date.now() - startMs);
             }, 250);
           }).catch(function(error) {
-            status.innerHTML = '<span class="osr-error">Microphone unavailable: '
+            status.innerHTML = '<span class="osr-error">' + (OSR_IS_GERMAN ? 'Mikrofon nicht verfügbar: ' : 'Microphone unavailable: ')
               + osrEscape(error && error.message ? error.message : 'permission denied') + '</span>';
             stopButton.disabled = false;
-            stopButton.textContent = 'Continue without audio';
+            stopButton.textContent = OSR_IS_GERMAN ? 'Ohne Audio fortfahren' : 'Continue without audio';
             stopButton.onclick = function() { finishWithoutAudio(error && error.message ? error.message : 'permission denied'); };
           });
         });
@@ -592,10 +593,10 @@
           return;
         }
 
-        display.innerHTML = '<div class="osr-card"><span class="osr-kicker">Memory interval</span>'
-          + '<h2>Short interval</h2><p>Please wait. The next section will begin automatically.</p>'
+        display.innerHTML = '<div class="osr-card"><span class="osr-kicker">' + (OSR_IS_GERMAN ? 'Erinnerungsintervall' : 'Memory interval') + '</span>'
+          + '<h2>' + (OSR_IS_GERMAN ? 'Kurze Wartezeit' : 'Short interval') + '</h2><p>' + (OSR_IS_GERMAN ? 'Bitte warten Sie. Der nächste Abschnitt beginnt automatisch.' : 'Please wait. The next section will begin automatically.') + '</p>'
           + '<div class="countdown-display" id="osr-delay-countdown"></div>'
-          + '<p class="osr-fineprint">Do not rehearse or discuss the earlier story.</p></div>';
+          + '<p class="osr-fineprint">' + (OSR_IS_GERMAN ? 'Wiederholen oder besprechen Sie die zuvor gehörte Geschichte nicht.' : 'Do not rehearse or discuss the earlier story.') + '</p></div>';
         var countdown = document.getElementById('osr-delay-countdown');
         function update() {
           var left = Math.max(0, OSR_MIN_DELAY_MS - (Date.now() - start));
@@ -618,38 +619,51 @@
       async: true,
       func: function(done) {
         var display = osrDisplay();
+        var priorTrial = window.BatteryData.trials.slice().reverse().find(function(row) {
+          return row.task_name === 'original_story_recall' && row.phase === 'free_recall' && row.condition === condition;
+        }) || null;
+        function savedScores(field) {
+          if (!priorTrial || !priorTrial[field]) return [];
+          try {
+            var parsed = JSON.parse(priorTrial[field]);
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) { return []; }
+        }
+        var priorVerbatim = savedScores('verbatim_unit_scores');
+        var priorParaphrase = savedScores('paraphrase_unit_scores');
+        var hasPriorScoring = priorVerbatim.length > 0 || priorParaphrase.length > 0;
         var rows = OSR_VERBATIM_UNITS.map(function(unit, index) {
-          return '<label class="osr-score-row"><input type="checkbox" class="osr-vb" data-index="' + index + '">'
+          return '<label class="osr-score-row"><input type="checkbox" class="osr-vb" data-index="' + index + '"' + (priorVerbatim[index] ? ' checked' : '') + '>'
             + '<span class="osr-unit-number">' + (index + 1) + '</span><span><strong>'
             + osrEscape(unit[0]) + '</strong><small>' + osrEscape(unit[1]) + '</small></span></label>';
         }).join('');
         var meaningRows = OSR_PARAPHRASE_UNITS.map(function(unit, index) {
-          return '<label class="osr-score-row"><input type="checkbox" class="osr-pp" data-index="' + index + '">'
+          return '<label class="osr-score-row"><input type="checkbox" class="osr-pp" data-index="' + index + '"' + (priorParaphrase[index] ? ' checked' : '') + '>'
             + '<span class="osr-unit-number">' + (index + 1) + '</span><span>' + osrEscape(unit) + '</span></label>';
         }).join('');
         var audioUrl = window.OSRState.audioUrls[condition];
         var audioBlob = window.OSRState.audio[condition];
 
         display.innerHTML = '<div class="osr-review">'
-          + '<div class="osr-review-header"><div><span class="osr-kicker">Examiner only</span><h2>'
-          + (condition === 'immediate' ? 'Immediate' : 'Delayed') + ' recall scoring</h2></div>'
-          + '<div class="osr-score-totals"><strong id="osr-vb-total">0/44</strong><span>verbatim</span>'
-          + '<strong id="osr-pp-total">0/25</strong><span>paraphrase</span></div></div>'
-          + '<div class="warning-box">Move the participant away from the screen. This page contains the answer key.</div>'
-          + (audioUrl ? '<audio controls class="osr-audio-review" src="' + audioUrl + '"></audio>' : '<p class="osr-error">No audio was captured.</p>')
+          + '<div class="osr-review-header"><div><span class="osr-kicker">' + (OSR_IS_GERMAN ? 'Nur für die Prüfperson' : 'Examiner only') + '</span><h2>'
+          + (OSR_IS_GERMAN ? (condition === 'immediate' ? 'Sofortige Wiedergabe auswerten' : 'Verzögerte Wiedergabe auswerten') : (condition === 'immediate' ? 'Immediate recall scoring' : 'Delayed recall scoring')) + '</h2></div>'
+          + '<div class="osr-score-totals"><strong id="osr-vb-total">0/44</strong><span>' + (OSR_IS_GERMAN ? 'wörtlich' : 'verbatim') + '</span>'
+          + '<strong id="osr-pp-total">0/25</strong><span>' + (OSR_IS_GERMAN ? 'sinngemäß' : 'paraphrase') + '</span></div></div>'
+          + '<div class="warning-box">' + (OSR_IS_GERMAN ? 'Die teilnehmende Person darf diesen Bildschirm nicht sehen. Er enthält den Lösungsschlüssel.' : 'Move the participant away from the screen. This page contains the answer key.') + '</div>'
+          + (audioUrl ? '<audio controls class="osr-audio-review" src="' + audioUrl + '"></audio>' : '<p class="osr-error">' + (OSR_IS_GERMAN ? 'Es wurde kein Ton aufgenommen.' : 'No audio was captured.') + '</p>')
           + '<p id="osr-asr-status" class="osr-status" aria-live="polite"></p>'
-          + '<label class="osr-transcript-label">Working transcript'
+          + '<label class="osr-transcript-label">' + (OSR_IS_GERMAN ? 'Arbeits­transkript' : 'Working transcript')
           + '<textarea id="osr-transcript" rows="6" '
-          + 'placeholder="Optional examiner transcript. Do not enter identifying information."></textarea></label>'
+          + 'placeholder="' + (OSR_IS_GERMAN ? 'Optionales Transkript. Keine Identifikationsdaten eingeben.' : 'Optional examiner transcript. Do not enter identifying information.') + '"></textarea></label>'
           + '<p class="osr-fineprint">Verbatim checkboxes below are auto-filled from the transcript where possible. '
           + 'This is a pre-fill only, generated by an in-browser speech recognition model (no audio leaves this device) — '
           + 'review and correct every box before saving. Paraphrase units always require your own judgment; they are not auto-scored.</p>'
-          + '<details open><summary>Verbatim units</summary><div class="osr-score-grid">' + rows + '</div></details>'
-          + '<details><summary>Paraphrase units</summary><div class="osr-score-grid">' + meaningRows + '</div></details>'
-          + '<label class="osr-transcript-label">Intrusions and scoring notes<textarea id="osr-intrusions" rows="3"></textarea></label>'
-          + '<div class="osr-review-actions"><button class="battery-btn primary" id="osr-save-score">Save verified score</button>'
-          + '<button class="battery-btn" id="osr-defer-score">Defer scoring</button>'
-          + (audioUrl ? '<button class="battery-btn download" id="osr-download-audio">Download audio</button>' : '')
+          + '<details open><summary>' + (OSR_IS_GERMAN ? 'Wörtliche Einheiten' : 'Verbatim units') + '</summary><div class="osr-score-grid">' + rows + '</div></details>'
+          + '<details><summary>' + (OSR_IS_GERMAN ? 'Sinngemäße Einheiten' : 'Paraphrase units') + '</summary><div class="osr-score-grid">' + meaningRows + '</div></details>'
+          + '<label class="osr-transcript-label">' + (OSR_IS_GERMAN ? 'Intrusionen und Bewertungsnotizen' : 'Intrusions and scoring notes') + '<textarea id="osr-intrusions" rows="3"></textarea></label>'
+          + '<div class="osr-review-actions"><button class="battery-btn primary" id="osr-save-score">' + (OSR_IS_GERMAN ? 'Bestätigten Score speichern' : 'Save verified score') + '</button>'
+          + '<button class="battery-btn" id="osr-defer-score">' + (OSR_IS_GERMAN ? 'Auswertung zurückstellen' : 'Defer scoring') + '</button>'
+          + (audioUrl ? '<button class="battery-btn download" id="osr-download-audio">' + (OSR_IS_GERMAN ? 'Audio herunterladen' : 'Download audio') + '</button>' : '')
           + '</div></div>';
 
         var asrOutcome = { attempted: false, succeeded: false, model: null };
@@ -665,16 +679,23 @@
         Array.prototype.forEach.call(document.querySelectorAll('.osr-vb,.osr-pp'), function(box) {
           box.addEventListener('change', updateTotals);
         });
+        if (priorTrial) {
+          document.getElementById('osr-transcript').value = priorTrial.transcript || '';
+          document.getElementById('osr-intrusions').value = priorTrial.intrusions_and_notes || '';
+        }
+        updateTotals();
         var dl = document.getElementById('osr-download-audio');
         if (dl) dl.addEventListener('click', function() { osrDownloadAudio(condition); });
 
         var asrStatus = document.getElementById('osr-asr-status');
-        if (audioBlob && window.OSRTranscription && window.OSRTranscriptionScoring) {
+        if (hasPriorScoring) {
+          asrStatus.textContent = OSR_IS_GERMAN ? 'Gespeicherte Bewertungen wurden geladen. Prüfen und ändern Sie nur die erforderlichen Einheiten.' : 'Saved scoring decisions loaded. Review and change only the units that need correction.';
+        } else if (audioBlob && window.OSRTranscription && window.OSRTranscriptionScoring) {
           asrOutcome.attempted = true;
           asrOutcome.model = window.OSRTranscription.modelId;
-          asrStatus.textContent = 'Loading speech recognition model (first use may take a while)…';
+          asrStatus.textContent = OSR_IS_GERMAN ? 'Spracherkennungsmodell wird geladen; die erste Nutzung kann dauern…' : 'Loading speech recognition model (first use may take a while)…';
           window.OSRTranscription.transcribeBlob(audioBlob, function(fraction) {
-            asrStatus.textContent = 'Downloading speech recognition model… ' + Math.round(fraction) + '%';
+            asrStatus.textContent = (OSR_IS_GERMAN ? 'Spracherkennungsmodell wird heruntergeladen… ' : 'Downloading speech recognition model… ') + Math.round(fraction) + '%';
           }).then(function(transcript) {
             var transcriptBox = document.getElementById('osr-transcript');
             if (!scoringActive || !transcriptBox) return;
@@ -690,12 +711,12 @@
             });
             updateTotals();
             asrOutcome.succeeded = true;
-            asrStatus.textContent = 'Transcribed automatically — review the transcript and every checkbox before saving.';
+            asrStatus.textContent = OSR_IS_GERMAN ? 'Automatisch transkribiert. Prüfen Sie vor dem Speichern das Transkript und jedes Kontrollkästchen.' : 'Transcribed automatically — review the transcript and every checkbox before saving.';
           }).catch(function(error) {
             if (!scoringActive) return;
-            asrStatus.innerHTML = '<span class="osr-error">Automatic transcription unavailable ('
-              + osrEscape(error && error.message ? error.message : 'unknown error')
-              + '). Score manually from the audio above.</span>';
+            asrStatus.innerHTML = '<span class="osr-error">' + (OSR_IS_GERMAN ? 'Automatische Transkription nicht verfügbar (' : 'Automatic transcription unavailable (')
+              + osrEscape(error && error.message ? error.message : (OSR_IS_GERMAN ? 'unbekannter Fehler' : 'unknown error'))
+              + (OSR_IS_GERMAN ? '). Bewerten Sie die Aufnahme oben manuell.' : '). Score manually from the audio above.') + '</span>';
           });
         } else if (audioBlob) {
           asrStatus.textContent = '';
@@ -725,6 +746,7 @@
             trial.intrusions_and_notes = intrusions || null;
             trial.review_status = 'examiner_verified';
             trial.scored_at = getTimestamp();
+            checkpointBatterySession();
           }
           done();
         });
@@ -745,8 +767,10 @@
         });
         var immediate = rows.find(function(row) { return row.condition === 'immediate'; }) || {};
         var delayed = rows.find(function(row) { return row.condition === 'delayed'; }) || {};
+        var priorSummary = window.BatteryData.taskSummaries.original_story_recall || {};
         var delay = window.OSRState.immediateEndMs && window.OSRState.delayedStartMs
-          ? window.OSRState.delayedStartMs - window.OSRState.immediateEndMs : null;
+          ? window.OSRState.delayedStartMs - window.OSRState.immediateEndMs
+          : (delayed.delay_duration_ms != null ? delayed.delay_duration_ms : priorSummary.osr_delay_duration_ms ?? null);
         if (delayed) {
           delayed.delay_duration_ms = delay;
           delayed.delay_out_of_window = delay == null || delay < OSR_MIN_DELAY_MS || delay > OSR_MAX_DELAY_MS;
@@ -762,7 +786,7 @@
           osr_task_version: OSR_VERSION,
           osr_dictionary_version: OSR_DICTIONARY_VERSION,
           osr_story_form: OSR_STORY_FORM,
-          osr_audio_set_version: OSR_IS_GERMAN ? 'osr-audio-de-thorsten-2.0-pilot' : 'osr-audio-en-kokoro-1.0-pilot'
+          osr_audio_set_version: OSR_IS_GERMAN ? 'osr-audio-de-thorsten-2.0-reviewed' : 'osr-audio-en-kokoro-1.0-pilot'
         });
       }
     };
@@ -778,10 +802,11 @@
       osrRecordTrial('delayed'),
       {
         type: jsPsychHtmlButtonResponse,
-        stimulus: '<div class="osr-card"><span class="osr-kicker">ETI Core</span>'
-          + '<h2>Story responses captured</h2><p>Immediate and delayed recordings have been saved locally.</p>'
-          + '<p class="osr-fineprint">Transcription and examiner verification will occur after participant testing.</p></div>',
-        choices: ['Continue battery'],
+        stimulus: '<div class="osr-card"><span class="osr-kicker">' + (OSR_IS_GERMAN ? 'ETI-Kern' : 'ETI Core') + '</span>'
+          + '<h2>' + (OSR_IS_GERMAN ? 'Antworten zur Geschichte wurden gespeichert' : 'Story responses captured') + '</h2><p>'
+          + (OSR_IS_GERMAN ? 'Die sofortige und die verzögerte Aufnahme wurden lokal gespeichert.' : 'Immediate and delayed recordings have been saved locally.') + '</p>'
+          + '<p class="osr-fineprint">' + (OSR_IS_GERMAN ? 'Die Transkription und Prüfung erfolgen nach Abschluss der Testsitzung.' : 'Transcription and examiner verification will occur after participant testing.') + '</p></div>',
+        choices: [OSR_IS_GERMAN ? 'Testbatterie fortsetzen' : 'Continue battery'],
         data: { task_name: 'original_story_recall', phase: 'participant_end', task_version: OSR_VERSION }
       }
     ];
@@ -791,9 +816,9 @@
     return [
       {
         type: jsPsychHtmlButtonResponse,
-        stimulus: '<div class="osr-card"><span class="osr-kicker">Examiner review</span>'
-          + '<h2>Story Recall scoring</h2><p>Local Whisper will suggest transcripts and verbatim matches. Review every suggestion and score paraphrases manually.</p></div>',
-        choices: ['Begin story review'],
+        stimulus: '<div class="osr-card"><span class="osr-kicker">' + (OSR_IS_GERMAN ? 'Auswertung durch die Prüfperson' : 'Examiner review') + '</span>'
+          + '<h2>' + (OSR_IS_GERMAN ? 'Geschichtenwiedergabe auswerten' : 'Story Recall scoring') + '</h2><p>' + (OSR_IS_GERMAN ? 'Lokales Whisper schlägt Transkripte und wörtliche Übereinstimmungen vor. Prüfen Sie jeden Vorschlag und bewerten Sie sinngemäße Einheiten manuell.' : 'Local Whisper will suggest transcripts and verbatim matches. Review every suggestion and score paraphrases manually.') + '</p></div>',
+        choices: [OSR_IS_GERMAN ? 'Geschichtenwiedergabe prüfen' : 'Begin story review'],
         data: { task_name: 'original_story_recall', phase: 'review_intro', task_version: OSR_VERSION }
       },
       osrScoringTrial('immediate'),

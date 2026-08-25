@@ -58,6 +58,8 @@ function batteryCheckpointPayload() {
     saved_at: getTimestamp(),
     participantId: window.BatteryData.participantId,
     sessionStart: window.BatteryData.sessionStart,
+    participantCompletedAt: window.BatteryData.participantCompletedAt || null,
+    reviewCompletedAt: window.BatteryData.reviewCompletedAt || null,
     language: window.BatteryData.language || (window.BatteryLanguage ? window.BatteryLanguage.get() : 'en'),
     trials: window.BatteryData.trials,
     taskSummaries: window.BatteryData.taskSummaries,
@@ -65,7 +67,10 @@ function batteryCheckpointPayload() {
     selectedTasks: Array.isArray(window.BatteryData.selectedTasks) ? window.BatteryData.selectedTasks : [],
     sessionStatus: window.BatteryData.sessionStatus || 'in_progress',
     taskState: {
-      ocfCopyCompletedAt: window.OCFState ? window.OCFState.copyCompletedAt : null
+      ocfCopyCompletedAt: window.OCFState ? window.OCFState.copyCompletedAt : null,
+      osrImmediateEndMs: window.OSRState ? window.OSRState.immediateEndMs : null,
+      osrDelayedStartMs: window.OSRState ? window.OSRState.delayedStartMs : null,
+      osrStoryAudioStandardized: window.OSRState ? window.OSRState.storyAudioStandardized : null
     }
   };
 }
@@ -101,7 +106,7 @@ function loadBatteryCheckpoint(participantId, options) {
     var saved = JSON.parse(raw);
     if (!saved || saved.participantId !== participantId || !Array.isArray(saved.trials)) return false;
     var selectedLanguage = window.BatteryLanguage ? window.BatteryLanguage.get() : 'en';
-    if (saved.language && saved.language !== selectedLanguage) {
+    if (saved.language && saved.language !== selectedLanguage && options.adoptLanguage !== true) {
       window.alert('This participant ID already belongs to a ' + saved.language.toUpperCase()
         + ' session. Select that language before restoring it.');
       return false;
@@ -112,6 +117,9 @@ function loadBatteryCheckpoint(participantId, options) {
     }
     window.BatteryData.participantId = saved.participantId;
     window.BatteryData.sessionStart = saved.sessionStart;
+    window.BatteryData.participantCompletedAt = saved.participantCompletedAt || saved.sessionEnd ||
+      (/^(participant_complete|examiner_review_)/.test(saved.sessionStatus || '') ? saved.saved_at || null : null);
+    window.BatteryData.reviewCompletedAt = saved.reviewCompletedAt || null;
     window.BatteryData.language = saved.language || 'en';
     if (window.BatteryLanguage) window.BatteryLanguage.set(window.BatteryData.language);
     window.BatteryData.trials = saved.trials;
@@ -145,6 +153,17 @@ function loadBatteryCheckpoint(participantId, options) {
       return item.task_name === 'original_story_recall' && item.phase === 'free_recall';
     });
     if (window.OSRState) {
+      var osrState = saved.taskState || {};
+      var savedOsrSummary = (saved.taskSummaries || {}).original_story_recall || {};
+      var immediateRow = osrRows.find(function(row) { return row.condition === 'immediate'; });
+      var delayedRow = osrRows.find(function(row) { return row.condition === 'delayed'; });
+      window.OSRState.immediateEndMs = osrState.osrImmediateEndMs ||
+        (immediateRow && immediateRow.timestamp ? Date.parse(immediateRow.timestamp) : null);
+      window.OSRState.delayedStartMs = osrState.osrDelayedStartMs ||
+        (delayedRow && delayedRow.timestamp ? Date.parse(delayedRow.timestamp) - (delayedRow.response_duration_ms || 0) : null);
+      window.OSRState.storyAudioStandardized = osrState.osrStoryAudioStandardized != null
+        ? !!osrState.osrStoryAudioStandardized
+        : !!(savedOsrSummary.osr_story_audio_standardized || (immediateRow && immediateRow.story_audio_standardized));
       osrRows.forEach(function(row) {
         if (row.condition) window.OSRState.neutralPromptUsed[row.condition] = !!row.neutral_prompt_used;
         if (row.microphone_problem) window.OSRState.protocolFlags.microphone_problem = true;
@@ -537,6 +556,8 @@ function restoreBatteryArtifacts(participantId) {
 window.BatteryData = {
   participantId: '',
   sessionStart: null,
+  participantCompletedAt: null,
+  reviewCompletedAt: null,
   trials: [],
   taskSummaries: {},
   batteryChoice: null,
@@ -552,7 +573,7 @@ window.BatteryData = {
     arr.forEach(r => {
       r.participant_id      = this.participantId;
       r.administration_language = this.language || 'en';
-      if (window.BatteryLanguage) Object.assign(r, window.BatteryLanguage.metadata());
+      if (window.BatteryLanguage) Object.assign(r, window.BatteryLanguage.metadata(this.language));
       r.timestamp           = r.timestamp || stamp;
       r.window_width_px     = win.width;
       r.window_height_px    = win.height;
@@ -658,17 +679,20 @@ function buildSummary() {
   const spSigned = spTrials.map(r => r.signed_angular_error_degrees).filter(v => v != null && !isNaN(v));
   const spRT     = spTrials.map(r => r.response_time_ms).filter(v => v != null && !isNaN(v));
 
-  const sessionEnd = new Date();
+  const sessionEnd = bd.participantCompletedAt ? new Date(bd.participantCompletedAt) : new Date();
   const totalDur   = bd.sessionStart ? (sessionEnd - new Date(bd.sessionStart)) : null;
+  const languageMetadata = window.BatteryLanguage ? window.BatteryLanguage.metadata(bd.language) : {};
 
   return {
     participant_id: bd.participantId,
     administration_language: bd.language || (window.BatteryLanguage ? window.BatteryLanguage.get() : 'en'),
-    language_form_version: window.BatteryLanguage ? window.BatteryLanguage.metadata().language_form_version : null,
-    language_equivalence_status: window.BatteryLanguage ? window.BatteryLanguage.metadata().language_equivalence_status : null,
+    language_form_version: languageMetadata.language_form_version || null,
+    language_equivalence_status: languageMetadata.language_equivalence_status || null,
     session_start:  bd.sessionStart,
     session_end:    sessionEnd.toISOString(),
     total_battery_duration_ms: totalDur,
+    session_status: bd.sessionStatus || 'in_progress',
+    review_completed_at: bd.reviewCompletedAt || null,
     pilot_mode: window.PILOT_MODE,
 
     /* Original Story Recall */

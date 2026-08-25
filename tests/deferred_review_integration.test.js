@@ -19,7 +19,10 @@ const css = fs.readFileSync(path.join(root, 'css/style.css'), 'utf8');
   'buildAnimalFluencyReviewTimeline',
   'buildOriginalVisualNamingReviewTimeline',
   'buildOCFReviewTimeline'
-].forEach((builder) => assert.ok(main.includes("'" + builder + "'"), builder + ' must be load-checked'));
+].forEach((builder) => {
+  assert.ok(admin.includes(builder + '()'), builder + ' must be owned by the examiner portal');
+  assert.ok(!main.includes('timeline: ' + builder + '()'), builder + ' must not be constructed in the participant timeline');
+});
 
 const participantStart = main.indexOf('var timeline = welcomeTrials.concat');
 const participantEnd = main.indexOf(']);', participantStart);
@@ -42,9 +45,20 @@ assert.ok(asf.includes('OSRTranscription.transcribeBlob'));
 assert.ok(ovn.includes("protocol_mode: 'deferred_uncued'"));
 assert.ok(ovn.includes('OSRTranscription.transcribeBlob'));
 assert.ok(admin.includes('Review and rescore session'));
+assert.ok(admin.includes('ensureReviewLanguage'));
+assert.ok(admin.includes('renderAdminResults(false)'));
+assert.ok(admin.includes('admin-sync-status'));
+assert.ok(admin.includes('outstandingReviews'));
+assert.ok(admin.includes('Review incomplete'));
 assert.ok(admin.includes("BatteryData.sessionStatus = 'examiner_review_in_progress'"));
 assert.ok(asf.includes('Saved scoring decisions loaded'));
+assert.ok(osr.includes('Saved scoring decisions loaded'));
+assert.ok(osr.includes('priorVerbatim'));
+assert.ok(osr.includes('priorParaphrase'));
+assert.ok(ocf.includes('priorElements'));
+assert.ok(ocf.includes('drawing_started_at'));
 assert.ok(ovn.includes('priorByItem'));
+assert.ok(ovn.includes('window.BatteryData.addTrials(Object.assign({}, decision))'));
 assert.ok(admin.includes('Number Span forward analogue: number of correct trials'));
 assert.ok(admin.includes('Print individual result'));
 assert.ok(admin.includes('printCollective'));

@@ -46,8 +46,8 @@ window.BatteryLanguage = (function() {
       animal: 'asf60-en-1.0', naming: 'ovn32-en-1.0', instructions: 'csb-instructions-en-1.0'
     },
     de: {
-      session: 'csb-de-0.3-pilot', story: 'osr44-library-wallet-a-de-0.2-pilot',
-      animal: 'asf60-de-0.1-pilot', naming: 'ovn32-de-0.1-pilot', instructions: 'csb-instructions-de-0.1-pilot'
+      session: 'csb-de-1.0', story: 'osr44-library-wallet-a-de-1.0',
+      animal: 'asf60-de-1.0', naming: 'ovn32-de-1.0', instructions: 'csb-instructions-de-1.0'
     }
   };
 
@@ -60,7 +60,10 @@ window.BatteryLanguage = (function() {
     return value;
   }
   function get() { return valid(code) ? code : 'en'; }
-  function locale() { return get() === 'de' ? 'de-DE' : 'en-US'; }
+  function locale(requestedLanguage) {
+    var selected = valid(requestedLanguage) ? requestedLanguage : get();
+    return selected === 'de' ? 'de-DE' : 'en-US';
+  }
   function text(key) { return (STRINGS[get()] && STRINGS[get()][key]) || STRINGS.en[key] || key; }
   function normalise(value, requestedLanguage) {
     var localeCode = requestedLanguage === 'de' ? 'de-DE' : (requestedLanguage === 'en' ? 'en-US' : locale());
@@ -68,14 +71,15 @@ window.BatteryLanguage = (function() {
       .replace(/[\u2019']/g, '').replace(/[^\p{L}\p{N}\s-]/gu, ' ')
       .replace(/\s+/g, ' ').trim();
   }
-  function metadata() {
-    var form = FORMS[get()];
+  function metadata(requestedLanguage) {
+    var selected = valid(requestedLanguage) ? requestedLanguage : get();
+    var form = FORMS[selected];
     return {
-      administration_language: get(), language_locale: locale(),
+      administration_language: selected, language_locale: locale(selected),
       language_form_version: form.session, instruction_version: form.instructions,
       story_form_version: form.story, animal_form_version: form.animal,
       naming_form_version: form.naming,
-      language_equivalence_status: get() === 'de' ? 'pilot_unvalidated' : 'reference_form'
+      language_equivalence_status: selected === 'de' ? 'translated_unvalidated' : 'reference_form'
     };
   }
 

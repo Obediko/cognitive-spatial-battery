@@ -68,24 +68,34 @@ window.BatteryLexicons = (function() {
     if (fillers.has(key)) return { canonical: key, decision: 'rule_violation', confidence: 'filler' };
     return { canonical: key, decision: 'uncertain', confidence: 'unknown' };
   }
+  /* target, accepted alternatives, semantic cue, phonemic cue.  Cues must be
+     language-specific: translating only the accepted answer changes the task. */
   var namingDe = {
-    cup:['Tasse',['Becher']], chair:['Stuhl',[]], key:['Schlüssel',[]], bicycle:['Fahrrad',['Rad']],
-    spoon:['Löffel',[]], umbrella:['Regenschirm',['Schirm']], ladder:['Leiter',[]],
-    kettle:['Wasserkocher',['Teekessel']], scissors:['Schere',[]], anchor:['Anker',[]],
-    binoculars:['Fernglas',[]], stethoscope:['Stethoskop',[]], compass:['Kompass',[]],
-    hammock:['Hängematte',[]], whisk:['Schneebesen',[]], accordion:['Akkordeon',[]],
-    abacus:['Abakus',['Rechenrahmen']], sundial:['Sonnenuhr',[]], sextant:['Sextant',[]],
-    hourglass:['Sanduhr',[]], pulley:['Flaschenzug',['Rolle']], thimble:['Fingerhut',[]],
-    calipers:['Messschieber',['Schieblehre']], metronome:['Metronom',[]], periscope:['Periskop',[]],
-    bellows:['Blasebalg',[]], astrolabe:['Astrolabium',['Astrolab']], yoke:['Joch',[]],
-    plumb_bob:['Senklot',['Lot']], spigot:['Zapfhahn',['Hahn']], trellis:['Spalier',[]],
-    weather_vane:['Wetterfahne',['Windfahne']]
+    cup:['Tasse',['Becher'],'ein kleines Gefäß zum Trinken','Ta'], chair:['Stuhl',[],'ein Möbelstück zum Sitzen','Stu'],
+    key:['Schlüssel',[],'ein Gegenstand zum Öffnen eines Schlosses','Schlü'], bicycle:['Fahrrad',['Rad'],'ein zweirädriges Fahrzeug mit Pedalen','Fahr'],
+    spoon:['Löffel',[],'ein Essgerät mit einer kleinen Mulde am Ende','Lö'], umbrella:['Regenschirm',['Schirm'],'ein Gegenstand, den man bei Regen über den Kopf hält','Regen'],
+    ladder:['Leiter',[],'ein Gerät mit Sprossen zum Hinaufsteigen','Lei'], kettle:['Wasserkocher',['Teekessel'],'ein Gefäß zum Erhitzen oder Ausgießen von Wasser','Wasser'],
+    scissors:['Schere',[],'ein Schneidewerkzeug mit zwei Klingen','Sche'], anchor:['Anker',[],'ein schwerer Gegenstand, der ein Boot an seinem Platz hält','An'],
+    binoculars:['Fernglas',[],'ein optisches Gerät, mit dem man entfernte Dinge mit beiden Augen sieht','Fern'],
+    stethoscope:['Stethoskop',[],'ein Instrument zum Abhören von Geräuschen im Körper','Steth'], compass:['Kompass',[],'ein Instrument, das die Richtung anzeigt','Kom'],
+    hammock:['Hängematte',[],'ein hängendes Bett aus Stoff oder Seilen','Hänge'], whisk:['Schneebesen',[],'ein Küchengerät zum Schlagen oder Vermischen von Zutaten','Schnee'],
+    accordion:['Akkordeon',[],'ein Musikinstrument, das zwischen den Händen zusammengedrückt wird','Ak'],
+    abacus:['Abakus',['Rechenrahmen'],'ein Rahmen mit verschiebbaren Kugeln zum Rechnen','Aba'], sundial:['Sonnenuhr',[],'ein Zeitmesser, der Sonne und Schatten nutzt','Sonnen'],
+    sextant:['Sextant',[],'ein Navigationsinstrument zum Messen von Winkeln zu Himmelskörpern','Sex'], hourglass:['Sanduhr',[],'ein Zeitmesser, bei dem Sand zwischen zwei Glaskammern fällt','Sand'],
+    pulley:['Flaschenzug',['Rolle'],'eine Rolle mit Seil zum Heben oder Bewegen einer Last','Flaschen'], thimble:['Fingerhut',[],'eine kleine Schutzkappe für den Finger beim Nähen','Finger'],
+    calipers:['Messschieber',['Schieblehre'],'ein Instrument mit zwei Schenkeln zum Messen von Dicke oder Abstand','Mess'],
+    metronome:['Metronom',[],'ein Gerät, das Musikern einen regelmäßigen Takt vorgibt','Metro'], periscope:['Periskop',[],'ein optisches Instrument, mit dem man aus einer verdeckten oder tieferen Position sieht','Peri'],
+    bellows:['Blasebalg',[],'ein Gerät, das zusammengedrückt wird, um Luft in ein Feuer zu blasen','Blase'],
+    astrolabe:['Astrolabium',['Astrolab'],'ein altes Instrument zum Auffinden von Sternen und für Navigationsberechnungen','Astro'],
+    yoke:['Joch',[],'ein hölzernes Querholz, das Arbeitstiere miteinander verbindet','Jo'], plumb_bob:['Senklot',['Lot'],'ein spitzes Gewicht an einer Schnur zum Bestimmen einer senkrechten Linie','Senk'],
+    spigot:['Zapfhahn',['Hahn'],'eine Armatur, die den Flüssigkeitsfluss aus einem Rohr oder Behälter regelt','Zapf'], trellis:['Spalier',[],'ein Gerüst, das Kletterpflanzen stützt','Spa'],
+    weather_vane:['Wetterfahne',['Windfahne'],'ein drehbares Instrument, das die Windrichtung anzeigt','Wetter']
   };
   function namingFor(art, fallbackTarget, fallbackAlternatives) {
     if ((window.BatteryLanguage ? window.BatteryLanguage.get() : 'en') !== 'de' || !namingDe[art]) {
-      return { target: fallbackTarget, alternatives: fallbackAlternatives || [] };
+      return { target: fallbackTarget, alternatives: fallbackAlternatives || [], semanticCue: null, phonemicCue: null };
     }
-    return { target: namingDe[art][0], alternatives: namingDe[art][1] };
+    return { target: namingDe[art][0], alternatives: namingDe[art][1], semanticCue: namingDe[art][2], phonemicCue: namingDe[art][3] };
   }
   return {
     animals: { classify: classify, en: en, de: de },

@@ -143,7 +143,8 @@ function buildOLMEncoding(blockNum, blockObjects, positions, trialType) {
 
       const title = document.createElement('div');
       title.style.cssText = 'color:#a8d8ea;font-size:0.95rem;margin-bottom:8px;text-align:center;';
-      title.innerHTML = '<strong>' + (trialType === 'practice' ? 'Practice - ' : 'Block ' + blockNum + ' - ') + 'Encoding</strong> &nbsp;|&nbsp; Study the object locations.';
+      title.innerHTML = '<strong>' + (trialType === 'practice' ? (OLM_IS_GERMAN ? 'Übung - ' : 'Practice - ') : 'Block ' + blockNum + ' - ')
+        + (OLM_IS_GERMAN ? 'Einprägen</strong> &nbsp;|&nbsp; Merken Sie sich die Positionen der Gegenstände.' : 'Encoding</strong> &nbsp;|&nbsp; Study the object locations.');
 
       const arena = document.createElement('div');
       arena.className = 'olm-arena';
@@ -166,10 +167,11 @@ function buildOLMEncoding(blockNum, blockObjects, positions, trialType) {
 
       /* Countdown display */
       let remaining = Math.round(durationMs / 1000);
-      countdown.textContent = 'Time remaining: ' + remaining + 's';
+      countdown.textContent = (OLM_IS_GERMAN ? 'Verbleibende Zeit: ' : 'Time remaining: ') + remaining + 's';
       const tick = setInterval(() => {
         remaining--;
-        countdown.textContent = remaining > 0 ? 'Time remaining: ' + remaining + 's' : 'Time\'s up!';
+        countdown.textContent = remaining > 0 ? (OLM_IS_GERMAN ? 'Verbleibende Zeit: ' : 'Time remaining: ') + remaining + 's'
+          : (OLM_IS_GERMAN ? 'Die Zeit ist abgelaufen.' : 'Time\'s up!');
       }, 1000);
 
       setTimeout(() => {
@@ -194,7 +196,8 @@ function buildOLMDelay(blockNum, trialType) {
       display.innerHTML =
         '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px">' +
         '<div class="fixation">+</div>' +
-        '<div style="color:#8899aa;font-size:0.85rem">' + (trialType === 'practice' ? 'Practice - ' : 'Block ' + blockNum + ' - ') + 'Delay period</div>' +
+        '<div style="color:#8899aa;font-size:0.85rem">' + (trialType === 'practice' ? (OLM_IS_GERMAN ? 'Übung - ' : 'Practice - ') : 'Block ' + blockNum + ' - ')
+        + (OLM_IS_GERMAN ? 'Wartezeit' : 'Delay period') + '</div>' +
         '</div>';
       setTimeout(() => { display.innerHTML = ''; done(); }, durationMs);
     }
@@ -231,7 +234,8 @@ function buildOLMRetrieval(blockNum, blockObjects, positions, retrievalOrder, tr
 
         const cueLabel = document.createElement('div');
         cueLabel.style.cssText = 'color:#a8d8ea;font-size:1rem;font-weight:bold;';
-        cueLabel.textContent = (trialType === 'practice' ? 'Practice - ' : 'Block ' + blockNum + ' - ') + 'Retrieval ' + (trialIdx + 1) + '/' + retrievalOrder.length;
+        cueLabel.textContent = (trialType === 'practice' ? (OLM_IS_GERMAN ? 'Übung - ' : 'Practice - ') : 'Block ' + blockNum + ' - ')
+          + (OLM_IS_GERMAN ? 'Abruf ' : 'Retrieval ') + (trialIdx + 1) + '/' + retrievalOrder.length;
 
         const cueObj = document.createElement('div');
         cueObj.style.cssText = 'display:flex;align-items:center;gap:10px;margin-top:4px;';
@@ -259,7 +263,7 @@ function buildOLMRetrieval(blockNum, blockObjects, positions, retrievalOrder, tr
 
         const cueName = document.createElement('div');
         cueName.style.cssText = 'color:#e0e0e0;font-size:1.1rem;font-weight:bold;';
-        cueName.textContent = 'Point to: ' + obj.label;
+        cueName.textContent = (OLM_IS_GERMAN ? 'Zeigen Sie auf: ' : 'Point to: ') + obj.label;
         cueObj.appendChild(cueName);
 
         cueArea.appendChild(cueLabel);
@@ -271,7 +275,9 @@ function buildOLMRetrieval(blockNum, blockObjects, positions, retrievalOrder, tr
 
         const hint = document.createElement('div');
         hint.style.cssText = 'color:#8899aa;font-size:0.8rem;text-align:center;';
-        hint.textContent = 'Click or use the joystick and primary button to mark where the ' + obj.label + ' was.';
+        hint.textContent = OLM_IS_GERMAN
+          ? 'Klicken Sie oder verwenden Sie den Joystick, um die frühere Position von ' + obj.label + ' zu markieren.'
+          : 'Click or use the joystick and primary button to mark where the ' + obj.label + ' was.';
 
         wrapper.appendChild(cueArea);
         wrapper.appendChild(arena);
@@ -356,7 +362,9 @@ function buildOLMRetrieval(blockNum, blockObjects, positions, retrievalOrder, tr
             arena.appendChild(corrDot);
 
             hint.style.color = '#66bb6a';
-            hint.textContent = 'Correct location shown in green. Your response in blue. Error: ' + errPx.toFixed(0) + ' px';
+            hint.textContent = OLM_IS_GERMAN
+              ? 'Richtige Position grün, Ihre Antwort blau. Abweichung: ' + errPx.toFixed(0) + ' px'
+              : 'Correct location shown in green. Your response in blue. Error: ' + errPx.toFixed(0) + ' px';
 
             setTimeout(() => { display.innerHTML = ''; done(); }, 1800);
           } else {

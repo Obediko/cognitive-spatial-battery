@@ -156,7 +156,8 @@ function buildSPStudy() {
 
       const title = document.createElement('div');
       title.style.cssText = 'color:#a8d8ea;font-size:1rem;font-weight:bold;text-align:center;';
-      title.textContent = 'Study Phase - Remember the locations of all 6 landmarks.';
+      title.textContent = SP_IS_GERMAN ? 'Lernphase: Merken Sie sich die Positionen aller sechs Orientierungspunkte.'
+        : 'Study Phase - Remember the locations of all 6 landmarks.';
 
       const canvas = document.createElement('canvas');
       canvas.id = 'sp-arena';
@@ -181,10 +182,11 @@ function buildSPStudy() {
       spDrawArena(ctx, cx, cy, landmarks, null, true, null);
 
       let remaining = Math.round(studyMs / 1000);
-      countdown.textContent = 'Time to study: ' + remaining + 's';
+      countdown.textContent = (SP_IS_GERMAN ? 'Verbleibende Lernzeit: ' : 'Time to study: ') + remaining + 's';
       const tick = setInterval(() => {
         remaining--;
-        countdown.textContent = remaining > 0 ? 'Time to study: ' + remaining + 's' : 'Time\'s up!';
+        countdown.textContent = remaining > 0 ? (SP_IS_GERMAN ? 'Verbleibende Lernzeit: ' : 'Time to study: ') + remaining + 's'
+          : (SP_IS_GERMAN ? 'Die Zeit ist abgelaufen.' : 'Time\'s up!');
       }, 1000);
 
       setTimeout(() => { clearInterval(tick); display.innerHTML = ''; done(); }, studyMs);
@@ -214,7 +216,7 @@ function buildSPTrial(trialNum, targetLandmark, startPosObj, practiceOrMain, sho
 
       const label = document.createElement('div');
       label.id = 'sp-cue-label';
-      label.innerHTML = 'Point toward: <strong>' + lm.emoji + ' ' + lm.label + '</strong>';
+      label.innerHTML = (SP_IS_GERMAN ? 'Zeigen Sie in Richtung: <strong>' : 'Point toward: <strong>') + lm.emoji + ' ' + lm.label + '</strong>';
 
       const canvas = document.createElement('canvas');
       canvas.id = 'sp-arena';
@@ -224,16 +226,18 @@ function buildSPTrial(trialNum, targetLandmark, startPosObj, practiceOrMain, sho
 
       const hint = document.createElement('div');
       hint.id = 'sp-hint';
-      hint.textContent = 'Click or use the joystick and primary button to set a direction, then confirm.';
+      hint.textContent = SP_IS_GERMAN ? 'Wählen Sie die Richtung per Mausklick oder Joystick und bestätigen Sie Ihre Auswahl.'
+        : 'Click or use the joystick and primary button to set a direction, then confirm.';
 
       const confirmBtn = document.createElement('button');
       confirmBtn.id = 'sp-confirm-btn';
-      confirmBtn.textContent = 'Confirm Direction';
+      confirmBtn.textContent = SP_IS_GERMAN ? 'Richtung bestätigen' : 'Confirm Direction';
       confirmBtn.disabled = true;
 
       const progress = document.createElement('div');
       progress.style.cssText = 'color:#8899aa;font-size:0.8rem;text-align:center;';
-      progress.textContent = (practiceOrMain === 'practice' ? 'Practice ' : 'Trial ') + trialNum + (practiceOrMain === 'main' ? '/18' : '/2');
+      progress.textContent = (practiceOrMain === 'practice' ? (SP_IS_GERMAN ? 'Übung ' : 'Practice ') : (SP_IS_GERMAN ? 'Durchgang ' : 'Trial '))
+        + trialNum + (practiceOrMain === 'main' ? '/18' : '/2');
 
       wrapper.appendChild(label); wrapper.appendChild(canvas); wrapper.appendChild(hint);
       wrapper.appendChild(confirmBtn); wrapper.appendChild(progress);
@@ -259,7 +263,8 @@ function buildSPTrial(trialNum, targetLandmark, startPosObj, practiceOrMain, sho
         chosenAngle = angleBetween(sp.x, sp.y, mx, my);
         spDrawArena(ctx, cx, cy, window._spLandmarks, sp, false, chosenAngle);
         confirmBtn.disabled = false;
-        hint.textContent = 'Direction set. Confirm to proceed, or select again to change.';
+        hint.textContent = SP_IS_GERMAN ? 'Richtung ausgewählt. Bestätigen Sie oder wählen Sie eine andere Richtung.'
+          : 'Direction set. Confirm to proceed, or select again to change.';
       }
 
       canvas.addEventListener('mousemove', (e) => {
@@ -319,7 +324,9 @@ function buildSPTrial(trialNum, targetLandmark, startPosObj, practiceOrMain, sho
           ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(ex, ey);
           ctx.strokeStyle = '#15803d'; ctx.lineWidth = 2.5; ctx.setLineDash([5, 3]); ctx.stroke();
           ctx.setLineDash([]);
-          hint.innerHTML = '<span style="color:#66bb6a">Correct direction shown in green.</span> &nbsp; Your response in yellow. &nbsp; Error: <strong>' + absErr.toFixed(1) + '&deg;</strong>';
+          hint.innerHTML = SP_IS_GERMAN
+            ? '<span style="color:#66bb6a">Richtige Richtung grün.</span> &nbsp; Ihre Antwort gelb. &nbsp; Abweichung: <strong>' + absErr.toFixed(1) + '&deg;</strong>'
+            : '<span style="color:#66bb6a">Correct direction shown in green.</span> &nbsp; Your response in yellow. &nbsp; Error: <strong>' + absErr.toFixed(1) + '&deg;</strong>';
           confirmBtn.disabled = true;
           setTimeout(() => { destroyGamepadPointer(); display.innerHTML = ''; done(); }, 2000);
         } else {

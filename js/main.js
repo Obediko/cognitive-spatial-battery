@@ -191,7 +191,8 @@ function makeWelcomeTrials() {
       prompt: '<div style="text-align:center">'
         + '<h3 style="color:#a8d8ea">' + (de ? 'Teilnehmenden-ID' : 'Participant ID') + '</h3>'
         + '<p style="color:#cdd9e5;max-width:500px;margin:0 auto 1em">'
-        + (de ? 'Geben Sie die <strong>pseudonyme Teilnehmenden-ID</strong> ein (z. B. P001, CSB_042).<br>' : 'Please enter your <strong>pseudonymous participant ID</strong> (e.g. P001, CSB_042).<br>')
+        + (de ? 'Geben Sie die <strong>pseudonyme Teilnehmenden-ID</strong> ein (z. B. P001, CSB_042). Verwenden Sie nur Buchstaben, Zahlen, Bindestriche oder Unterstriche.<br>'
+          : 'Please enter your <strong>pseudonymous participant ID</strong> (e.g. P001, CSB_042). Use letters, numbers, hyphens, or underscores only.<br>')
         + '<span style="color:#ef9a9a;font-size:0.85rem">'
         + (de ? 'Geben Sie keinen Namen, keine E-Mail-Adresse, kein Geburtsdatum und keine anderen Identifikationsdaten ein.' : 'Do NOT enter your name, email, student number, date of birth, or any identifying information.')
         + '</span></p></div>',
@@ -201,6 +202,18 @@ function makeWelcomeTrials() {
     }],
     button_label: de ? 'ID bestätigen' : 'Confirm ID',
     data: { battery_phase: 'participant_id' },
+    on_load: function() {
+      var input = document.querySelector('input[type="text"]');
+      if (!input) return;
+      input.maxLength = 64;
+      input.setAttribute('pattern', '[A-Za-z0-9_-]{1,64}');
+      input.setAttribute('title', de
+        ? 'Verwenden Sie 1 bis 64 Buchstaben, Zahlen, Bindestriche oder Unterstriche.'
+        : 'Use 1 to 64 letters, numbers, hyphens, or underscores.');
+      input.addEventListener('input', function() {
+        input.value = input.value.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+      });
+    },
     on_finish: function(data) {
       var pid = (data.response && data.response.participant_id)
         ? data.response.participant_id.trim() : 'UNKNOWN';
@@ -439,14 +452,16 @@ function makeTaskMenu(jsPsych) {
    BREAK SCREEN
    ==================================================== */
 function makeBreakScreen(nextTaskName) {
+  var de = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
   return {
     type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="max-width:600px;margin:0 auto;text-align:center">'
       + '<h3 style="color:#a8d8ea">' + batteryText('break_title') + '</h3>'
       + '<p>' + batteryText('next_task') + ': <strong>' + nextTaskName + '</strong></p>'
-      + '<p style="color:#8899aa;font-size:0.85rem">Press Continue when ready.</p>'
+      + '<p style="color:#8899aa;font-size:0.85rem">'
+      + (de ? 'Drücken Sie auf Weiter, sobald Sie bereit sind.' : 'Press Continue when ready.') + '</p>'
       + '</div>',
-    choices: ['Continue'],
+    choices: [batteryText('continue')],
     data: { battery_phase: 'break' }
   };
 }
@@ -460,7 +475,9 @@ function makeCompletionScreen() {
     async: true,
     func: function() {
       var pid = window.BatteryData.participantId || 'unknown';
+      var de = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
       window.BatteryData.batteryChoice = window._batteryChoice || window.BatteryData.batteryChoice;
+      window.BatteryData.participantCompletedAt = window.BatteryData.participantCompletedAt || getTimestamp();
       window.BatteryData.sessionStatus = 'participant_complete';
       checkpointBatterySession();
       sessionStorage.removeItem('csb-language-confirmed');
@@ -471,13 +488,13 @@ function makeCompletionScreen() {
         display.innerHTML = '<div id="completion-screen" class="osr-card">'
           + '<span class="osr-kicker">' + batteryText('participant_complete') + '</span>'
           + '<h2>&#10003; ' + batteryText('thank_you') + '</h2>'
-          + '<p>All participant tasks are finished.</p>'
-          + '<div class="info-box"><p>Your responses have been saved locally under session <strong>'
+          + '<p>' + (de ? 'Alle Aufgaben der Testsitzung sind abgeschlossen.' : 'All participant tasks are finished.') + '</p>'
+          + '<div class="info-box"><p>' + (de ? 'Ihre Antworten wurden lokal unter folgender Sitzungs-ID gespeichert: <strong>' : 'Your responses have been saved locally under session <strong>')
           + String(pid).replace(/[&<>"']/g, '') + '</strong>.</p>'
-          + '<p id="participant-sync-status">Secure cross-device synchronization is continuing in the background…</p>'
+          + '<p id="participant-sync-status">' + (de ? 'Die sichere Synchronisierung läuft im Hintergrund…' : 'Secure cross-device synchronization is continuing in the background…') + '</p>'
           + '<p>' + batteryText('scoring_separate') + '</p></div>'
-          + '<p class="osr-fineprint">Research staff: use <strong>admin.html</strong> from an authorized device to open the examiner checkpoint.</p>'
-          + '<button class="battery-btn download" id="participant-backup-json">Research staff: download backup JSON</button>'
+          + '<p class="osr-fineprint">' + (de ? 'Studienpersonal: Öffnen Sie <strong>admin.html</strong> auf einem autorisierten Gerät für die Auswertung.' : 'Research staff: use <strong>admin.html</strong> from an authorized device to open the examiner checkpoint.') + '</p>'
+          + '<button class="battery-btn download" id="participant-backup-json">' + (de ? 'Studienpersonal: JSON-Sicherung herunterladen' : 'Research staff: download backup JSON') + '</button>'
           + '<p id="participant-backup-status" class="osr-status" aria-live="polite"></p></div>';
       }
       if (window.BatteryRemoteSync) {
@@ -485,15 +502,16 @@ function makeCompletionScreen() {
           var syncStatus = document.getElementById('participant-sync-status');
           if (!syncStatus) return;
           syncStatus.textContent = window.BatteryRemoteSync.getStatus() === 'synced'
-            ? 'Secure cross-device synchronization finished.'
-            : 'The local recovery copy is safe, but remote synchronization is pending. Keep this page open and contact research staff.';
+            ? (de ? 'Die sichere geräteübergreifende Synchronisierung ist abgeschlossen.' : 'Secure cross-device synchronization finished.')
+            : (de ? 'Die lokale Sicherung ist vorhanden, aber die Synchronisierung ist nicht abgeschlossen. Lassen Sie diese Seite geöffnet und informieren Sie das Studienpersonal.'
+              : 'The local recovery copy is safe, but remote synchronization is pending. Keep this page open and contact research staff.');
         });
       }
       var backup = document.getElementById('participant-backup-json');
       if (backup) backup.addEventListener('click', function() {
         exportAllJSON();
         var status = document.getElementById('participant-backup-status');
-        if (status) status.textContent = 'Backup download started.';
+        if (status) status.textContent = de ? 'Der Download der Sicherung wurde gestartet.' : 'Backup download started.';
       });
       injectProgressBar();
       setProgress(100);
@@ -511,7 +529,7 @@ window.addEventListener('load', function() {
   checkScreenSize();
 
   /* Safety check: ensure all task builders are available */
-  var required = ['buildOSRImmediateTimeline', 'buildOSRDelayedTimeline', 'buildOSRReviewTimeline', 'buildAnimalFluencyTimeline', 'buildAnimalFluencyReviewTimeline', 'buildOriginalVisualNamingTimeline', 'buildOriginalVisualNamingReviewTimeline', 'buildOCFImmediateTimeline', 'buildOCFDelayedTimeline', 'buildOCFReviewTimeline', 'buildVisualSequencingTimeline', 'buildObjectLocationTimeline', 'buildSpatialPointingTimeline', 'buildNumberSpanTimeline'];
+  var required = ['buildOSRImmediateTimeline', 'buildOSRDelayedTimeline', 'buildAnimalFluencyTimeline', 'buildOriginalVisualNamingTimeline', 'buildOCFImmediateTimeline', 'buildOCFDelayedTimeline', 'buildVisualSequencingTimeline', 'buildObjectLocationTimeline', 'buildSpatialPointingTimeline', 'buildNumberSpanTimeline'];
   for (var ri = 0; ri < required.length; ri++) {
     if (typeof window[required[ri]] !== 'function') {
       var target = document.getElementById('jspsych-target');
@@ -539,6 +557,7 @@ window.addEventListener('load', function() {
     ? makeWelcomeTrials()
     : [makeLanguageSelectionTrial()];
   var taskMenu = makeTaskMenu(jsPsych);
+  var de = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
 
   /* Conditional timeline nodes */
   var osrImmediateTimeline = {
@@ -563,99 +582,55 @@ window.addEventListener('load', function() {
   };
 
   var asfTimeline = {
-    timeline: [makeBreakScreen('Animal Naming Task')].concat(buildAnimalFluencyTimeline()),
+    timeline: [makeBreakScreen(de ? 'Tiere nennen' : 'Animal Naming Task')].concat(buildAnimalFluencyTimeline()),
     conditional_function: function() {
       return batteryTaskSelected('asf');
     }
   };
 
   var ovnTimeline = {
-    timeline: [makeBreakScreen('Original Visual Naming')].concat(buildOriginalVisualNamingTimeline()),
+    timeline: [makeBreakScreen(de ? 'Visuelles Benennen' : 'Original Visual Naming')].concat(buildOriginalVisualNamingTimeline()),
     conditional_function: function() {
       return batteryTaskSelected('ovn');
     }
   };
 
   var ocfImmediateTimeline = {
-    timeline: [makeBreakScreen('Original Complex Figure — copy')].concat(buildOCFImmediateTimeline()),
+    timeline: [makeBreakScreen(de ? 'Komplexe Figur: Kopieren' : 'Original Complex Figure — copy')].concat(buildOCFImmediateTimeline()),
     conditional_function: function() {
       return batteryTaskSelected('ocf');
     }
   };
 
   var ocfDelayedTimeline = {
-    timeline: [makeBreakScreen('Original Complex Figure — delayed recall')].concat(buildOCFDelayedTimeline()),
+    timeline: [makeBreakScreen(de ? 'Komplexe Figur: verzögerte Wiedergabe' : 'Original Complex Figure — delayed recall')].concat(buildOCFDelayedTimeline()),
     conditional_function: function() {
       return batteryTaskSelected('ocf');
     }
   };
 
-  var examinerHandoffTimeline = {
-    timeline: [{
-      type: jsPsychHtmlButtonResponse,
-      stimulus: '<div class="osr-card"><span class="osr-kicker">Participant testing complete</span>'
-        + '<h2>Hand the device to the examiner</h2>'
-        + '<p>The remaining screens contain recordings, expected answers and scoring controls.</p>'
-        + '<div class="warning-box">The participant should no longer view or operate the screen.</div></div>',
-      choices: ['Examiner: begin final review'],
-      data: { battery_phase: 'examiner_handoff' }
-    }],
-    conditional_function: function() {
-      return false;
-    }
-  };
-
-  var osrReviewTimeline = {
-    timeline: buildOSRReviewTimeline(),
-    conditional_function: function() {
-      return false;
-    }
-  };
-
-  var asfReviewTimeline = {
-    timeline: buildAnimalFluencyReviewTimeline(),
-    conditional_function: function() {
-      return false;
-    }
-  };
-
-  var ovnReviewTimeline = {
-    timeline: buildOriginalVisualNamingReviewTimeline(),
-    conditional_function: function() {
-      return false;
-    }
-  };
-
-  var ocfReviewTimeline = {
-    timeline: buildOCFReviewTimeline(),
-    conditional_function: function() {
-      return false;
-    }
-  };
-
   var olmTimeline = {
-    timeline: [makeBreakScreen('Object-Location Memory Task')].concat(buildObjectLocationTimeline()),
+    timeline: [makeBreakScreen(de ? 'Objekt-Ort-Gedächtnis' : 'Object-Location Memory Task')].concat(buildObjectLocationTimeline()),
     conditional_function: function() {
       return batteryTaskSelected('olm');
     }
   };
 
   var spTimeline = {
-    timeline: [makeBreakScreen('Spatial Pointing Task')].concat(buildSpatialPointingTimeline()),
+    timeline: [makeBreakScreen(de ? 'Räumliches Zeigen' : 'Spatial Pointing Task')].concat(buildSpatialPointingTimeline()),
     conditional_function: function() {
       return batteryTaskSelected('sp');
     }
   };
 
   var nsTimeline = {
-    timeline: [makeBreakScreen('Number Span Task')].concat(buildNumberSpanTimeline()),
+    timeline: [makeBreakScreen(de ? 'Zahlenspanne' : 'Number Span Task')].concat(buildNumberSpanTimeline()),
     conditional_function: function() {
       return batteryTaskSelected('ns');
     }
   };
 
   var setP15 = { type: jsPsychCallFunction, func: function() { setProgress(15); } };
-  var setP35 = { type: jsPsychCallFunction, func: function() { setProgress(35); } };
   var setP50 = { type: jsPsychCallFunction, func: function() { setProgress(50); } };
   var setP70 = { type: jsPsychCallFunction, func: function() { setProgress(70); } };
   var setP90 = { type: jsPsychCallFunction, func: function() { setProgress(90); } };

@@ -32,6 +32,7 @@
     version: NS_VERSION,
     audioStandardized: true,
     digitBlobUrls: {},       // digit -> object URL (preloaded once)
+    activeAudio: [],         // retain players until playback ends (prevents browser GC/interruptions)
     playbackOnsets: [],     // planned and observed audio starts for timing QA
     discontinued: { forward: false, backward: false },
     lengthPassed: { forward: {}, backward: {} } // length -> boolean, at least one correct trial
@@ -111,7 +112,7 @@
 
   function nsPlayInstruction(direction, statusEl, button) {
     if (button) button.disabled = true;
-    if (statusEl) statusEl.textContent = 'Playing…';
+    if (statusEl) statusEl.textContent = NS_IS_GERMAN ? 'Wiedergabe läuft…' : 'Playing…';
     var url = NS_INSTRUCTION_FILES[direction + 'BlobUrl'];
     var finished = false;
     var instructionTimer = setTimeout(function() { finish(false); }, 30000);
@@ -151,14 +152,14 @@
   function nsInstructionTrial(direction) {
     return {
       type: jsPsychHtmlButtonResponse,
-      stimulus: '<div class="osr-card"><span class="osr-kicker">ETI Core · Working memory</span>'
+      stimulus: '<div class="osr-card"><span class="osr-kicker">' + (NS_IS_GERMAN ? 'ETI-Kern · Arbeitsgedächtnis' : 'ETI Core · Working memory') + '</span>'
         + '<h2>' + (NS_IS_GERMAN ? (direction === 'forward' ? 'Zahlenspanne — vorwärts' : 'Zahlenspanne — rückwärts') : (direction === 'forward' ? 'Number Span — Forward' : 'Number Span — Backward')) + '</h2>'
         + '<p>' + (NS_IS_GERMAN
           ? ('Sie hören einzelne Ziffern. Wiederholen Sie die Ziffern anschließend ' + (direction === 'forward' ? 'in derselben Reihenfolge.' : 'in umgekehrter Reihenfolge.'))
           : ('You will hear a series of digits, one at a time. When the sequence ends, repeat the digits ' + (direction === 'forward' ? 'in the same order.' : 'in reverse order.'))) + '</p>'
         + '<button class="battery-btn" id="ns-replay-instructions" type="button">' + (NS_IS_GERMAN ? 'Anweisung erneut abspielen' : 'Replay instructions audio') + '</button>'
         + '<p id="ns-instruction-status" class="osr-status" aria-live="polite"></p></div>',
-      choices: ['Continue'],
+      choices: [NS_IS_GERMAN ? 'Weiter' : 'Continue'],
       data: { task_name: 'number_span', phase: 'instructions', direction: direction, task_version: NS_VERSION },
       on_load: function() {
         var button = document.getElementById('ns-replay-instructions');
@@ -203,8 +204,9 @@
   // Plays with nominal one-second spacing, records actual starts, and always
   // resolves via a hard deadline even if a browser rejects or stalls media.
   function nsPlaySequence(sequence) {
-    return new Promise(function(resolve) {
+    return new Promise(function(resolve, reject) {
       var resolved = false;
+      var failed = false;
       var startedAt = performance.now();
       var hardDeadline = setTimeout(finish, sequence.length * NS_ONSET_INTERVAL_MS + NS_AUDIO_LOAD_TIMEOUT_MS);
 
@@ -212,7 +214,16 @@
         if (resolved) return;
         resolved = true;
         clearTimeout(hardDeadline);
-        setTimeout(resolve, NS_POST_SEQUENCE_BUFFER_MS);
+        window.NSState.activeAudio.length = 0;
+        setTimeout(function() {
+          if (failed) reject(new Error('One or more Number Span digits did not play.'));
+          else resolve();
+        }, NS_POST_SEQUENCE_BUFFER_MS);
+      }
+
+      function releasePlayer(player) {
+        var index = window.NSState.activeAudio.indexOf(player);
+        if (index !== -1) window.NSState.activeAudio.splice(index, 1);
       }
 
       sequence.forEach(function(digit, index) {
@@ -229,15 +240,27 @@
           var url = window.NSState.digitBlobUrls[digit];
           if (url) {
             var el = new Audio(url);
-            if (index === sequence.length - 1) {
-              el.addEventListener('ended', finish, { once: true });
-              el.addEventListener('error', finish, { once: true });
-            }
-            el.play().catch(function() {
+            // A strong reference is required for the entire clip. Chromium can
+            // otherwise collect or interrupt short-lived Audio objects mid-list.
+            window.NSState.activeAudio.push(el);
+            el.addEventListener('ended', function() {
+              releasePlayer(el);
+              if (index === sequence.length - 1) finish();
+            }, { once: true });
+            el.addEventListener('error', function() {
+              failed = true;
               window.NSState.audioStandardized = false;
+              releasePlayer(el);
+              if (index === sequence.length - 1) finish();
+            }, { once: true });
+            el.play().catch(function() {
+              failed = true;
+              window.NSState.audioStandardized = false;
+              releasePlayer(el);
               if (index === sequence.length - 1) finish();
             });
           } else {
+            failed = true;
             window.NSState.audioStandardized = false;
             if (index === sequence.length - 1) finish();
           }
@@ -265,38 +288,58 @@
           + '<h2>' + (NS_IS_GERMAN ? 'Hören Sie auf die Ziffern' : 'Listen for the digits') + '</h2><p id="ns-play-status" class="osr-status" aria-live="polite">...</p></div>';
 
         var status = document.getElementById('ns-play-status');
-        if (status) status.textContent = 'Playing…';
+        if (status) status.textContent = NS_IS_GERMAN ? 'Wiedergabe läuft…' : 'Playing…';
 
-        nsPlaySequence(sequence).then(function() {
+        function playAndContinue() {
+          nsPlaySequence(sequence).then(function() {
           var expected = nsExpectedResponse(direction, sequence);
-          display.innerHTML = '<div class="osr-card"><span class="osr-kicker">'
+          display.innerHTML = '<div class="osr-card ns-recall-card"><span class="osr-kicker">'
             + (NS_IS_GERMAN ? (direction === 'forward' ? 'Vorwärts' : 'Rückwärts') : (direction === 'forward' ? 'Forward span' : 'Backward span')) + ' · ' + (NS_IS_GERMAN ? 'Länge ' : 'length ') + length
             + ' · ' + (NS_IS_GERMAN ? 'Durchgang ' : 'trial ') + trialIndex + '</span>'
             + '<h2>' + (NS_IS_GERMAN ? 'Geben Sie die erinnerten Ziffern ein' : 'Enter the digits you remember') + '</h2>'
             + '<p class="osr-fineprint">' + (NS_IS_GERMAN ? 'Verwenden Sie nur Ziffern und die verlangte Reihenfolge.' : 'Use digits only and enter them in the requested order.') + '</p>'
-            + '<input type="text" id="ns-response-input" inputmode="numeric" pattern="[0-9]*" '
-            + 'style="font-size:1.4rem;letter-spacing:0.15em;text-align:center;width:100%;max-width:320px;padding:0.5em;margin:0.6em 0" '
+            + '<input class="ns-response-input" type="text" id="ns-response-input" inputmode="numeric" pattern="[0-9]*" '
+            + 'maxlength="' + length + '" enterkeyhint="done" aria-label="' + (NS_IS_GERMAN ? 'Erinnerte Ziffern' : 'Remembered digits') + '" '
             + 'placeholder="' + (NS_IS_GERMAN ? 'Nur Ziffern' : 'Digits only') + '" autocomplete="off">'
-            + '<div id="ns-digit-pad" style="display:grid;grid-template-columns:repeat(5,minmax(48px,1fr));gap:.4rem;max-width:420px;margin:.5rem auto">'
-            + [1,2,3,4,5,6,7,8,9,0].map(function(digit) { return '<button class="battery-btn ns-digit-key" type="button" data-digit="' + digit + '">' + digit + '</button>'; }).join('')
-            + '<button class="battery-btn" id="ns-delete" type="button" style="grid-column:span 2">' + (NS_IS_GERMAN ? 'Löschen' : 'Delete') + '</button></div>'
-            + '<button class="battery-btn primary" id="ns-score-trial" type="button">' + (NS_IS_GERMAN ? 'Antwort senden' : 'Submit response') + '</button>'
+            + '<div id="ns-digit-pad" class="ns-digit-pad" aria-label="' + (NS_IS_GERMAN ? 'Zifferntastatur' : 'Number keypad') + '">'
+            + [1,2,3,4,5,6,7,8,9,0].map(function(digit) {
+              return '<button class="battery-btn ns-digit-key" type="button" data-digit="' + digit + '" aria-label="'
+                + (NS_IS_GERMAN ? 'Ziffer ' : 'Digit ') + digit + '">' + digit + '</button>';
+            }).join('')
+            + '<button class="battery-btn ns-delete-key" id="ns-delete" type="button">' + (NS_IS_GERMAN ? 'Letzte Ziffer löschen' : 'Delete last digit') + '</button></div>'
+            + '<button class="battery-btn primary ns-submit-key" id="ns-score-trial" type="button">' + (NS_IS_GERMAN ? 'Antwort senden' : 'Submit response') + '</button>'
             + '<p id="ns-score-status" class="osr-status" aria-live="polite"></p></div>';
 
           var input = document.getElementById('ns-response-input');
           var scoreButton = document.getElementById('ns-score-trial');
+          var scoreStatus = document.getElementById('ns-score-status');
+          var submitted = false;
+
+          function updateResponseStatus() {
+            if (!input || !scoreStatus) return;
+            input.value = input.value.replace(/[^0-9]/g, '').slice(0, length);
+            scoreStatus.textContent = NS_IS_GERMAN
+              ? input.value.length + ' von ' + length + ' Ziffern eingegeben'
+              : input.value.length + ' of ' + length + ' digits entered';
+          }
+
           if (input) input.focus();
           Array.prototype.forEach.call(document.querySelectorAll('.ns-digit-key'), function(button) {
             button.addEventListener('click', function() {
-              if (input) input.value += button.getAttribute('data-digit');
+              if (input && input.value.length < length) input.value += button.getAttribute('data-digit');
+              updateResponseStatus();
             });
           });
           var deleteButton = document.getElementById('ns-delete');
           if (deleteButton) deleteButton.addEventListener('click', function() {
             if (input) input.value = input.value.slice(0, -1);
+            updateResponseStatus();
           });
 
           function scoreTrial() {
+            if (submitted) return;
+            submitted = true;
+            if (scoreButton) scoreButton.disabled = true;
             var response = (input ? input.value : '').replace(/[^0-9]/g, '');
             var correct = response === expected;
             window.BatteryData.addTrials({
@@ -319,10 +362,30 @@
           }
 
           if (scoreButton) scoreButton.addEventListener('click', scoreTrial);
-          if (input) input.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') scoreTrial();
+          if (input) {
+            input.addEventListener('input', updateResponseStatus);
+            input.addEventListener('keydown', function(event) {
+              if (event.key === 'Enter') { event.preventDefault(); scoreTrial(); }
+            });
+          }
+          updateResponseStatus();
+          }).catch(function() {
+            display.innerHTML = '<div class="osr-card"><h2>'
+              + (NS_IS_GERMAN ? 'Die Zahlenfolge war unvollständig' : 'The digit sequence was incomplete')
+              + '</h2><p>' + (NS_IS_GERMAN
+                ? 'Mindestens eine Ziffer konnte nicht abgespielt werden. Der Durchgang wurde nicht gewertet.'
+                : 'At least one digit could not be played. This trial has not been scored.')
+              + '</p><button class="battery-btn" id="ns-retry-sequence" type="button">'
+              + (NS_IS_GERMAN ? 'Zahlenfolge erneut abspielen' : 'Replay digit sequence') + '</button></div>';
+            var retry = document.getElementById('ns-retry-sequence');
+            if (retry) retry.addEventListener('click', function() {
+              retry.disabled = true;
+              playAndContinue();
+            });
           });
-        });
+        }
+
+        playAndContinue();
       }
     };
   }
@@ -386,7 +449,7 @@
           ns_forward_correct_trials: rows.filter(function(r) { return r.direction === 'forward' && r.correct; }).length,
           ns_backward_correct_trials: rows.filter(function(r) { return r.direction === 'backward' && r.correct; }).length,
           ns_audio_standardized: window.NSState.audioStandardized,
-          ns_audio_set_version: NS_IS_GERMAN ? 'ons-audio-de-thorsten-2.0-pilot' : 'ons-audio-en-kokoro-1.0-pilot',
+          ns_audio_set_version: NS_IS_GERMAN ? 'ons-audio-de-thorsten-2.0-reviewed' : 'ons-audio-en-kokoro-1.0-pilot',
           ns_task_version: NS_VERSION,
           ns_sequence_version: NS_SEQUENCE_VERSION
         });
@@ -401,7 +464,7 @@
       func: function(done) {
         var display = nsDisplay();
         function load() {
-          display.innerHTML = '<div class="osr-card"><span class="osr-kicker">ETI Core · Working memory</span>'
+          display.innerHTML = '<div class="osr-card"><span class="osr-kicker">' + (NS_IS_GERMAN ? 'ETI-Kern · Arbeitsgedächtnis' : 'ETI Core · Working memory') + '</span>'
             + '<h2>' + (NS_IS_GERMAN ? 'Audio für die Zahlenspanne wird vorbereitet…' : 'Preparing number span audio…') + '</h2>'
             + '<p class="osr-status" aria-live="polite">' + (NS_IS_GERMAN ? 'Dies dauert nur einen Moment.' : 'This only takes a moment.') + '</p></div>';
           nsPreloadAudio().then(function() {
@@ -409,7 +472,7 @@
               done({ audio_preload_complete: true });
               return;
             }
-            display.innerHTML = '<div class="osr-card"><span class="osr-kicker">ETI Core · Working memory</span>'
+            display.innerHTML = '<div class="osr-card"><span class="osr-kicker">' + (NS_IS_GERMAN ? 'ETI-Kern · Arbeitsgedächtnis' : 'ETI Core · Working memory') + '</span>'
               + '<h2>' + (NS_IS_GERMAN ? 'Audio konnte nicht vollständig geladen werden' : 'Audio did not load completely') + '</h2>'
               + '<p class="osr-error">' + (NS_IS_GERMAN
                 ? 'Die Aufgabe wurde angehalten, damit keine nicht standardisierte Computerstimme verwendet wird.'

@@ -10,7 +10,7 @@
   var OVN_STIMULUS_SET = 'ovn32-en-0.1';
   var RESPONSE_LIMIT_MS = 20000;
   var OVN_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
-  if (OVN_IS_GERMAN) OVN_STIMULUS_SET = 'ovn32-de-0.1-pilot';
+  if (OVN_IS_GERMAN) OVN_STIMULUS_SET = 'ovn32-de-1.0';
   window.OVN_DEFER_EXAMINER_REVIEW = window.OVN_DEFER_EXAMINER_REVIEW !== false;
   window.OVNState = window.OVNState || { itemAudio: [], itemAudioUrls: [], deferredResponses: [] };
   var ovnImagePreloads = {};
@@ -97,14 +97,14 @@
       art: row[0],
       target: languageNames.target,
       alternatives: languageNames.alternatives,
-      semanticCue: row[3],
-      phonemicCue: row[4],
+      semanticCue: languageNames.semanticCue || row[3],
+      phonemicCue: languageNames.phonemicCue || row[4],
       provisionalDifficulty: row[5]
     };
   });
 
   function ovnSvg(item) {
-    return '<svg class="ovn-stimulus" viewBox="0 0 240 200" role="img" aria-label="Black line drawing of an object">'
+    return '<svg class="ovn-stimulus" viewBox="0 0 240 200" role="img" aria-label="' + (OVN_IS_GERMAN ? 'Strichzeichnung eines Gegenstands' : 'Black line drawing of an object') + '">'
       + '<g class="ovn-line">' + drawings[item.art] + '</g></svg>';
   }
 
@@ -126,9 +126,9 @@
   function ovnStimulusMarkup(item) {
     var path = ovnDeliveryPath(item.art);
     return '<div class="ovn-stimulus-frame" data-ovn-art="' + item.art + '">'
-      + '<img class="ovn-stimulus-image" src="' + path + '" alt="Object naming stimulus" decoding="async" fetchpriority="high">'
+      + '<img class="ovn-stimulus-image" src="' + path + '" alt="' + (OVN_IS_GERMAN ? 'Bild zum Benennen eines Gegenstands' : 'Object naming stimulus') + '" decoding="async" fetchpriority="high">'
       + '<div class="ovn-stimulus-fallback" hidden>' + ovnSvg(item) + '</div>'
-      + '<p class="ovn-stimulus-status osr-status" aria-live="polite">Preparing image…</p></div>';
+      + '<p class="ovn-stimulus-status osr-status" aria-live="polite">' + (OVN_IS_GERMAN ? 'Bild wird vorbereitet…' : 'Preparing image…') + '</p></div>';
   }
 
   function ovnPrepareStimulus(item, container) {
@@ -143,7 +143,7 @@
     function showFallback(reason) {
       image.hidden = true;
       if (fallback) fallback.hidden = false;
-      if (status) status.textContent = 'Photograph unavailable; standardized line-drawing fallback shown.';
+      if (status) status.textContent = OVN_IS_GERMAN ? 'Foto nicht verfügbar; die standardisierte Strichzeichnung wird angezeigt.' : 'Photograph unavailable; standardized line-drawing fallback shown.';
       return { loadMs: Date.now() - requestedAt, fallback: true, reason: reason };
     }
 
@@ -225,13 +225,13 @@
   function buildOriginalVisualNamingLiveTimeline() {
     var instructions = {
       type: jsPsychHtmlButtonResponse,
-      stimulus: '<div class="osr-card"><span class="osr-kicker">ETI Core · Visual naming</span>'
-        + '<h2>Object Naming</h2>'
-        + '<p>You will see one black line drawing at a time. Say the name of each object aloud.</p>'
-        + '<div class="info-box"><p>Try your best even when you are uncertain.</p>'
-        + '<p>The examiner may provide a clue after an incorrect response.</p></div>'
-        + '<p class="osr-fineprint">These are original experimental drawings, not MINT stimuli.</p></div>',
-      choices: ['Begin'],
+      stimulus: '<div class="osr-card"><span class="osr-kicker">' + (OVN_IS_GERMAN ? 'ETI-Kern · Visuelles Benennen' : 'ETI Core · Visual naming') + '</span>'
+        + '<h2>' + (OVN_IS_GERMAN ? 'Gegenstände benennen' : 'Object Naming') + '</h2>'
+        + '<p>' + (OVN_IS_GERMAN ? 'Sie sehen nacheinander Strichzeichnungen. Sagen Sie den Namen jedes Gegenstands laut.' : 'You will see one black line drawing at a time. Say the name of each object aloud.') + '</p>'
+        + '<div class="info-box"><p>' + (OVN_IS_GERMAN ? 'Versuchen Sie es auch, wenn Sie unsicher sind.' : 'Try your best even when you are uncertain.') + '</p>'
+        + '<p>' + (OVN_IS_GERMAN ? 'Nach einer falschen Antwort kann die Prüfperson einen Hinweis geben.' : 'The examiner may provide a clue after an incorrect response.') + '</p></div>'
+        + '<p class="osr-fineprint">' + (OVN_IS_GERMAN ? 'Dies sind neu erstellte experimentelle Zeichnungen, keine MINT-Testbilder.' : 'These are original experimental drawings, not MINT stimuli.') + '</p></div>',
+      choices: [OVN_IS_GERMAN ? 'Beginnen' : 'Begin'],
       data: { task_name: 'original_visual_naming', phase: 'instructions', task_version: OVN_VERSION }
     };
 
@@ -305,9 +305,9 @@
 
         function showPhonemic(item, semanticGiven) {
           document.getElementById('ovn-cue-panel').innerHTML =
-            '<div class="ovn-cue"><span>Phonemic cue</span><strong>Say only: “' + item.phonemicCue + '…”</strong></div>'
-            + '<div class="ovn-actions"><button class="battery-btn primary" id="ovn-pc-correct">Correct after phonemic cue</button>'
-            + '<button class="battery-btn" id="ovn-pc-wrong">Still incorrect</button></div>';
+            '<div class="ovn-cue"><span>' + (OVN_IS_GERMAN ? 'Phonematischer Hinweis' : 'Phonemic cue') + '</span><strong>' + (OVN_IS_GERMAN ? 'Sagen Sie nur: „' : 'Say only: “') + item.phonemicCue + '…”</strong></div>'
+            + '<div class="ovn-actions"><button class="battery-btn primary" id="ovn-pc-correct">' + (OVN_IS_GERMAN ? 'Richtig nach phonematischem Hinweis' : 'Correct after phonemic cue') + '</button>'
+            + '<button class="battery-btn" id="ovn-pc-wrong">' + (OVN_IS_GERMAN ? 'Weiterhin falsch' : 'Still incorrect') + '</button></div>';
           document.getElementById('ovn-pc-correct').onclick = function() {
             saveOutcome(item, 'phonemic_correct', semanticGiven, true);
           };
@@ -318,9 +318,9 @@
 
         function showSemantic(item) {
           document.getElementById('ovn-cue-panel').innerHTML =
-            '<div class="ovn-cue"><span>Semantic cue</span><strong>' + item.semanticCue + '</strong></div>'
-            + '<div class="ovn-actions"><button class="battery-btn primary" id="ovn-sc-correct">Correct after semantic cue</button>'
-            + '<button class="battery-btn" id="ovn-sc-wrong">Incorrect — give phonemic cue</button></div>';
+            '<div class="ovn-cue"><span>' + (OVN_IS_GERMAN ? 'Semantischer Hinweis' : 'Semantic cue') + '</span><strong>' + item.semanticCue + '</strong></div>'
+            + '<div class="ovn-actions"><button class="battery-btn primary" id="ovn-sc-correct">' + (OVN_IS_GERMAN ? 'Richtig nach semantischem Hinweis' : 'Correct after semantic cue') + '</button>'
+            + '<button class="battery-btn" id="ovn-sc-wrong">' + (OVN_IS_GERMAN ? 'Falsch – phonematischen Hinweis geben' : 'Incorrect — give phonemic cue') + '</button></div>';
           document.getElementById('ovn-sc-correct').onclick = function() {
             saveOutcome(item, 'semantic_correct', true, false);
           };
@@ -332,18 +332,18 @@
         function showItem() {
           var item = items[index];
           itemStartedAt = Date.now();
-          display.innerHTML = '<div class="ovn-shell"><div class="ovn-progress">Item ' + (index + 1) + ' of ' + items.length
-            + '<span>Consecutive total-score failures: ' + failureRun + '/6</span></div>'
+          display.innerHTML = '<div class="ovn-shell"><div class="ovn-progress">' + (OVN_IS_GERMAN ? 'Bild ' : 'Item ') + (index + 1) + (OVN_IS_GERMAN ? ' von ' : ' of ') + items.length
+            + '<span>' + (OVN_IS_GERMAN ? 'Aufeinanderfolgende Fehler im Gesamtscore: ' : 'Consecutive total-score failures: ') + failureRun + '/6</span></div>'
             + '<div class="ovn-layout"><div class="ovn-picture-card">' + ovnStimulusMarkup(item)
-            + '<div class="ovn-clock"><strong id="ovn-time">20</strong><span>seconds uncued</span></div></div>'
-            + '<div class="ovn-examiner"><span class="osr-kicker">Examiner controls</span>'
-            + '<label>Verbatim response<input id="ovn-response" autocomplete="off"></label>'
-            + '<label>Optional note<input id="ovn-note" autocomplete="off"></label>'
-            + '<div class="ovn-actions"><button class="battery-btn primary" id="ovn-correct">Correct without semantic cue</button>'
-            + '<button class="battery-btn" id="ovn-misperceived">Incorrect / object not recognised</button>'
-            + '<button class="battery-btn" id="ovn-recognised">Recognised but name not retrieved</button></div>'
+            + '<div class="ovn-clock"><strong id="ovn-time">20</strong><span>' + (OVN_IS_GERMAN ? 'Sekunden ohne Hinweis' : 'seconds uncued') + '</span></div></div>'
+            + '<div class="ovn-examiner"><span class="osr-kicker">' + (OVN_IS_GERMAN ? 'Bedienelemente für die Prüfperson' : 'Examiner controls') + '</span>'
+            + '<label>' + (OVN_IS_GERMAN ? 'Wörtliche Antwort' : 'Verbatim response') + '<input id="ovn-response" autocomplete="off"></label>'
+            + '<label>' + (OVN_IS_GERMAN ? 'Optionale Notiz' : 'Optional note') + '<input id="ovn-note" autocomplete="off"></label>'
+            + '<div class="ovn-actions"><button class="battery-btn primary" id="ovn-correct">' + (OVN_IS_GERMAN ? 'Richtig ohne semantischen Hinweis' : 'Correct without semantic cue') + '</button>'
+            + '<button class="battery-btn" id="ovn-misperceived">' + (OVN_IS_GERMAN ? 'Falsch / Gegenstand nicht erkannt' : 'Incorrect / object not recognised') + '</button>'
+            + '<button class="battery-btn" id="ovn-recognised">' + (OVN_IS_GERMAN ? 'Erkannt, Name aber nicht abgerufen' : 'Recognised but name not retrieved') + '</button></div>'
             + '<div id="ovn-cue-panel"></div>'
-            + '<button class="battery-btn ovn-stop" id="ovn-stop">End task and mark incomplete</button></div></div></div>';
+            + '<button class="battery-btn ovn-stop" id="ovn-stop">' + (OVN_IS_GERMAN ? 'Aufgabe beenden und als unvollständig markieren' : 'End task and mark incomplete') + '</button></div></div></div>';
 
           var timeEl = document.getElementById('ovn-time');
           timer = setInterval(function() {
@@ -352,7 +352,7 @@
             if (remaining <= 0) {
               clearInterval(timer);
               timeEl.parentNode.classList.add('expired');
-              timeEl.parentNode.querySelector('span').textContent = 'uncued limit reached';
+              timeEl.parentNode.querySelector('span').textContent = OVN_IS_GERMAN ? 'Zeit ohne Hinweis abgelaufen' : 'uncued limit reached';
             }
           }, 100);
 
@@ -366,7 +366,7 @@
             showPhonemic(item, false);
           };
           document.getElementById('ovn-stop').onclick = function() {
-            if (window.confirm('End this naming task and mark its score incomplete?')) {
+            if (window.confirm(OVN_IS_GERMAN ? 'Diese Benennaufgabe beenden und den Score als unvollständig markieren?' : 'End this naming task and mark its score incomplete?')) {
               incomplete = true;
               finishTask();
             }
@@ -382,14 +382,14 @@
       stimulus: function() {
         var s = window.BatteryData.taskSummaries.original_visual_naming || {};
         var score = s.ovn_total_with_semantic;
-        return '<div class="osr-card"><span class="osr-kicker">ETI Core</span><h2>Object Naming complete</h2>'
-          + '<p class="osr-score-callout">' + (score == null ? 'Score incomplete' : score + ' / ' + (s.ovn_items_administered || 32)) + '</p>'
-          + '<p>Uncued correct: ' + (s.ovn_total_uncued == null ? 'N/A' : s.ovn_total_uncued)
-          + ' · Semantic-cue correct: ' + (s.ovn_semantic_cues_correct || 0)
-          + ' · Phonemic-cue correct: ' + (s.ovn_phonemic_cues_correct || 0) + '</p>'
-          + '<p class="osr-fineprint">Original visual-naming measure; not a MINT score.</p></div>';
+        return '<div class="osr-card"><span class="osr-kicker">' + (OVN_IS_GERMAN ? 'ETI-Kern' : 'ETI Core') + '</span><h2>' + (OVN_IS_GERMAN ? 'Gegenstände benennen abgeschlossen' : 'Object Naming complete') + '</h2>'
+          + '<p class="osr-score-callout">' + (score == null ? (OVN_IS_GERMAN ? 'Score unvollständig' : 'Score incomplete') : score + ' / ' + (s.ovn_items_administered || 32)) + '</p>'
+          + '<p>' + (OVN_IS_GERMAN ? 'Richtig ohne Hinweis: ' : 'Uncued correct: ') + (s.ovn_total_uncued == null ? 'N/A' : s.ovn_total_uncued)
+          + (OVN_IS_GERMAN ? ' · Richtig nach semantischem Hinweis: ' : ' · Semantic-cue correct: ') + (s.ovn_semantic_cues_correct || 0)
+          + (OVN_IS_GERMAN ? ' · Richtig nach phonematischem Hinweis: ' : ' · Phonemic-cue correct: ') + (s.ovn_phonemic_cues_correct || 0) + '</p>'
+          + '<p class="osr-fineprint">' + (OVN_IS_GERMAN ? 'Neu erstelltes visuelles Benennmaß; kein MINT-Score.' : 'Original visual-naming measure; not a MINT score.') + '</p></div>';
       },
-      choices: ['Continue battery'],
+      choices: [OVN_IS_GERMAN ? 'Testbatterie fortsetzen' : 'Continue battery'],
       data: { task_name: 'original_visual_naming', phase: 'end', task_version: OVN_VERSION }
     };
 
@@ -566,7 +566,7 @@
         function save(outcome) {
           var item = items[index];
           var transcriptBox = document.getElementById('ovn-review-transcript');
-          reviewed.push({
+          var decision = {
             task_name: 'original_visual_naming',
             phase: 'deferred_examiner_review',
             task_version: OVN_VERSION,
@@ -580,7 +580,15 @@
             phonemic_cue_given: false,
             asr_model: window.OSRTranscription ? window.OSRTranscription.modelId : null,
             review_status: outcome === 'uncertain' ? 'provisional' : 'examiner_verified'
+          };
+          reviewed.push(decision);
+          // Persist each examiner decision immediately. The finalizer replaces
+          // the complete review set, but a reload between items must not erase
+          // decisions already made.
+          window.BatteryData.trials = window.BatteryData.trials.filter(function(row) {
+            return !(row.task_name === 'original_visual_naming' && row.phase === 'deferred_examiner_review' && row.item_id === item.id);
           });
+          window.BatteryData.addTrials(Object.assign({}, decision));
           window.BatteryReliability.revokeObjectUrl(window.OVNState.itemAudioUrls[index]);
           window.OVNState.itemAudioUrls[index] = null;
           index += 1;
@@ -594,18 +602,18 @@
           var prior = priorByItem[item.id] || null;
           var audioUrl = window.OVNState.itemAudioUrls[index];
           var blob = window.OVNState.itemAudio[index];
-          display.innerHTML = '<div class="ovn-shell"><div class="ovn-progress">Review item ' + (index + 1)
-            + ' of ' + items.length + '<span>Target: ' + item.target + '</span></div>'
+          display.innerHTML = '<div class="ovn-shell"><div class="ovn-progress">' + (OVN_IS_GERMAN ? 'Bild prüfen ' : 'Review item ') + (index + 1)
+            + (OVN_IS_GERMAN ? ' von ' : ' of ') + items.length + '<span>' + (OVN_IS_GERMAN ? 'Zielwort: ' : 'Target: ') + item.target + '</span></div>'
             + '<div class="ovn-layout"><div class="ovn-picture-card">' + ovnStimulusMarkup(item) + '</div>'
-            + '<div class="ovn-examiner"><span class="osr-kicker">Examiner review</span>'
-            + (audioUrl ? '<audio controls autoplay class="osr-audio-review" src="' + audioUrl + '"></audio>' : '<p class="osr-error">No item audio captured.</p>')
-            + '<label>Transcript<input id="ovn-review-transcript" autocomplete="off" value="' + ovnEscape(prior && prior.transcript ? prior.transcript : '') + '" placeholder="Enter manually or request a local Whisper suggestion"></label>'
+            + '<div class="ovn-examiner"><span class="osr-kicker">' + (OVN_IS_GERMAN ? 'Prüfperson · Auswertung' : 'Examiner review') + '</span>'
+            + (audioUrl ? '<audio controls autoplay class="osr-audio-review" src="' + audioUrl + '"></audio>' : '<p class="osr-error">' + (OVN_IS_GERMAN ? 'Für dieses Bild wurde kein Ton aufgenommen.' : 'No item audio captured.') + '</p>')
+            + '<label>' + (OVN_IS_GERMAN ? 'Transkript' : 'Transcript') + '<input id="ovn-review-transcript" autocomplete="off" value="' + ovnEscape(prior && prior.transcript ? prior.transcript : '') + '" placeholder="' + (OVN_IS_GERMAN ? 'Manuell eingeben oder lokalen Whisper-Vorschlag anfordern' : 'Enter manually or request a local Whisper suggestion') + '"></label>'
             + (blob && window.OSRTranscription
-              ? '<button class="battery-btn" id="ovn-review-transcribe">Transcribe this recording</button>' : '')
-            + '<p id="ovn-review-asr" class="osr-status" aria-live="polite">Whisper is optional and will not start automatically.</p>'
-            + '<div class="ovn-actions"><button class="battery-btn primary" id="ovn-review-correct">Correct</button>'
-            + '<button class="battery-btn" id="ovn-review-incorrect">Incorrect</button>'
-            + '<button class="battery-btn" id="ovn-review-uncertain">Uncertain</button></div></div></div></div>';
+              ? '<button class="battery-btn" id="ovn-review-transcribe">' + (OVN_IS_GERMAN ? 'Aufnahme transkribieren' : 'Transcribe this recording') + '</button>' : '')
+            + '<p id="ovn-review-asr" class="osr-status" aria-live="polite">' + (OVN_IS_GERMAN ? 'Whisper ist optional und startet nicht automatisch.' : 'Whisper is optional and will not start automatically.') + '</p>'
+            + '<div class="ovn-actions"><button class="battery-btn primary" id="ovn-review-correct">' + (OVN_IS_GERMAN ? 'Richtig' : 'Correct') + '</button>'
+            + '<button class="battery-btn" id="ovn-review-incorrect">' + (OVN_IS_GERMAN ? 'Falsch' : 'Incorrect') + '</button>'
+            + '<button class="battery-btn" id="ovn-review-uncertain">' + (OVN_IS_GERMAN ? 'Unsicher' : 'Uncertain') + '</button></div></div></div></div>';
           document.getElementById('ovn-review-correct').onclick = function() { save('uncued_correct'); };
           document.getElementById('ovn-review-incorrect').onclick = function() { save('incorrect'); };
           document.getElementById('ovn-review-uncertain').onclick = function() { save('uncertain'); };
@@ -621,22 +629,22 @@
           if (transcribeButton && blob && typeof window.OSRTranscription.transcribeBlob === 'function') {
             transcribeButton.onclick = function() {
               transcribeButton.disabled = true;
-              status.textContent = 'Transcribing in the background. The page remains usable…';
+              status.textContent = OVN_IS_GERMAN ? 'Die Transkription läuft im Hintergrund. Die Seite bleibt bedienbar…' : 'Transcribing in the background. The page remains usable…';
               window.OSRTranscription.transcribeBlob(blob, function(progress) {
-                if (token === reviewToken && status) status.textContent = 'Loading Whisper in the background… ' + Math.round(progress) + '%';
+                if (token === reviewToken && status) status.textContent = (OVN_IS_GERMAN ? 'Whisper wird im Hintergrund geladen… ' : 'Loading Whisper in the background… ') + Math.round(progress) + '%';
               }).then(function(transcript) {
                 if (token !== reviewToken || !document.getElementById('ovn-review-transcript')) return;
                 document.getElementById('ovn-review-transcript').value = transcript;
                 var suggested = ovnTranscriptMatches(item, transcript);
                 status.textContent = suggested
-                  ? 'Whisper exact-name suggestion: correct. Examiner must verify the recording.'
-                  : 'No exact accepted-name match. Check the recording before deciding.';
+                  ? (OVN_IS_GERMAN ? 'Whisper-Vorschlag entspricht genau einem zulässigen Namen. Die Prüfperson muss die Aufnahme bestätigen.' : 'Whisper exact-name suggestion: correct. Examiner must verify the recording.')
+                  : (OVN_IS_GERMAN ? 'Keine genaue Übereinstimmung mit einem zulässigen Namen. Prüfen Sie die Aufnahme vor der Bewertung.' : 'No exact accepted-name match. Check the recording before deciding.');
                 transcribeButton.disabled = false;
-                transcribeButton.textContent = 'Transcribe again';
+                transcribeButton.textContent = OVN_IS_GERMAN ? 'Erneut transkribieren' : 'Transcribe again';
               }).catch(function(error) {
                 if (token !== reviewToken) return;
-                status.textContent = 'Whisper unavailable: ' + (error && error.message ? error.message : 'unknown error')
-                  + '. Enter the transcript manually or score from the recording.';
+                status.textContent = (OVN_IS_GERMAN ? 'Whisper nicht verfügbar: ' : 'Whisper unavailable: ') + (error && error.message ? error.message : (OVN_IS_GERMAN ? 'unbekannter Fehler' : 'unknown error'))
+                  + (OVN_IS_GERMAN ? '. Geben Sie das Transkript manuell ein oder bewerten Sie anhand der Aufnahme.' : '. Enter the transcript manually or score from the recording.');
                 transcribeButton.disabled = false;
               });
             };
@@ -670,9 +678,9 @@
       ovnDeferredAdministrationTrial(),
       {
         type: jsPsychHtmlButtonResponse,
-        stimulus: '<div class="osr-card"><h2>Object Naming responses captured</h2>'
-          + '<p>The recordings will be transcribed and checked after participant testing.</p></div>',
-        choices: ['Continue battery'],
+        stimulus: '<div class="osr-card"><h2>' + (OVN_IS_GERMAN ? 'Antworten zum visuellen Benennen wurden gespeichert' : 'Object Naming responses captured') + '</h2>'
+          + '<p>' + (OVN_IS_GERMAN ? 'Die Aufnahmen werden nach der Testung transkribiert und geprüft.' : 'The recordings will be transcribed and checked after participant testing.') + '</p></div>',
+        choices: [OVN_IS_GERMAN ? 'Testbatterie fortsetzen' : 'Continue battery'],
         data: { task_name: 'original_visual_naming', phase: 'participant_end', protocol_mode: 'deferred_uncued', task_version: OVN_VERSION }
       }
     ];

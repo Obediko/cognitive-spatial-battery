@@ -1,7 +1,7 @@
 {
   "manifest_version": "2.0.0",
   "generated_on": "2026-08-20",
-  "status": "pilot_only_v2_preview_accepted_full_set_native_listener_review_pending",
+  "status": "v2_full_set_native_speaker_review_completed",
   "generator": {
     "engine": "Piper",
     "engine_release": "2023.11.14-2",
@@ -38,6 +38,6 @@
     "assets/audio/osr/osr_delayed_prompt_de_v2.wav": "d025b8e6731bf00a70805b38ef97d31d24035e921fbadfe009dd65c60831f05e",
     "assets/audio/osr/osr_neutral_prompt_de_v2.wav": "e74e394e136a848cc958b70adcec96a157fb37716a606088044f54006233320a"
   },
-  "researcher_listening_review": "Repository owner accepted the v2 story, Number Span instruction, and digit comparison previews on 2026-08-20. Full-set native-listener review remains pending.",
+  "researcher_listening_review": "Repository owner confirmed completion of a full German native-speaker listening evaluation on 2026-08-22.",
   "validation_boundary": "Automated file QA does not establish pronunciation, naturalness, intelligibility, cultural appropriateness, cross-device equivalence, or English-German measurement equivalence."
 }

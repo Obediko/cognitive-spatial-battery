@@ -1,7 +1,8 @@
 {
   "manifest_version": "1.0.0",
   "status": "pilot_only",
-  "statement": "No NACC, Craft Story, MINT, Benson Figure, or Trail Making Test stimuli are included.",
+  "statement": "The current repository does not embed protected NACC, Craft Story, MINT, Benson Figure, or Trail Making Test materials. This statement describes repository contents and does not assert that the project team lacks instrument licences. Permission must be verified before any research use.",
+  "permission_policy": "No instrument or stimulus may be administered, reproduced, translated, adapted, digitised, distributed, or embedded until the applicable permission and permitted scope are documented in docs/instrument-rights-register.md and the relevant asset ledger.",
   "stimuli": [
     {
       "group": "osr_audio_english",

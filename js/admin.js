@@ -2,6 +2,7 @@
 'use strict';
 (function() {
   var remoteSessions = [];
+  var PENDING_SESSION_KEY = 'csb-admin-pending-session';
 
   function escapeHtml(value) {
     return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -34,19 +35,36 @@
     };
     return escapeHtml(labels[statusName] || 'Not scored yet');
   }
-  function checkpointPayload() {
-    return {
-      saved_at: getTimestamp(), participantId: BatteryData.participantId,
-      sessionStart: BatteryData.sessionStart, trials: BatteryData.trials,
-      taskSummaries: BatteryData.taskSummaries, batteryChoice: BatteryData.batteryChoice || null,
-      sessionStatus: BatteryData.sessionStatus || 'in_progress',
-      taskState: { ocfCopyCompletedAt: window.OCFState ? window.OCFState.copyCompletedAt : null }
-    };
+  function outstandingReviews() {
+    var pending = [];
+    if (hasTask('original_story_recall')) {
+      var storyRows = BatteryData.trials.filter(function(row) {
+        return row.task_name === 'original_story_recall' && row.phase === 'free_recall';
+      });
+      if (storyRows.some(function(row) { return row.review_status !== 'examiner_verified'; })) pending.push('Story Recall');
+    }
+    var animal = BatteryData.taskSummaries.animal_semantic_fluency || {};
+    if (hasTask('animal_semantic_fluency') && ['deferred', 'unreviewed', 'provisional'].indexOf(animal.asf_review_status) !== -1) {
+      pending.push('Animal Fluency');
+    }
+    var naming = BatteryData.taskSummaries.original_visual_naming || {};
+    if (hasTask('original_visual_naming') && ['deferred', 'unreviewed', 'provisional'].indexOf(naming.ovn_review_status) !== -1) {
+      pending.push('Visual Naming');
+    }
+    return pending;
   }
-  function adminCompletionTrial() {
-    return { type: jsPsychCallFunction, async: true, func: function() {
-      BatteryData.sessionStatus = 'examiner_review_complete';
+  function renderAdminResults(markComplete) {
+    var pendingReviews = outstandingReviews();
+    if (markComplete) {
+      if (pendingReviews.length) {
+        BatteryData.sessionStatus = 'examiner_review_in_progress';
+        BatteryData.reviewCompletedAt = null;
+      } else {
+        BatteryData.sessionStatus = 'examiner_review_complete';
+        BatteryData.reviewCompletedAt = getTimestamp();
+      }
       checkpointBatterySession();
+    }
       var summary = buildSummary();
       var asf = BatteryData.taskSummaries.animal_semantic_fluency || {};
       var ovn = BatteryData.taskSummaries.original_visual_naming || {};
@@ -67,17 +85,18 @@
         '<tr><td>Number Span backward analogue: number of correct trials</td><td>' + summaryValue(summary.ns_backward_correct_trials) + '</td><td>0–14</td></tr>');
       var extraSections = '';
       if (hasTask('visual_sequencing_set_shifting')) extraSections += '<h3>Trail comparators (not ETI inputs)</h3><table class="summary-table">'
-        + '<tr><td>Trail A / Trail B analogue time</td><td>' + summaryValue(summary.completion_time_sequencing_ms == null ? null : summary.completion_time_sequencing_ms / 1000, ' sec')
-        + ' / ' + summaryValue(summary.completion_time_set_shifting_ms == null ? null : summary.completion_time_set_shifting_ms / 1000, ' sec') + '</td></tr></table>';
+        + '<tr><td>Trail A analogue completion time</td><td>' + summaryValue(summary.completion_time_sequencing_ms == null ? null : summary.completion_time_sequencing_ms / 1000, ' sec') + '</td></tr>'
+        + '<tr><td>Trail B analogue completion time</td><td>' + summaryValue(summary.completion_time_set_shifting_ms == null ? null : summary.completion_time_set_shifting_ms / 1000, ' sec') + '</td></tr></table>';
       var spatialRows = [];
       if (hasTask('object_location_memory')) spatialRows.push('<tr><td>Object-Location Memory mean error</td><td>' + summaryValue(summary.olm_mean_euclidean_error_px, ' px') + '</td></tr>');
       if (hasTask('spatial_pointing')) spatialRows.push('<tr><td>Spatial Pointing mean absolute error</td><td>' + summaryValue(summary.sp_mean_absolute_angular_error_deg, '°') + '</td></tr>');
       if (spatialRows.length) extraSections += '<h3>Additional spatial outcomes (not ETI inputs)</h3><table class="summary-table">' + spatialRows.join('') + '</table>';
       target.innerHTML = '<div class="osr-card individual-result" style="max-width:900px;margin:0 auto;"><span class="osr-kicker">Examiner checkpoint</span>'
-        + '<h2>Review complete</h2><p>Participant ID: <strong>' + escapeHtml(BatteryData.participantId) + '</strong></p>'
-        + '<h3>Eight ETI analogue inputs</h3><p class="osr-fineprint">NACC-style raw-score labels and ranges. These original tasks are analogues, not NACC instrument scores.</p>'
-        + '<table class="summary-table"><tr><th>Measure</th><th>Raw value</th><th>Expected range</th></tr>' + etiRows.join('') + '</table>'
-        + '<div class="info-box"><p><strong>How to read these values:</strong> Story Recall counts verified details out of 44. Animal Fluency counts distinct valid animal names. Visual Naming counts pictures named correctly without help. Complex Figure counts reproduced elements out of 17. Number Span counts correctly repeated trials in each direction.</p>'
+        + '<h2>' + (pendingReviews.length ? 'Review incomplete' : 'Review complete') + '</h2><p>Participant ID: <strong>' + escapeHtml(BatteryData.participantId) + '</strong></p>'
+        + (pendingReviews.length ? '<div class="warning-box">Further examiner decisions are required for: <strong>' + escapeHtml(pendingReviews.join(', ')) + '</strong>.</div>' : '')
+        + (etiRows.length ? '<h3>Administered ETI analogue measures</h3><p class="osr-fineprint">NACC-style raw-score labels and ranges. These original tasks are analogues, not NACC instrument scores.</p>'
+          + '<table class="summary-table"><tr><th>Measure</th><th>Raw value</th><th>Expected range</th></tr>' + etiRows.join('') + '</table>' : '')
+        + '<div class="info-box"><p><strong>How to read these values:</strong> Only tasks administered during this session are listed. Story Recall counts verified details out of 44. Animal Fluency counts distinct valid animal names. Visual Naming counts pictures named correctly without help. Complex Figure counts reproduced elements out of 17. Number Span counts correctly repeated trials in each direction.</p>'
         + '<p>These are task scores, not diagnoses or norm-referenced interpretations.</p></div>'
         + extraSections
         + '<div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin-top:1rem;">'
@@ -85,8 +104,10 @@
         + '<button class="battery-btn download" id="admin-export-json">Download full JSON</button>'
         + '<button class="battery-btn download" id="admin-export-summary">Download summary JSON</button>'
         + '<button class="battery-btn download" id="admin-export-package">Download research package</button>'
-        + '<button class="battery-btn" id="admin-print-individual">Print individual result</button></div>'
-        + '<p class="osr-fineprint">Verified scoring has been synchronized. Automatic suggestions remain provisional unless examiner-verified.</p>'
+        + '<button class="battery-btn" id="admin-print-individual">Print individual result</button>'
+        + '<button class="battery-btn" id="admin-rescore-session">Review and rescore session</button></div>'
+        + '<p class="osr-fineprint" id="admin-sync-status" aria-live="polite">Checking whether verified scoring has been synchronized…</p>'
+        + '<p class="osr-fineprint">Automatic suggestions remain provisional unless examiner-verified.</p>'
         + '<p><a href="admin.html">Return to session list</a></p></div>';
       document.getElementById('admin-export-csv').onclick = exportAllCSV;
       document.getElementById('admin-export-json').onclick = exportAllJSON;
@@ -95,7 +116,24 @@
         if (window.BatteryReporting) window.BatteryReporting.exportResearchPackage();
       };
       document.getElementById('admin-print-individual').onclick = function() { window.print(); };
-    }};
+      document.getElementById('admin-rescore-session').onclick = function() { beginReview(true); };
+      var syncStatus = document.getElementById('admin-sync-status');
+      if (!window.BatteryRemoteSync || !window.BatteryRemoteSync.enabled) {
+        syncStatus.textContent = 'Verified scoring is saved locally. Remote synchronization is unavailable in this environment.';
+      } else {
+        syncStatus.textContent = 'Verified scoring is saved locally. Waiting for remote synchronization…';
+        window.BatteryRemoteSync.flush().then(function() {
+          var remoteState = window.BatteryRemoteSync.getStatus();
+          syncStatus.textContent = remoteState === 'synced'
+            ? 'Verified scoring has been synchronized successfully.'
+            : remoteState === 'idle' && !markComplete
+              ? 'Previously verified results are available. No synchronization is currently pending.'
+              : 'Verified scoring is saved locally, but remote synchronization failed or is still pending. Keep this page open and retry.';
+        });
+      }
+  }
+  function adminCompletionTrial() {
+    return { type: jsPsychCallFunction, async: true, func: function() { renderAdminResults(true); } };
   }
   function buildReviewTimeline(alreadyReviewed) {
     var timeline = [{ type: jsPsychHtmlButtonResponse,
@@ -109,21 +147,41 @@
     if (hasTask('original_complex_figure')) timeline = timeline.concat(buildOCFReviewTimeline());
     timeline.push(adminCompletionTrial()); return timeline;
   }
-  function startLoadedReview(priorStatus) {
-    var alreadyReviewed = priorStatus === 'examiner_review_complete';
+  function beginReview(alreadyReviewed) {
     BatteryData.sessionStatus = 'examiner_review_in_progress';
     checkpointBatterySession();
     document.getElementById('admin-shell').hidden = true;
     initJsPsych({ display_element: 'jspsych-target', on_finish: function() {} }).run(buildReviewTimeline(alreadyReviewed));
   }
+  function startLoadedReview(priorStatus) {
+    document.getElementById('admin-shell').hidden = true;
+    if (priorStatus === 'examiner_review_complete') {
+      renderAdminResults(false);
+      return;
+    }
+    beginReview(false);
+  }
+  function ensureReviewLanguage(languageCode, source, sessionId) {
+    if (!languageCode || !window.BatteryLanguage || window.BatteryLanguage.get() === languageCode) return true;
+    sessionStorage.setItem(PENDING_SESSION_KEY, JSON.stringify({ source: source, id: sessionId }));
+    window.BatteryLanguage.set(languageCode);
+    location.reload();
+    return false;
+  }
   function startLocal(participantId) {
-    if (!loadBatteryCheckpoint(participantId, { confirm: false })) return status('No local checkpoint was found.');
+    var raw = localStorage.getItem('csb-recovery-v1:' + encodeURIComponent(participantId));
+    var saved;
+    try { saved = raw ? JSON.parse(raw) : null; } catch (error) { return status('The local checkpoint could not be read.'); }
+    if (!saved) return status('No local checkpoint was found.');
+    if (!ensureReviewLanguage(saved.language || 'en', 'local', participantId)) return;
+    if (!loadBatteryCheckpoint(participantId, { confirm: false, adoptLanguage: true })) return status('No local checkpoint was found.');
     var prior = BatteryData.sessionStatus;
     restoreBatteryArtifacts(participantId).then(function() { startLoadedReview(prior); })
       .catch(function(error) { status('Recordings could not be restored: ' + error.message); });
   }
   function installRemoteCheckpoint(data) {
     var saved = data.checkpoint;
+    if (!ensureReviewLanguage(saved.language || 'en', 'remote', data.session.remoteId)) return Promise.resolve();
     BatteryRemoteSync.setAdminRemoteId(data.session.remoteId);
     localStorage.setItem('csb-recovery-v1:' + encodeURIComponent(saved.participantId), JSON.stringify(saved));
     return Promise.all((data.artifactKeys || []).map(function(key) {
@@ -136,7 +194,7 @@
           return BatteryArtifactStore.put(batteryArtifactKey(saved.participantId, parts[0], parts[1]), blob);
         });
     })).then(function() {
-      if (!loadBatteryCheckpoint(saved.participantId, { confirm: false })) throw new Error('Remote checkpoint could not be opened.');
+      if (!loadBatteryCheckpoint(saved.participantId, { confirm: false, adoptLanguage: true })) throw new Error('Remote checkpoint could not be opened.');
       return restoreBatteryArtifacts(saved.participantId).then(function() { startLoadedReview(saved.sessionStatus); });
     });
   }
@@ -159,6 +217,7 @@
     status('Deleting local session…');
     BatteryArtifactStore.deleteParticipant(participantId).then(function() {
       localStorage.removeItem('csb-recovery-v1:' + encodeURIComponent(participantId));
+      if (window.BatteryRemoteSync) window.BatteryRemoteSync.clearIdentity(participantId);
       status('Local session and browser artifacts deleted.');
       renderLocal();
     }).catch(function(error) { status('Local deletion failed: ' + error.message); });
@@ -192,6 +251,15 @@
       remoteSessions = data.sessions || []; renderRemote(); renderLocal();
       document.getElementById('admin-login-panel').hidden = true;
       document.getElementById('admin-sessions-panel').hidden = false;
+      var pending = sessionStorage.getItem(PENDING_SESSION_KEY);
+      if (pending) {
+        sessionStorage.removeItem(PENDING_SESSION_KEY);
+        try {
+          var requested = JSON.parse(pending);
+          if (requested.source === 'remote') loadRemote(requested.id);
+          else if (requested.source === 'local') startLocal(requested.id);
+        } catch (error) { status('The selected session could not be reopened after changing language.'); }
+      }
     }).catch(function(error) {
       if (error.status !== 401) document.getElementById('admin-login-panel').querySelector('.warning-box').textContent = error.message;
     });
@@ -207,12 +275,19 @@
     return Promise.all(remoteSessions.map(function(session) {
       return api('/api/admin-sessions?id=' + encodeURIComponent(session.remoteId)).then(function(data) { return data.checkpoint; });
     })).then(function(remote) {
-      var seen = {};
-      var combined = [];
+      var latest = {};
       remote.concat(localCheckpoints()).forEach(function(checkpoint) {
+        if (checkpoint.sessionStatus === 'in_progress') return;
         var key = String(checkpoint.participantId) + '|' + String(checkpoint.sessionStart || '');
-        if (!seen[key]) { seen[key] = true; combined.push(checkpoint); }
+        var existing = latest[key];
+        var savedAt = Date.parse(checkpoint.saved_at || checkpoint.remoteSavedAt || '') || 0;
+        var existingSavedAt = existing ? Date.parse(existing.saved_at || existing.remoteSavedAt || '') || 0 : -1;
+        if (!existing || savedAt > existingSavedAt ||
+            (savedAt === existingSavedAt && checkpoint.sessionStatus === 'examiner_review_complete' && existing.sessionStatus !== 'examiner_review_complete')) {
+          latest[key] = checkpoint;
+        }
       });
+      var combined = Object.keys(latest).map(function(key) { return latest[key]; });
       status(combined.length + ' unique session result' + (combined.length === 1 ? '' : 's') + ' prepared.');
       return combined;
     });
@@ -229,9 +304,9 @@
       + 'body{font-family:Arial,sans-serif;color:#111;padding:24px}table{border-collapse:collapse;width:100%;font-size:11px}'
       + 'th,td{border:1px solid #777;padding:6px;text-align:left;vertical-align:top}th{background:#eee}h1{font-size:20px}'
       + '@media print{body{padding:0}@page{size:landscape;margin:10mm}}</style></head><body><h1>Collective cognitive battery results</h1>'
-      + '<p>One row per unique participant session. Only measures administered in at least one included session are shown.</p><table><thead><tr><th>Participant ID</th>'
+      + '<p>One row per completed participant session. Only administered measures are shown. Review status distinguishes verified from pending scores.</p><table><thead><tr><th>Participant ID</th><th>Language</th><th>Review status</th>'
       + ids.map(function(id) { return '<th>' + escapeHtml(labels[id] || id) + '</th>'; }).join('') + '</tr></thead><tbody>'
-      + rows.map(function(row) { return '<tr><td>' + escapeHtml(row.participant_id) + '</td>' + ids.map(function(id) {
+      + rows.map(function(row) { return '<tr><td>' + escapeHtml(row.participant_id) + '</td><td>' + escapeHtml(row.language) + '</td><td>' + escapeHtml(row.session_status) + '</td>' + ids.map(function(id) {
         var value = Object.prototype.hasOwnProperty.call(row, id) ? row[id] : 'Not administered';
         return '<td>' + escapeHtml(value == null ? 'Needs review / incomplete' : value) + '</td>';
       }).join('') + '</tr>'; }).join('') + '</tbody></table></body></html>';

@@ -89,6 +89,8 @@ assert.ok(!participantArray.includes('asfReviewTimeline'));
 assert.ok(!participantArray.includes('ovnReviewTimeline'));
 assert.ok(!participantArray.includes('ocfReviewTimeline'));
 assert.ok(main.includes("sessionStatus = 'participant_complete'"));
+assert.ok(main.includes("input.setAttribute('pattern', '[A-Za-z0-9_-]{1,64}')"));
+assert.ok(main.includes('input.maxLength = 64'));
 assert.ok(adminHtml.includes('js/admin.js'));
 assert.ok(admin.includes('buildOSRReviewTimeline()'));
 assert.ok(admin.includes('buildAnimalFluencyReviewTimeline()'));

@@ -85,7 +85,8 @@ window.BatteryReporting = (function() {
     var sequenceSec = finite(summary.completion_time_sequencing_ms) ? round(summary.completion_time_sequencing_ms / 1000, 3) : null;
     var shiftSec = finite(summary.completion_time_set_shifting_ms) ? round(summary.completion_time_set_shifting_ms / 1000, 3) : null;
     var costSec = finite(summary.set_shifting_cost_ms) ? round(summary.set_shifting_cost_ms / 1000, 3) : null;
-    var languageMeta = window.BatteryLanguage ? window.BatteryLanguage.metadata() : {};
+    var sessionLanguage = summary.administration_language || language();
+    var languageMeta = window.BatteryLanguage ? window.BatteryLanguage.metadata(sessionLanguage) : {};
     var namingTotal = finite(summary.ovn_total_with_semantic)
       ? summary.ovn_total_with_semantic : summary.ovn_total_uncued;
     var etiValues = [
@@ -94,14 +95,24 @@ window.BatteryReporting = (function() {
       summary.ocf_copy_score, summary.ocf_delayed_score,
       summary.ns_forward_correct_trials, summary.ns_backward_correct_trials
     ];
-    var row = Object.assign({
+    var included = administeredMeasureSet(trials);
+    var etiIds = ['CRAFTVRS_ANALOGUE', 'CRAFTDVR_ANALOGUE', 'ANIMALS_ANALOGUE', 'MINTTOTS_ANALOGUE',
+      'UDSBENTC_ANALOGUE', 'UDSBENTD_ANALOGUE', 'DIGFORCT_ANALOGUE', 'DIGBACCT_ANALOGUE'];
+    var administeredEtiCount = etiIds.filter(function(id) { return included[id]; }).length;
+    var etiStatus = administeredEtiCount === 0 ? 'not_administered'
+      : administeredEtiCount < etiIds.length ? 'selected_subset_only'
+      : etiValues.every(finite) ? 'eight_inputs_complete' : 'pending_or_incomplete';
+    var row = Object.assign({}, languageMeta, {
       participant_id: summary.participant_id,
-      language: summary.administration_language || language(),
+      language: sessionLanguage,
+      administration_language: sessionLanguage,
       language_form_version: languageMeta.language_form_version || null,
       language_equivalence_status: languageMeta.language_equivalence_status || null,
       session_start: summary.session_start,
       session_end: summary.session_end,
-      eti_input_status: etiValues.every(finite) ? 'eight_inputs_complete' : 'pending_or_incomplete',
+      session_status: summary.session_status || 'in_progress',
+      review_completed_at: summary.review_completed_at || null,
+      eti_input_status: etiStatus,
       eti_value: null,
       eti_value_status: 'not_computed_normative_parameters_required',
       CRAFTVRS_ANALOGUE: summary.osr_immediate_verbatim,
@@ -131,8 +142,7 @@ window.BatteryReporting = (function() {
       OLM_ACCURACY_100: boundedAccuracy(summary.olm_mean_normalized_error, 1),
       SP_MEAN_ABS_ERROR: round(summary.sp_mean_absolute_angular_error_deg, 2),
       SP_ACCURACY_100: boundedAccuracy(summary.sp_mean_absolute_angular_error_deg, 180)
-    }, languageMeta);
-    var included = administeredMeasureSet(trials);
+    });
     DEFINITIONS.forEach(function(def) { if (!included[def[0]]) delete row[def[0]]; });
     return row;
   }
@@ -188,6 +198,10 @@ window.BatteryReporting = (function() {
       participantId: checkpoint.participantId,
       language: checkpoint.language || 'en',
       sessionStart: checkpoint.sessionStart,
+      participantCompletedAt: checkpoint.participantCompletedAt || checkpoint.sessionEnd ||
+        (/^(participant_complete|examiner_review_)/.test(checkpoint.sessionStatus || '') ? checkpoint.saved_at || null : null),
+      reviewCompletedAt: checkpoint.reviewCompletedAt || null,
+      sessionStatus: checkpoint.sessionStatus || 'in_progress',
       trials: checkpoint.trials || [],
       taskSummaries: checkpoint.taskSummaries || {}
     };

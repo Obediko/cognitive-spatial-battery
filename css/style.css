@@ -831,6 +831,68 @@ code { background: #0d1b2a; padding: 0.15em 0.4em; border-radius: 3px; font-size
 
 
 /* ============================================================
+   ETI CORE: Number Span recall keypad
+   ============================================================ */
+.ns-recall-card {
+  width: min(580px, calc(100vw - 2rem));
+}
+.ns-response-input {
+  display: block;
+  width: min(100%, 360px);
+  min-height: 62px;
+  margin: 0.7rem auto;
+  padding: 0.6rem 0.8rem;
+  border: 2px solid #7dd3fc;
+  border-radius: 10px;
+  background: #081727;
+  color: #fff;
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.18em;
+  text-align: center;
+}
+.ns-digit-pad {
+  display: grid;
+  width: min(100%, 360px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin: 0.8rem auto;
+}
+.ns-digit-pad .battery-btn {
+  width: 100%;
+  min-width: 0;
+  min-height: 60px;
+  margin: 0;
+  padding: 0.45rem 0.35rem;
+}
+.ns-digit-key {
+  color: #f8fafc;
+  font-size: 1.75rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.ns-delete-key {
+  grid-column: span 2;
+  font-size: 0.9rem;
+  white-space: normal;
+}
+.ns-submit-key {
+  width: min(100%, 360px);
+  min-height: 52px;
+  margin: 0.45rem auto;
+}
+@media (max-width: 420px), (max-height: 740px) {
+  .ns-recall-card { padding: 1rem; }
+  .ns-response-input { min-height: 50px; margin-block: 0.4rem; font-size: 1.5rem; }
+  .ns-digit-pad { gap: 0.35rem; margin-block: 0.45rem; }
+  .ns-digit-pad .battery-btn { min-height: 48px; }
+  .ns-digit-key { font-size: 1.5rem; }
+}
+
+
+/* ============================================================
    ETI CORE: Original Visual Naming (OVN-32)
    ============================================================ */
 .ovn-shell {

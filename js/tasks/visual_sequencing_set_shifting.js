@@ -215,7 +215,9 @@ function buildVSTrial(opts) {
             totalErrors++;
             if (showFeedback) {
               el.classList.add('error');
-              errorMsg.textContent = 'Wrong target - continue from "' + sequence[nextIdx] + '"';
+              errorMsg.textContent = VS_IS_GERMAN
+                ? 'Falsches Ziel – fahren Sie bei „' + sequence[nextIdx] + '“ fort.'
+                : 'Wrong target - continue from "' + sequence[nextIdx] + '"';
               setTimeout(function() {
                 el.classList.remove('error');
                 errorMsg.textContent = '';
@@ -275,22 +277,22 @@ function vsFullInstructions() {
 function vsReadyScreen(condition, isPractice) {
   var label = VS_IS_GERMAN ? (condition === 'sequencing' ? 'Zahlenfolge' : 'Wechseln') : (condition === 'sequencing' ? 'Sequencing' : 'Set-Shifting');
   var kind  = VS_IS_GERMAN ? (isPractice ? 'Übung' : 'Hauptaufgabe') : (isPractice ? 'Practice' : 'Main Trial');
-  var desc  = condition === 'sequencing'
-    ? (isPractice
-        ? 'Click circles <strong>1 &rarr; 2 &rarr; &hellip; &rarr; 8</strong> in order.'
-        : 'Click circles <strong>1 &rarr; 2 &rarr; &hellip; &rarr; 25</strong> in order.')
-    : (isPractice
-        ? 'Click in order: <strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; 3 &rarr; C &rarr; 4 &rarr; D</strong>.'
-        : 'Click in order: <strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; &hellip; &rarr; 12 &rarr; L &rarr; 13</strong>.');
+  var desc = VS_IS_GERMAN
+    ? (condition === 'sequencing'
+        ? (isPractice ? 'Klicken Sie die Kreise der Reihe nach an: <strong>1 &rarr; 2 &rarr; &hellip; &rarr; 8</strong>.' : 'Klicken Sie die Kreise der Reihe nach an: <strong>1 &rarr; 2 &rarr; &hellip; &rarr; 25</strong>.')
+        : (isPractice ? 'Klicken Sie in dieser Reihenfolge: <strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; 3 &rarr; C &rarr; 4 &rarr; D</strong>.' : 'Klicken Sie in dieser Reihenfolge: <strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; &hellip; &rarr; 12 &rarr; L &rarr; 13</strong>.'))
+    : (condition === 'sequencing'
+        ? (isPractice ? 'Click circles <strong>1 &rarr; 2 &rarr; &hellip; &rarr; 8</strong> in order.' : 'Click circles <strong>1 &rarr; 2 &rarr; &hellip; &rarr; 25</strong> in order.')
+        : (isPractice ? 'Click in order: <strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; 3 &rarr; C &rarr; 4 &rarr; D</strong>.' : 'Click in order: <strong>1 &rarr; A &rarr; 2 &rarr; B &rarr; &hellip; &rarr; 12 &rarr; L &rarr; 13</strong>.'));
   return {
     type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="max-width:600px;margin:0 auto;text-align:center">'
             + '<h3 style="color:#a8d8ea">' + kind + ' - ' + label + '</h3>'
             + '<p>' + desc + '</p>'
             + (isPractice
-                ? '<p style="color:#66bb6a">Feedback will be shown during practice.</p>'
-                : '<p style="color:#8899aa">No feedback during the main trial. Keep going if you make an error.</p>')
-            + '<p style="color:#8899aa;font-size:0.85rem">Click <strong>Start</strong> when ready.</p>'
+                ? '<p style="color:#66bb6a">' + (VS_IS_GERMAN ? 'Während der Übung wird eine Rückmeldung angezeigt.' : 'Feedback will be shown during practice.') + '</p>'
+                : '<p style="color:#8899aa">' + (VS_IS_GERMAN ? 'Während der Hauptaufgabe gibt es keine Rückmeldung. Fahren Sie nach einem Fehler fort.' : 'No feedback during the main trial. Keep going if you make an error.') + '</p>')
+            + '<p style="color:#8899aa;font-size:0.85rem">' + (VS_IS_GERMAN ? 'Klicken Sie auf <strong>Starten</strong>, wenn Sie bereit sind.' : 'Click <strong>Start</strong> when ready.') + '</p>'
             + '</div>',
     choices: [VS_IS_GERMAN ? 'Starten' : 'Start'],
     data: { task_name: 'visual_sequencing_set_shifting', phase: isPractice ? 'practice_ready' : 'main_ready', condition: condition }

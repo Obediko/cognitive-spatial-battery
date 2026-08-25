@@ -9,7 +9,7 @@
   var ASF_DICTIONARY_VERSION = 'asf60-en-0.1';
   var ASF_TIME_LIMIT_MS = window.PILOT_MODE ? 15000 : 60000;
   var ASF_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
-  if (ASF_IS_GERMAN) ASF_DICTIONARY_VERSION = 'asf60-de-0.1-pilot';
+  if (ASF_IS_GERMAN) ASF_DICTIONARY_VERSION = 'asf60-de-1.0';
 
   window.ASFState = {
     audio: null,
@@ -357,28 +357,28 @@
         var display = asfDisplay();
         var audio = window.ASFState.audioUrl;
         display.innerHTML = '<div class="osr-review asf-review"><div class="osr-review-header"><div>'
-          + '<span class="osr-kicker">Examiner only</span><h2>Animal Fluency scoring</h2></div>'
-          + '<div class="osr-score-totals"><strong id="asf-valid-total">0</strong><span>valid unique</span>'
-          + '<strong id="asf-error-total">0</strong><span>other</span></div></div>'
-          + '<div class="warning-box">Move the participant away from the screen before scoring.</div>'
+          + '<span class="osr-kicker">' + (ASF_IS_GERMAN ? 'Nur für die Prüfperson' : 'Examiner only') + '</span><h2>' + (ASF_IS_GERMAN ? 'Semantische Wortflüssigkeit (Tiere) auswerten' : 'Animal Fluency scoring') + '</h2></div>'
+          + '<div class="osr-score-totals"><strong id="asf-valid-total">0</strong><span>' + (ASF_IS_GERMAN ? 'gültig und eindeutig' : 'valid unique') + '</span>'
+          + '<strong id="asf-error-total">0</strong><span>' + (ASF_IS_GERMAN ? 'andere' : 'other') + '</span></div></div>'
+          + '<div class="warning-box">' + (ASF_IS_GERMAN ? 'Die teilnehmende Person darf den Bildschirm während der Auswertung nicht sehen.' : 'Move the participant away from the screen before scoring.') + '</div>'
           + (audio ? '<audio controls class="osr-audio-review" src="' + audio + '"></audio>'
-            : '<p class="osr-error">No audio was captured. Use the live transcript if available.</p>')
-          + '<label class="osr-transcript-label">Transcript'
-          + '<textarea id="asf-transcript" rows="6" placeholder="Whisper will suggest a transcript; one response per line works best."></textarea></label>'
+            : '<p class="osr-error">' + (ASF_IS_GERMAN ? 'Es wurde kein Ton aufgenommen. Verwenden Sie gegebenenfalls das Live-Transkript.' : 'No audio was captured. Use the live transcript if available.') + '</p>')
+          + '<label class="osr-transcript-label">' + (ASF_IS_GERMAN ? 'Transkript' : 'Transcript')
+          + '<textarea id="asf-transcript" rows="6" placeholder="' + (ASF_IS_GERMAN ? 'Whisper schlägt ein Transkript vor; eine Antwort pro Zeile funktioniert am besten.' : 'Whisper will suggest a transcript; one response per line works best.') + '"></textarea></label>'
           + '<p id="asf-asr-status" class="osr-status" aria-live="polite"></p>'
-          + '<div class="asf-parser-actions"><button class="battery-btn" id="asf-parse">Create response rows</button>'
-          + '<button class="battery-btn" id="asf-add-row">Add response</button></div>'
+          + '<div class="asf-parser-actions"><button class="battery-btn" id="asf-parse">' + (ASF_IS_GERMAN ? 'Antwortzeilen erstellen' : 'Create response rows') + '</button>'
+          + '<button class="battery-btn" id="asf-add-row">' + (ASF_IS_GERMAN ? 'Antwort hinzufügen' : 'Add response') + '</button></div>'
           + '<div id="asf-duplicate-warning" class="asf-duplicate-warning" hidden></div>'
           + '<div class="asf-response-table"><div class="asf-response-head">'
-          + '<span>Response</span><span>Canonical label</span><span>Decision</span><span>Note</span><span></span></div>'
+          + '<span>' + (ASF_IS_GERMAN ? 'Antwort' : 'Response') + '</span><span>' + (ASF_IS_GERMAN ? 'Kanonische Bezeichnung' : 'Canonical label') + '</span><span>' + (ASF_IS_GERMAN ? 'Entscheidung' : 'Decision') + '</span><span>' + (ASF_IS_GERMAN ? 'Notiz' : 'Note') + '</span><span></span></div>'
           + '<div id="asf-response-body"></div></div>'
-          + '<div class="asf-counts"><span>Repetitions <strong id="asf-repetitions">0</strong></span>'
-          + '<span>Rule violations <strong id="asf-violations">0</strong></span>'
-          + '<span>Uncertain <strong id="asf-uncertain">0</strong></span>'
-          + '<span>Unreviewed <strong id="asf-unreviewed">0</strong></span></div>'
-          + '<div class="osr-review-actions"><button class="battery-btn primary" id="asf-save">Save review</button>'
-          + '<button class="battery-btn" id="asf-defer">Defer scoring</button>'
-          + (audio ? '<button class="battery-btn download" id="asf-download">Download audio</button>' : '')
+          + '<div class="asf-counts"><span>' + (ASF_IS_GERMAN ? 'Wiederholungen ' : 'Repetitions ') + '<strong id="asf-repetitions">0</strong></span>'
+          + '<span>' + (ASF_IS_GERMAN ? 'Regelverstöße ' : 'Rule violations ') + '<strong id="asf-violations">0</strong></span>'
+          + '<span>' + (ASF_IS_GERMAN ? 'Unsicher ' : 'Uncertain ') + '<strong id="asf-uncertain">0</strong></span>'
+          + '<span>' + (ASF_IS_GERMAN ? 'Ungeprüft ' : 'Unreviewed ') + '<strong id="asf-unreviewed">0</strong></span></div>'
+          + '<div class="osr-review-actions"><button class="battery-btn primary" id="asf-save">' + (ASF_IS_GERMAN ? 'Auswertung speichern' : 'Save review') + '</button>'
+          + '<button class="battery-btn" id="asf-defer">' + (ASF_IS_GERMAN ? 'Auswertung zurückstellen' : 'Defer scoring') + '</button>'
+          + (audio ? '<button class="battery-btn download" id="asf-download">' + (ASF_IS_GERMAN ? 'Audio herunterladen' : 'Download audio') + '</button>' : '')
           + '</div></div>';
 
         var body = document.getElementById('asf-response-body');
@@ -403,9 +403,9 @@
           row.innerHTML = '<input class="asf-verbatim" aria-label="Verbatim response" value="' + asfEscape(response || '') + '">'
             + '<input class="asf-canonical" aria-label="Canonical label" value="' + asfEscape(classified.canonical || normalise(response)) + '">'
             + '<select class="asf-decision" aria-label="Scoring decision">'
-            + '<option value="unreviewed">Unreviewed</option><option value="valid">Valid</option>'
-            + '<option value="repetition">Repetition</option><option value="rule_violation">Rule violation</option>'
-            + '<option value="uncertain">Uncertain</option></select>'
+            + '<option value="unreviewed">' + (ASF_IS_GERMAN ? 'Ungeprüft' : 'Unreviewed') + '</option><option value="valid">' + (ASF_IS_GERMAN ? 'Gültig' : 'Valid') + '</option>'
+            + '<option value="repetition">' + (ASF_IS_GERMAN ? 'Wiederholung' : 'Repetition') + '</option><option value="rule_violation">' + (ASF_IS_GERMAN ? 'Regelverstoß' : 'Rule violation') + '</option>'
+            + '<option value="uncertain">' + (ASF_IS_GERMAN ? 'Unsicher' : 'Uncertain') + '</option></select>'
             + '<input class="asf-note" aria-label="Scoring note">'
             + '<button class="asf-remove" aria-label="Remove response">&times;</button>';
           row.querySelector('.asf-remove').addEventListener('click', function() {
@@ -454,7 +454,7 @@
           var warning = document.getElementById('asf-duplicate-warning');
           if (duplicates.size) {
             warning.hidden = false;
-            warning.textContent = 'Duplicate valid canonical labels count once: ' + Array.from(duplicates).join(', ');
+            warning.textContent = (ASF_IS_GERMAN ? 'Doppelte gültige kanonische Bezeichnungen zählen einmal: ' : 'Duplicate valid canonical labels count once: ') + Array.from(duplicates).join(', ');
           } else {
             warning.hidden = true;
             warning.textContent = '';
@@ -480,13 +480,13 @@
             row.querySelector('.asf-note').value = saved.note || '';
           });
           updateCounts();
-          asrStatus.textContent = 'Saved scoring decisions loaded. Review and change them as needed.';
+          asrStatus.textContent = ASF_IS_GERMAN ? 'Gespeicherte Bewertungen wurden geladen. Prüfen und ändern Sie sie bei Bedarf.' : 'Saved scoring decisions loaded. Review and change them as needed.';
         } else if (window.ASFState.audio && window.OSRTranscription && typeof window.OSRTranscription.transcribeBlob === 'function') {
           asrOutcome.attempted = true;
           asrOutcome.model = window.OSRTranscription.modelId;
-          asrStatus.textContent = 'Loading local Whisper transcription…';
+          asrStatus.textContent = ASF_IS_GERMAN ? 'Lokale Whisper-Transkription wird geladen…' : 'Loading local Whisper transcription…';
           window.OSRTranscription.transcribeBlob(window.ASFState.audio, function(progress) {
-            if (reviewActive) asrStatus.textContent = 'Loading local Whisper model… ' + Math.round(progress) + '%';
+            if (reviewActive) asrStatus.textContent = (ASF_IS_GERMAN ? 'Lokales Whisper-Modell wird geladen… ' : 'Loading local Whisper model… ') + Math.round(progress) + '%';
           }).then(function(transcript) {
             if (!reviewActive || !document.getElementById('asf-transcript')) return;
             document.getElementById('asf-transcript').value = transcript
@@ -495,13 +495,13 @@
               .trim();
             parseTranscriptIntoRows();
             asrOutcome.succeeded = true;
-            asrStatus.textContent = 'Whisper suggestion ready. Verify the audio, response boundaries, spelling and every scoring decision.';
+            asrStatus.textContent = ASF_IS_GERMAN ? 'Whisper-Vorschlag ist bereit. Prüfen Sie Audio, Antwortgrenzen, Rechtschreibung und jede Bewertungsentscheidung.' : 'Whisper suggestion ready. Verify the audio, response boundaries, spelling and every scoring decision.';
           }).catch(function(error) {
             if (!reviewActive) return;
-            asrStatus.textContent = 'Automatic transcription unavailable: ' + (error && error.message ? error.message : 'unknown error') + '. Transcribe manually.';
+            asrStatus.textContent = (ASF_IS_GERMAN ? 'Automatische Transkription nicht verfügbar: ' : 'Automatic transcription unavailable: ') + (error && error.message ? error.message : (ASF_IS_GERMAN ? 'unbekannter Fehler' : 'unknown error')) + (ASF_IS_GERMAN ? '. Transkribieren Sie manuell.' : '. Transcribe manually.');
           });
         } else {
-          asrStatus.textContent = 'No local audio available for automatic transcription.';
+          asrStatus.textContent = ASF_IS_GERMAN ? 'Für die automatische Transkription ist kein lokales Audio verfügbar.' : 'No local audio available for automatic transcription.';
         }
 
         document.getElementById('asf-parse').addEventListener('click', parseTranscriptIntoRows);
