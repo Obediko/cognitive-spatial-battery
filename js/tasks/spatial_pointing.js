@@ -223,6 +223,7 @@ function buildSPTrial(trialNum, targetLandmark, startPosObj, practiceOrMain, sho
       canvas.width  = SP_ARENA_SIZE;
       canvas.height = SP_ARENA_SIZE;
       canvas.style.cssText = 'display:block;border-radius:50%;cursor:crosshair;';
+      canvas.style.touchAction = 'none';
 
       const hint = document.createElement('div');
       hint.id = 'sp-hint';
@@ -267,7 +268,9 @@ function buildSPTrial(trialNum, targetLandmark, startPosObj, practiceOrMain, sho
           : 'Direction set. Confirm to proceed, or select again to change.';
       }
 
-      canvas.addEventListener('mousemove', (e) => {
+      canvas.addEventListener('pointermove', (e) => {
+        if (e.pointerType !== 'mouse' && e.buttons === 0) return;
+        e.preventDefault();
         const point = canvasPoint(e);
         if (euclideanDistance(point.x, point.y, cx, cy) <= SP_ARENA_R + 20) {
           const previewAngle = angleBetween(sp.x, sp.y, point.x, point.y);
@@ -275,7 +278,8 @@ function buildSPTrial(trialNum, targetLandmark, startPosObj, practiceOrMain, sho
         }
       });
 
-      canvas.addEventListener('click', (e) => {
+      canvas.addEventListener('pointerup', (e) => {
+        e.preventDefault();
         const point = canvasPoint(e);
         selectPoint(point.x, point.y);
       });

@@ -16,7 +16,8 @@
     audioUrl: null,
     promptUsed: false,
     endedEarly: false,
-    microphoneProblem: false
+    microphoneProblem: false,
+    audioContext: null
   };
 
   function asfDisplay() {
@@ -165,7 +166,7 @@
             button.onclick = function() { done(); };
             return;
           }
-          window.BatteryReliability.requestMicrophone(12000).then(function(stream) {
+          window.BatteryReliability.requestMicrophone(30000).then(function(stream) {
             stream.getTracks().forEach(function(track) { track.stop(); });
             status.innerHTML = '<span class="osr-success">' + (ASF_IS_GERMAN ? 'Das Mikrofon ist bereit.' : 'Microphone is ready.') + '</span>';
             setTimeout(function() { done(); }, 500);
@@ -186,7 +187,8 @@
     try {
       var AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) return;
-      var ctx = new AudioContextClass();
+      var ctx = window.ASFState.audioContext || (window.ASFState.audioContext = new AudioContextClass());
+      if (ctx.state === 'suspended') ctx.resume().catch(function() {});
       var oscillator = ctx.createOscillator();
       var gain = ctx.createGain();
       oscillator.frequency.value = 660;
@@ -196,7 +198,6 @@
       gain.connect(ctx.destination);
       oscillator.start();
       oscillator.stop(ctx.currentTime + 0.12);
-      oscillator.onended = function() { ctx.close(); };
     } catch (error) {
       /* Tone failure does not invalidate the timed visual start. */
     }
@@ -271,10 +272,13 @@
           startButton.disabled = true;
           earlyButton.disabled = true;
           clearInterval(timer);
+          if (window.ASFState.audioContext && window.ASFState.audioContext.state !== 'closed') {
+            window.ASFState.audioContext.close().catch(function() {});
+          }
           window.ASFState.endedEarly = !!early;
           var duration = startedAt ? Date.now() - startedAt : 0;
           if (recorder && recorder.state !== 'inactive') {
-            window.BatteryReliability.stopRecorder(recorder, chunks, 3000).then(function(result) {
+            window.BatteryReliability.stopRecorder(recorder, chunks, 8000).then(function(result) {
               if (stream) stream.getTracks().forEach(function(track) { track.stop(); });
               if (result && result.timedOut) window.ASFState.microphoneProblem = true;
               addTrialAndDone(result && result.blob ? result.blob : null, duration);
@@ -287,11 +291,7 @@
 
         function beginWithStream(activeStream) {
           stream = activeStream;
-          var preferred = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
-          var mime = preferred.find(function(type) {
-            return typeof MediaRecorder.isTypeSupported !== 'function' || MediaRecorder.isTypeSupported(type);
-          }) || '';
-          recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+          recorder = window.BatteryReliability.createAudioRecorder(stream);
           recorder.ondataavailable = function(event) {
             if (event.data && event.data.size) chunks.push(event.data);
           };
@@ -329,13 +329,22 @@
             return;
           }
           startButton.disabled = true;
+          /* Create/resume Web Audio synchronously inside the user gesture so
+             Safari can play the standardized start cue after permission. */
+          try {
+            var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass && !window.ASFState.audioContext) window.ASFState.audioContext = new AudioContextClass();
+            if (window.ASFState.audioContext && window.ASFState.audioContext.state === 'suspended') {
+              window.ASFState.audioContext.resume().catch(function() {});
+            }
+          } catch (audioContextError) { /* visual timer remains authoritative */ }
           if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
             window.ASFState.microphoneProblem = true;
             status.innerHTML = '<span class="osr-error">' + (ASF_IS_GERMAN ? 'Keine Audioaufnahme; die Prüfperson muss live transkribieren.' : 'No audio recording; examiner must transcribe live.') + '</span>';
             startTimedPeriod(false);
             return;
           }
-          window.BatteryReliability.requestMicrophone(12000).then(beginWithStream).catch(function(error) {
+          window.BatteryReliability.requestMicrophone(30000).then(beginWithStream).catch(function(error) {
             window.ASFState.microphoneProblem = true;
             status.innerHTML = '<span class="osr-error">' + (ASF_IS_GERMAN ? 'Keine Audioaufnahme; die Prüfperson muss live transkribieren.' : 'No audio recording; examiner must transcribe live.') + '</span>';
             startTimedPeriod(false);

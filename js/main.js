@@ -142,12 +142,70 @@ function setProgress(pct) {
 function checkScreenSize() {
   var warning = document.getElementById('small-screen-warning');
   var dims = document.getElementById('screen-dims');
-  if (dims) dims.textContent = window.innerWidth + 'x' + window.innerHeight + 'px';
+  var active = document.activeElement;
+  var keyboardLikelyOpen = !!(active && (/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName) || active.isContentEditable));
+  var viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+  var viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  if (dims) dims.textContent = Math.round(viewportWidth) + 'x' + Math.round(viewportHeight) + 'px';
   if (warning) {
-    warning.style.display = (window.innerWidth < 750 || window.innerHeight < 520) ? 'flex' : 'none';
+    warning.style.display = (viewportWidth < 750 || (!keyboardLikelyOpen && viewportHeight < 520)) ? 'flex' : 'none';
   }
 }
 window.addEventListener('resize', checkScreenSize);
+window.addEventListener('orientationchange', function() { window.setTimeout(checkScreenSize, 250); });
+if (window.visualViewport) window.visualViewport.addEventListener('resize', checkScreenSize);
+
+/* ---- iPad/background interruption and wake-lock handling ---- */
+var batteryHiddenAt = null;
+var batteryWakeLock = null;
+
+function requestBatteryWakeLock() {
+  if (!navigator.wakeLock || batteryWakeLock) return Promise.resolve(false);
+  return navigator.wakeLock.request('screen').then(function(lock) {
+    batteryWakeLock = lock;
+    lock.addEventListener('release', function() { batteryWakeLock = null; });
+    return true;
+  }).catch(function() { return false; });
+}
+
+document.addEventListener('pointerdown', function() {
+  requestBatteryWakeLock();
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function() {});
+}, { once: true });
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    batteryHiddenAt = Date.now();
+    if (typeof checkpointBatterySession === 'function') checkpointBatterySession();
+    return;
+  }
+  requestBatteryWakeLock();
+  if (!batteryHiddenAt || !window.BatteryData || !window.BatteryData.participantId) return;
+  var hiddenDuration = Date.now() - batteryHiddenAt;
+  batteryHiddenAt = null;
+  window.BatteryData.addTrials({
+    battery_phase: 'device_interruption',
+    interruption_type: 'page_hidden',
+    interruption_duration_ms: hiddenDuration,
+    protocol_review_required: true
+  });
+  checkpointBatterySession();
+  var existing = document.getElementById('battery-interruption-warning');
+  if (!existing) {
+    var interruptionGerman = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
+    var notice = document.createElement('div');
+    notice.id = 'battery-interruption-warning';
+    notice.className = 'warning-box';
+    notice.style.cssText = 'position:fixed;inset:auto 1rem 1rem 1rem;z-index:10001;max-width:720px;margin:auto;';
+    notice.innerHTML = interruptionGerman
+      ? '<strong>Unterbrechung der Testung erfasst.</strong> Die App war im Hintergrund oder der Bildschirm war gesperrt. Audio, Aufnahme oder Zeitmessung müssen möglicherweise geprüft werden. <button class="battery-btn" type="button" id="dismiss-interruption">Weiter</button>'
+      : '<strong>Assessment interruption recorded.</strong> The app was backgrounded or the screen was locked. Audio, recording, or timed-task validity may require examiner review. <button class="battery-btn" type="button" id="dismiss-interruption">Continue</button>';
+    document.body.appendChild(notice);
+    document.getElementById('dismiss-interruption').onclick = function() { notice.remove(); };
+  }
+});
+window.addEventListener('pagehide', function() {
+  if (typeof checkpointBatterySession === 'function') checkpointBatterySession();
+});
 
 /* ---- Hide loading fallback ---- */
 function hideLoadingFallback() {
@@ -287,7 +345,8 @@ function makeWelcomeTrials() {
                 finish(false, error && error.message ? error.message : 'not_granted');
               });
           } else {
-            finish(!!document.fullscreenElement, document.fullscreenElement ? null : 'not_granted');
+            var fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+            finish(!!fullscreenElement, fullscreenElement ? null : 'not_granted');
           }
         } catch (error) {
           finish(false, error && error.message ? error.message : 'not_granted');

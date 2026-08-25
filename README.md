@@ -93,10 +93,12 @@ python3 -m http.server 8080
 
 Open `http://localhost:8080` in a current Chromium, Firefox, or Safari browser on a laptop or sufficiently large tablet. The recommended minimum viewport is 900 x 600 pixels; 1280 x 800 pixels is preferred. Supported input methods include mouse, trackpad, touch, keyboard, and gamepad, but they must not be pooled before equivalence is demonstrated.
 
+On iPadOS, Chrome, Edge, Firefox, and Safari all use Apple's WebKit engine. Therefore, selecting Chrome on an iPad does not provide Chromium media behavior. Keep iPadOS current, grant microphone access to the selected browser, prevent the device from locking during administration, and validate the exact iPad/browser/audio configuration before participant use. The application records background interruptions and uses one persistent media element for standardized sequential playback, but these safeguards do not establish device equivalence.
+
 ```bash
 npm install
 npm run test:unit
-npx playwright install chromium
+npx playwright install chromium webkit
 npm run test:e2e
 ```
 

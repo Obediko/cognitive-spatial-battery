@@ -101,7 +101,9 @@
       return decodingContext.decodeAudioData(arrayBuffer.slice(0)).then(function(decoded) {
         decodingContext.close();
         var durationSec = decoded.duration;
-        var offlineCtx = new OfflineAudioContext(1, Math.ceil(durationSec * ASR_TARGET_SAMPLE_RATE), ASR_TARGET_SAMPLE_RATE);
+        var OfflineAudioContextCtor = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        if (!OfflineAudioContextCtor) throw new Error('Offline audio resampling is not supported in this browser');
+        var offlineCtx = new OfflineAudioContextCtor(1, Math.ceil(durationSec * ASR_TARGET_SAMPLE_RATE), ASR_TARGET_SAMPLE_RATE);
         var source = offlineCtx.createBufferSource();
         source.buffer = decoded;
         source.connect(offlineCtx.destination);

@@ -46,11 +46,11 @@ assert.ok(asrWorker.includes("self.postMessage({ type: 'progress'"));
 assert.ok(asrWorker.includes('asr(audioData, generationOptions)'));
 assert.ok(asrWorker.includes("if (message.language === 'de')"));
 
-assert.ok(osr.includes('requestMicrophone(12000)'));
-assert.ok(osr.includes('stopRecorder(recorder, chunks, 3000)'));
+assert.ok(osr.includes('requestMicrophone(30000)'));
+assert.ok(osr.includes('stopRecorder(recorder, chunks, 8000)'));
 assert.ok(osr.includes("new Error('playback timed out')"));
-assert.ok(asf.includes('requestMicrophone(12000)'));
-assert.ok(asf.includes('stopRecorder(recorder, chunks, 3000)'));
+assert.ok(asf.includes('requestMicrophone(30000)'));
+assert.ok(asf.includes('stopRecorder(recorder, chunks, 8000)'));
 assert.ok(asf.includes("batteryArtifactKey(window.BatteryData.participantId, 'asf', 'main')"));
 assert.ok(asf.includes('Timer running; audio is not being recorded.'));
 assert.ok(css.includes('[hidden] { display: none !important; }'));

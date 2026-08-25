@@ -26,7 +26,10 @@ Use this checklist for documented software testing and supervised piloting. Comp
 - [ ] German sessions are labeled as an unvalidated pilot form.
 - [ ] Only a pseudonymous participant identifier is accepted and entered.
 - [ ] The minimum viewport and device requirements are visible and appropriate.
+- [ ] For iPad administration, the exact iPadOS version is recorded; Chrome on iPad is treated as WebKit rather than desktop Chromium.
+- [ ] The device remains foregrounded and unlocked; any recorded background interruption is reviewed before accepting the session.
 - [ ] Audio playback is audible at a controlled level without clipping, truncation, or unexpected browser-synthesized substitutions.
+- [ ] Number Span completes repeated forward and backward sequences without missing digits, replay loops, or non-zero playback errors.
 - [ ] Mouse, trackpad, touch, keyboard, or gamepad input is recorded accurately for the tested configuration.
 - [ ] The core-only option selects all five task families and produces eight designated analogue outputs.
 - [ ] The custom battery selector includes optional object-location, spatial-pointing, and sequencing/set-shifting modules.

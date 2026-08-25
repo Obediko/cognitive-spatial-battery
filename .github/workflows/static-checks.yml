@@ -30,7 +30,7 @@ jobs:
           path: audio-qa-report.json
       - name: Install browser test dependency
         run: npm install --ignore-scripts
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-      - name: Run browser smoke test
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+      - name: Run Chrome, Safari and iPad browser smoke tests
         run: npm run test:e2e

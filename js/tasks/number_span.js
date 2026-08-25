@@ -32,7 +32,8 @@
     version: NS_VERSION,
     audioStandardized: true,
     digitBlobUrls: {},       // digit -> object URL (preloaded once)
-    activeAudio: [],         // retain players until playback ends (prevents browser GC/interruptions)
+    player: null,            // one reusable element: Safari grants playback per media element
+    lastPlaybackError: null,
     playbackOnsets: [],     // planned and observed audio starts for timing QA
     discontinued: { forward: false, backward: false },
     lengthPassed: { forward: {}, backward: {} } // length -> boolean, at least one correct trial
@@ -110,30 +111,37 @@
     return Promise.all(jobs);
   }
 
-  function nsPlayInstruction(direction, statusEl, button) {
+  function nsPlayInstruction(direction, statusEl, button, onFinished) {
     if (button) button.disabled = true;
     if (statusEl) statusEl.textContent = NS_IS_GERMAN ? 'Wiedergabe läuft…' : 'Playing…';
     var url = NS_INSTRUCTION_FILES[direction + 'BlobUrl'];
+    var el = window.NSState.player || (window.NSState.player = new Audio());
     var finished = false;
     var instructionTimer = setTimeout(function() { finish(false); }, 30000);
     var finish = function(preserveStatus) {
       if (finished) return;
       finished = true;
       clearTimeout(instructionTimer);
+      el.onended = null;
+      el.onerror = null;
       if (statusEl && !preserveStatus) statusEl.textContent = '';
       if (button) button.disabled = false;
+      if (typeof onFinished === 'function') onFinished();
     };
     if (url) {
-      var el = new Audio(url);
-      el.addEventListener('ended', function() { finish(false); }, { once: true });
-      el.addEventListener('error', function() {
+      el.pause();
+      el.src = url;
+      el.load();
+      el.onended = function() { finish(false); };
+      el.onerror = function() {
         window.NSState.audioStandardized = false;
         if (statusEl) statusEl.textContent = NS_IS_GERMAN
           ? 'Die standardisierte Aufnahme konnte nicht abgespielt werden. Bitte erneut versuchen.'
           : 'The standardized recording could not be played. Please retry.';
         finish(true);
-      }, { once: true });
-      el.play().catch(function() {
+      };
+      el.play().catch(function(error) {
+        window.NSState.lastPlaybackError = error && error.message ? error.message : String(error || 'playback rejected');
         window.NSState.audioStandardized = false;
         if (statusEl) statusEl.textContent = NS_IS_GERMAN
           ? 'Die standardisierte Aufnahme konnte nicht abgespielt werden. Bitte erneut versuchen.'
@@ -164,8 +172,16 @@
       on_load: function() {
         var button = document.getElementById('ns-replay-instructions');
         var status = document.getElementById('ns-instruction-status');
-        if (button) button.addEventListener('click', function() { nsPlayInstruction(direction, status, button); });
-        nsPlayInstruction(direction, status, button);
+        var choices = document.querySelectorAll('.jspsych-btn');
+        function setChoicesEnabled(enabled) {
+          Array.prototype.forEach.call(choices, function(choice) { choice.disabled = !enabled; });
+        }
+        function play() {
+          setChoicesEnabled(false);
+          nsPlayInstruction(direction, status, button, function() { setChoicesEnabled(true); });
+        }
+        if (button) button.addEventListener('click', play);
+        play();
       }
     };
   }
@@ -201,34 +217,44 @@
     return byLength[trialIndex - 1].slice();
   }
 
-  // Plays with nominal one-second spacing, records actual starts, and always
-  // resolves via a hard deadline even if a browser rejects or stalls media.
+  // Use one persistent media element for the whole task. WebKit applies
+  // autoplay permission per element, so creating a fresh Audio object for
+  // every timer-fired digit causes intermittent NotAllowedError failures on
+  // iPad. Each clip must finish before the next onset is scheduled.
   function nsPlaySequence(sequence) {
     return new Promise(function(resolve, reject) {
-      var resolved = false;
-      var failed = false;
+      var player = window.NSState.player || (window.NSState.player = new Audio());
+      var settled = false;
       var startedAt = performance.now();
-      var hardDeadline = setTimeout(finish, sequence.length * NS_ONSET_INTERVAL_MS + NS_AUDIO_LOAD_TIMEOUT_MS);
+      var hardDeadline = setTimeout(function() {
+        fail(new Error('Digit-sequence playback timed out'));
+      }, sequence.length * NS_ONSET_INTERVAL_MS + NS_AUDIO_LOAD_TIMEOUT_MS);
 
       function finish() {
-        if (resolved) return;
-        resolved = true;
+        if (settled) return;
+        settled = true;
         clearTimeout(hardDeadline);
-        window.NSState.activeAudio.length = 0;
-        setTimeout(function() {
-          if (failed) reject(new Error('One or more Number Span digits did not play.'));
-          else resolve();
-        }, NS_POST_SEQUENCE_BUFFER_MS);
+        setTimeout(resolve, NS_POST_SEQUENCE_BUFFER_MS);
       }
 
-      function releasePlayer(player) {
-        var index = window.NSState.activeAudio.indexOf(player);
-        if (index !== -1) window.NSState.activeAudio.splice(index, 1);
+      function fail(error) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(hardDeadline);
+        player.pause();
+        window.NSState.audioStandardized = false;
+        window.NSState.lastPlaybackError = error && error.message ? error.message : String(error || 'playback failed');
+        reject(error || new Error('Digit playback failed'));
       }
 
-      sequence.forEach(function(digit, index) {
+      function playDigit(index) {
+        if (settled) return;
+        if (index >= sequence.length) return finish();
+        var digit = sequence[index];
         var planned = startedAt + index * NS_ONSET_INTERVAL_MS;
+        var delay = Math.max(0, planned - performance.now());
         setTimeout(function() {
+          if (settled) return;
           var observed = performance.now();
           window.NSState.playbackOnsets.push({
             sequence_digit_index: index,
@@ -238,34 +264,37 @@
             onset_error_ms: observed - planned
           });
           var url = window.NSState.digitBlobUrls[digit];
-          if (url) {
-            var el = new Audio(url);
-            // A strong reference is required for the entire clip. Chromium can
-            // otherwise collect or interrupt short-lived Audio objects mid-list.
-            window.NSState.activeAudio.push(el);
-            el.addEventListener('ended', function() {
-              releasePlayer(el);
-              if (index === sequence.length - 1) finish();
-            }, { once: true });
-            el.addEventListener('error', function() {
-              failed = true;
-              window.NSState.audioStandardized = false;
-              releasePlayer(el);
-              if (index === sequence.length - 1) finish();
-            }, { once: true });
-            el.play().catch(function() {
-              failed = true;
-              window.NSState.audioStandardized = false;
-              releasePlayer(el);
-              if (index === sequence.length - 1) finish();
+          if (!url) return fail(new Error('Digit audio was not preloaded: ' + digit));
+          player.pause();
+          player.src = url;
+          player.currentTime = 0;
+          player.load();
+          var ended = function() {
+            player.removeEventListener('error', errored);
+            playDigit(index + 1);
+          };
+          var errored = function() {
+            player.removeEventListener('ended', ended);
+            fail(new Error('Browser media error while playing digit ' + digit));
+          };
+          player.addEventListener('ended', ended, { once: true });
+          player.addEventListener('error', errored, { once: true });
+          var promise = player.play();
+          if (promise && typeof promise.catch === 'function') {
+            promise.catch(function(error) {
+              player.removeEventListener('ended', ended);
+              player.removeEventListener('error', errored);
+              fail(error);
             });
-          } else {
-            failed = true;
-            window.NSState.audioStandardized = false;
-            if (index === sequence.length - 1) finish();
           }
-        }, index * NS_ONSET_INTERVAL_MS);
-      });
+        }, delay);
+      }
+
+      window.NSState.lastPlaybackError = null;
+      player.pause();
+      player.onended = null;
+      player.onerror = null;
+      playDigit(0);
     });
   }
 
@@ -369,13 +398,15 @@
             });
           }
           updateResponseStatus();
-          }).catch(function() {
+          }).catch(function(error) {
+            var detail = error && error.message ? error.message : window.NSState.lastPlaybackError;
             display.innerHTML = '<div class="osr-card"><h2>'
               + (NS_IS_GERMAN ? 'Die Zahlenfolge war unvollständig' : 'The digit sequence was incomplete')
               + '</h2><p>' + (NS_IS_GERMAN
                 ? 'Mindestens eine Ziffer konnte nicht abgespielt werden. Der Durchgang wurde nicht gewertet.'
                 : 'At least one digit could not be played. This trial has not been scored.')
-              + '</p><button class="battery-btn" id="ns-retry-sequence" type="button">'
+              + '</p><p class="osr-fineprint">' + (NS_IS_GERMAN ? 'Technischer Hinweis: ' : 'Technical detail: ') + nsEscape(detail || 'unknown playback error') + '</p>'
+              + '<button class="battery-btn" id="ns-retry-sequence" type="button">'
               + (NS_IS_GERMAN ? 'Zahlenfolge erneut abspielen' : 'Replay digit sequence') + '</button></div>';
             var retry = document.getElementById('ns-retry-sequence');
             if (retry) retry.addEventListener('click', function() {
@@ -443,6 +474,11 @@
         ['forward', 'backward'].forEach(function(direction) {
           window.BatteryReliability.revokeObjectUrl(NS_INSTRUCTION_FILES[direction + 'BlobUrl']);
         });
+        if (window.NSState.player) {
+          window.NSState.player.pause();
+          window.NSState.player.removeAttribute('src');
+          window.NSState.player.load();
+        }
         window.BatteryData.setTaskSummary('number_span', {
           ns_forward_span: longestPassedLength('forward'),
           ns_backward_span: longestPassedLength('backward'),
@@ -503,5 +539,9 @@
     sequenceVersion: NS_SEQUENCE_VERSION,
     expectedResponse: nsExpectedResponse,
     shouldDiscontinue: function(lengthPassedAtThisLength) { return !lengthPassedAtThisLength; }
+  };
+  window.NSPlaybackDiagnostics = {
+    playSequence: nsPlaySequence,
+    lastError: function() { return window.NSState.lastPlaybackError; }
   };
 })();

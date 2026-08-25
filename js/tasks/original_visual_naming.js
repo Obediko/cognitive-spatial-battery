@@ -416,6 +416,7 @@
         window.OVNState.itemAudio = [];
         window.OVNState.itemAudioUrls = [];
         window.OVNState.deferredResponses = [];
+        window.OVNState.microphoneProblem = null;
 
         function finishAll() {
           if (finished) return;
@@ -451,6 +452,8 @@
             stimulus_fallback_used: stimulusLoad ? stimulusLoad.fallback : null,
             stimulus_load_failure_reason: stimulusLoad ? stimulusLoad.reason : null,
             response_audio_mime_type: blob ? blob.type : null,
+            microphone_problem: !blob,
+            microphone_failure_reason: blob ? null : window.OVNState.microphoneProblem,
             review_status: 'pending'
           });
           index += 1;
@@ -464,7 +467,7 @@
           var next = document.getElementById('ovn-deferred-next');
           if (next) next.disabled = true;
           if (recorder && recorder.state !== 'inactive') {
-            window.BatteryReliability.stopRecorder(recorder, chunks, 3000).then(function(result) {
+            window.BatteryReliability.stopRecorder(recorder, chunks, 8000).then(function(result) {
               saveClipAndAdvance(result && result.blob ? result.blob : null);
             });
           } else {
@@ -497,11 +500,12 @@
             nextButton.disabled = false;
             if (stream && typeof MediaRecorder !== 'undefined') {
               try {
-                recorder = new MediaRecorder(stream);
+                recorder = window.BatteryReliability.createAudioRecorder(stream);
                 recorder.ondataavailable = function(event) { if (event.data && event.data.size) chunks.push(event.data); };
                 recorder.start();
               } catch (error) {
                 recorder = null;
+                window.OVNState.microphoneProblem = error && error.message ? error.message : 'Recorder creation failed';
               }
             }
             timer = setInterval(function() {
@@ -514,10 +518,11 @@
         }
 
         if (typeof MediaRecorder !== 'undefined') {
-          window.BatteryReliability.requestMicrophone(12000).then(function(activeStream) {
+          window.BatteryReliability.requestMicrophone(30000).then(function(activeStream) {
             stream = activeStream;
             showItem();
-          }).catch(function() {
+          }).catch(function(error) {
+            window.OVNState.microphoneProblem = error && error.message ? error.message : 'Microphone unavailable';
             showItem();
           });
         } else {

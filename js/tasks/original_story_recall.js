@@ -25,7 +25,10 @@
   // can pause and offer a retry without substituting a different voice.
   function osrLoadAudio(src) {
     return new Promise(function(resolve, reject) {
-      var el = new Audio();
+      var el = window.OSRState && window.OSRState.player
+        ? window.OSRState.player : new Audio();
+      if (window.OSRState) window.OSRState.player = el;
+      el.pause();
       var settled = false;
       var timeoutId = setTimeout(function() {
         if (settled) return;
@@ -184,6 +187,7 @@
     immediateEndMs: null,
     delayedStartMs: null,
     voiceMetadata: null,
+    player: null,
     storyAudioStandardized: false,
     neutralPromptUsed: { immediate: false, delayed: false },
     protocolFlags: {
@@ -247,7 +251,14 @@
         var status = document.getElementById('osr-instruction-audio-status');
         var currentAudio = null;
 
+        function setContinueEnabled(enabled) {
+          Array.prototype.forEach.call(document.querySelectorAll('.jspsych-btn'), function(choice) {
+            choice.disabled = !enabled;
+          });
+        }
+
         function playInstructionAudio() {
+          setContinueEnabled(false);
           if (button) { button.disabled = true; }
           if (status) status.textContent = OSR_IS_GERMAN ? 'Wiedergabe läuft…' : 'Playing…';
           osrLoadAudio(OSR_AUDIO_FILES.instruction).then(function(audioEl) {
@@ -256,12 +267,14 @@
           }).then(function() {
             if (status) status.textContent = '';
             if (button) button.disabled = false;
+            setContinueEnabled(true);
           }).catch(function() {
             if (status) status.innerHTML =
               '<span class="osr-error">' + (OSR_IS_GERMAN
                 ? 'Die standardisierte Aufnahme konnte nicht geladen werden. Prüfen Sie die Verbindung und versuchen Sie es erneut.'
                 : 'The standardized recording could not be loaded. Check the connection and retry.') + '</span>';
             if (button) button.disabled = false;
+            setContinueEnabled(true);
           });
         }
 
@@ -294,7 +307,7 @@
             button.onclick = function() { done({ microphone_available: false }); };
             return;
           }
-          window.BatteryReliability.requestMicrophone(12000).then(function(stream) {
+          window.BatteryReliability.requestMicrophone(30000).then(function(stream) {
             stream.getTracks().forEach(function(track) { track.stop(); });
             status.innerHTML = '<span class="osr-success">' + (OSR_IS_GERMAN ? 'Das Mikrofon ist bereit.' : 'Microphone is ready.') + '</span>';
             setTimeout(function() { done({ microphone_available: true }); }, 600);
@@ -485,19 +498,15 @@
             stopButton.onclick = function() { finishWithoutAudio('MediaRecorder unavailable'); };
             return;
           }
-          window.BatteryReliability.requestMicrophone(12000).then(function(activeStream) {
+          window.BatteryReliability.requestMicrophone(30000).then(function(activeStream) {
             stream = activeStream;
-            var preferred = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
-            var mime = preferred.find(function(type) {
-              return typeof MediaRecorder.isTypeSupported !== 'function' || MediaRecorder.isTypeSupported(type);
-            }) || '';
-            recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+            recorder = window.BatteryReliability.createAudioRecorder(stream);
             recorder.ondataavailable = function(event) {
               if (event.data && event.data.size) chunks.push(event.data);
             };
             recorder.onstop = function() {
               clearInterval(timerId);
-              var blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+              var blob = new Blob(chunks, { type: recorder.mimeType || recorder._batteryMimeType || 'application/octet-stream' });
               window.OSRState.audio[condition] = blob;
               if (window.OSRState.audioUrls[condition]) URL.revokeObjectURL(window.OSRState.audioUrls[condition]);
               window.OSRState.audioUrls[condition] = URL.createObjectURL(blob);
@@ -551,7 +560,7 @@
         stopButton.addEventListener('click', function() {
           if (recorder && recorder.state !== 'inactive') {
             stopButton.disabled = true;
-            window.BatteryReliability.stopRecorder(recorder, chunks, 3000).then(function(result) {
+            window.BatteryReliability.stopRecorder(recorder, chunks, 8000).then(function(result) {
               if (result && result.timedOut) {
                 if (stream) stream.getTracks().forEach(function(track) { track.stop(); });
                 finishWithoutAudio('MediaRecorder stop timed out');

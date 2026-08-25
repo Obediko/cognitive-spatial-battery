@@ -11,7 +11,7 @@
   },
   "homepage": "https://github.com/Obediko/cognitive-spatial-battery",
   "scripts": {
-    "test:unit": "node tests/animal_semantic_fluency.test.js && node tests/osr_transcription.test.js && node tests/number_span.test.js && node tests/original_visual_naming.test.js && node tests/original_complex_figure.test.js && node tests/eti_core_eight_scores.test.js && node tests/bilingual_reporting.test.js && node tests/german_parity.test.js && node tests/deferred_review_integration.test.js && node tests/reliability_hardening.test.js && node tests/session_integrity.test.js && npm run test:sync",
+    "test:unit": "node tests/animal_semantic_fluency.test.js && node tests/osr_transcription.test.js && node tests/number_span.test.js && node tests/number_span_playback.test.js && node tests/original_visual_naming.test.js && node tests/original_complex_figure.test.js && node tests/eti_core_eight_scores.test.js && node tests/bilingual_reporting.test.js && node tests/german_parity.test.js && node tests/deferred_review_integration.test.js && node tests/reliability_hardening.test.js && node tests/session_integrity.test.js && node tests/ipad_browser_compatibility.test.js && npm run test:sync",
     "test:e2e": "playwright test",
     "test:sync": "node tests/remote_sync_security.test.mjs"
   },

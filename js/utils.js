@@ -253,7 +253,7 @@ function clearBatteryCheckpoint() {
 
 /* ── Reliability helpers ───────────────────────────────────── */
 window.BatteryReliability = (function() {
-  var DEFAULT_TIMEOUT_MS = 12000;
+  var DEFAULT_TIMEOUT_MS = 30000;
 
   function withTimeout(promise, timeoutMs, label) {
     timeoutMs = timeoutMs || DEFAULT_TIMEOUT_MS;
@@ -308,15 +308,35 @@ window.BatteryReliability = (function() {
     });
   }
 
+  function supportedRecordingMimeType() {
+    if (typeof MediaRecorder === 'undefined') return '';
+    var candidates = [
+      'audio/mp4;codecs=mp4a.40.2',
+      'audio/mp4',
+      'audio/webm;codecs=opus',
+      'audio/webm'
+    ];
+    if (typeof MediaRecorder.isTypeSupported !== 'function') return '';
+    return candidates.find(function(type) { return MediaRecorder.isTypeSupported(type); }) || '';
+  }
+
+  function createAudioRecorder(stream) {
+    if (typeof MediaRecorder === 'undefined') throw new Error('MediaRecorder is unavailable');
+    var mimeType = supportedRecordingMimeType();
+    var recorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+    recorder._batteryMimeType = recorder.mimeType || mimeType || 'application/octet-stream';
+    return recorder;
+  }
+
   function stopRecorder(recorder, chunks, timeoutMs) {
-    timeoutMs = timeoutMs || 3000;
+    timeoutMs = timeoutMs || 8000;
     return new Promise(function(resolve) {
       if (!recorder || recorder.state === 'inactive') {
         resolve(null);
         return;
       }
       var settled = false;
-      var mime = recorder.mimeType || 'audio/webm';
+      var mime = recorder.mimeType || recorder._batteryMimeType || 'application/octet-stream';
       var previousStop = recorder.onstop;
       function finish(timedOut) {
         if (settled) return;
@@ -432,6 +452,8 @@ window.BatteryReliability = (function() {
   return {
     withTimeout: withTimeout,
     requestMicrophone: requestMicrophone,
+    supportedRecordingMimeType: supportedRecordingMimeType,
+    createAudioRecorder: createAudioRecorder,
     stopRecorder: stopRecorder,
     revokeObjectUrl: revokeObjectUrl,
     decimateStroke: decimateStroke,
