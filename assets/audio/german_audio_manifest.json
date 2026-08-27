@@ -1,7 +1,7 @@
 {
   "manifest_version": "2.0.0",
   "generated_on": "2026-08-20",
-  "status": "v2_full_set_native_speaker_review_completed",
+  "status": "v2_frozen_perceptual_rereview_required",
   "generator": {
     "engine": "Piper",
     "engine_release": "2023.11.14-2",
@@ -10,7 +10,11 @@
     "model_sha256": "9df1c43c61149ef9b39e618e2b861fbe41e1fcea9390b2dac62e8761573ea4f1",
     "model_sample_rate_hz": 22050,
     "model_quality": "high",
-    "inference": { "noise_scale": 0.5, "length_scale": 1.15, "noise_w": 0.6 },
+    "inference": {
+      "noise_scale": 0.5,
+      "length_scale": 1.15,
+      "noise_w": 0.6
+    },
     "postprocessing": "sentence-wise synthesis; 120 ms inter-sentence silence; leading silence trim; 50 ms onset pad; 90 ms fade-in; 40 ms fade-out; 80 ms retained trailing silence; FFmpeg loudnorm I=-24, TP=-3, LRA=7; resample to mono 48 kHz 16-bit PCM"
   },
   "licensing": {
@@ -38,6 +42,16 @@
     "assets/audio/osr/osr_delayed_prompt_de_v2.wav": "d025b8e6731bf00a70805b38ef97d31d24035e921fbadfe009dd65c60831f05e",
     "assets/audio/osr/osr_neutral_prompt_de_v2.wav": "e74e394e136a848cc958b70adcec96a157fb37716a606088044f54006233320a"
   },
-  "researcher_listening_review": "Repository owner confirmed completion of a full German native-speaker listening evaluation on 2026-08-22.",
-  "validation_boundary": "Automated file QA does not establish pronunciation, naturalness, intelligibility, cultural appropriateness, cross-device equivalence, or English-German measurement equivalence."
+  "researcher_listening_review": "A full owner/native-speaker listening review was previously recorded on 2026-08-22. Pilot listening on 2026-08-27 identified digit 5 (fünf) as perceptually too brief, so the v2 set has been reopened for file-level perceptual review rather than treated as fully cleared.",
+  "validation_boundary": "Automated file QA does not establish pronunciation, naturalness, intelligibility, cultural appropriateness, cross-device equivalence, or English-German measurement equivalence.",
+  "perceptual_rereview": {
+    "status": "required_before_v3_release",
+    "trigger": "Pilot listening identified digit_5_de_v2.wav as perceptually too brief; automated QA also flags digit 5 and digit 8 for short active-speech duration.",
+    "priority_files": [
+      "assets/audio/digits/digit_5_de_v2.wav",
+      "assets/audio/digits/digit_8_de_v2.wav"
+    ],
+    "scope": "Listen to all 17 German files on the intended administration device and record file-level decisions for pronunciation, naturalness, intelligibility, truncation, and misleading emphasis.",
+    "versioning_rule": "Do not overwrite v2 files. Any regenerated or reprocessed German audio must be released under new v3 filenames and a new manifest."
+  }
 }
