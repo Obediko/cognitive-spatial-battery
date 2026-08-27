@@ -43,7 +43,12 @@ assert.ok(trails.includes('Während der Übung wird eine Rückmeldung angezeigt.
 assert.ok(trails.includes('Falsches Ziel – fahren Sie bei'));
 
 const manifest = JSON.parse(read('assets/audio/german_audio_manifest.json'));
-assert.equal(manifest.status, 'v2_full_set_native_speaker_review_completed');
-assert.match(manifest.researcher_listening_review, /full German native-speaker listening evaluation/);
+assert.equal(manifest.status, 'v2_frozen_perceptual_rereview_required');
+assert.equal(manifest.perceptual_rereview.status, 'required_before_v3_release');
+assert.deepEqual(manifest.perceptual_rereview.priority_files, [
+  'assets/audio/digits/digit_5_de_v2.wav',
+  'assets/audio/digits/digit_8_de_v2.wav'
+]);
+assert.match(manifest.researcher_listening_review, /reopened for file-level perceptual review/);
 
 console.log('German parity checks passed.');
