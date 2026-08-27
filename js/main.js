@@ -618,16 +618,57 @@ window.addEventListener('load', function() {
   var taskMenu = makeTaskMenu(jsPsych);
   var de = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
 
+  function delayedRecallCompleted(kind) {
+    if (kind === 'osr') {
+      return window.BatteryData.trials.some(function(row) {
+        return row.task_name === 'original_story_recall' && row.phase === 'free_recall' && row.condition === 'delayed';
+      });
+    }
+    return window.BatteryData.trials.some(function(row) {
+      return row.task_name === 'original_complex_figure' && row.phase === 'delayed_drawing';
+    });
+  }
+
+  function delayedRecallStart(kind) {
+    return kind === 'osr'
+      ? (window.OSRState && window.OSRState.immediateEndMs)
+      : (window.OCFState && window.OCFState.copyCompletedAt);
+  }
+
+  function delayedRecallPolicy(kind) {
+    return kind === 'osr' ? window.OSRDelayPolicy : window.OCFDelayPolicy;
+  }
+
+  function delayedRecallShouldRun(kind, upcomingTaskId, force) {
+    if (!batteryTaskSelected(kind) || delayedRecallCompleted(kind)) return false;
+    if (force) return true;
+    var start = delayedRecallStart(kind);
+    var policy = delayedRecallPolicy(kind);
+    if (!start || !policy) return false;
+    var elapsed = Date.now() - start;
+    var upcomingMaxMs = 0;
+    if (upcomingTaskId && batteryTaskSelected(upcomingTaskId) && BATTERY_TASK_MINUTES[upcomingTaskId]) {
+      upcomingMaxMs = BATTERY_TASK_MINUTES[upcomingTaskId][1] * 60 * 1000;
+    }
+    return elapsed >= policy.targetMs || (upcomingMaxMs > 0 && elapsed + upcomingMaxMs >= policy.maxMs);
+  }
+
+  function makeDelayedRecallNode(kind, upcomingTaskId, force) {
+    var title = kind === 'osr'
+      ? (de ? 'Geschichte: verzögerte Wiedergabe' : 'Original Story Recall — delayed recall')
+      : (de ? 'Komplexe Figur: verzögerte Wiedergabe' : 'Original Complex Figure — delayed recall');
+    var delayedTimeline = kind === 'osr' ? buildOSRDelayedTimeline() : buildOCFDelayedTimeline();
+    return {
+      timeline: [makeBreakScreen(title)].concat(delayedTimeline),
+      conditional_function: function() {
+        return delayedRecallShouldRun(kind, upcomingTaskId, force);
+      }
+    };
+  }
+
   /* Conditional timeline nodes */
   var osrImmediateTimeline = {
     timeline: buildOSRImmediateTimeline(),
-    conditional_function: function() {
-      return batteryTaskSelected('osr');
-    }
-  };
-
-  var osrDelayedTimeline = {
-    timeline: buildOSRDelayedTimeline(),
     conditional_function: function() {
       return batteryTaskSelected('osr');
     }
@@ -661,13 +702,6 @@ window.addEventListener('load', function() {
     }
   };
 
-  var ocfDelayedTimeline = {
-    timeline: [makeBreakScreen(de ? 'Komplexe Figur: verzögerte Wiedergabe' : 'Original Complex Figure — delayed recall')].concat(buildOCFDelayedTimeline()),
-    conditional_function: function() {
-      return batteryTaskSelected('ocf');
-    }
-  };
-
   var olmTimeline = {
     timeline: [makeBreakScreen(de ? 'Objekt-Ort-Gedächtnis' : 'Object-Location Memory Task')].concat(buildObjectLocationTimeline()),
     conditional_function: function() {
@@ -689,6 +723,17 @@ window.addEventListener('load', function() {
     }
   };
 
+  // Check delayed recalls before long filler tasks. If the projected maximum
+  // duration of the next selected task could cross the 15-minute ceiling, the
+  // delayed-recall gate runs first and waits only until the minimum interval.
+  var osrBeforeAsf = makeDelayedRecallNode('osr', 'asf', false);
+  var osrBeforeOvn = makeDelayedRecallNode('osr', 'ovn', false);
+  var ocfBeforeOvn = makeDelayedRecallNode('ocf', 'ovn', false);
+  var osrBeforeNs = makeDelayedRecallNode('osr', 'ns', false);
+  var ocfBeforeNs = makeDelayedRecallNode('ocf', 'ns', false);
+  var osrDelayedFinal = makeDelayedRecallNode('osr', null, true);
+  var ocfDelayedFinal = makeDelayedRecallNode('ocf', null, true);
+
   var setP15 = { type: jsPsychCallFunction, func: function() { setProgress(15); } };
   var setP50 = { type: jsPsychCallFunction, func: function() { setProgress(50); } };
   var setP70 = { type: jsPsychCallFunction, func: function() { setProgress(70); } };
@@ -699,12 +744,17 @@ window.addEventListener('load', function() {
     osrImmediateTimeline,
     ocfImmediateTimeline,
     setP15,
+    osrBeforeAsf,
     asfTimeline,
+    osrBeforeOvn,
+    ocfBeforeOvn,
     ovnTimeline,
+    osrBeforeNs,
+    ocfBeforeNs,
     nsTimeline,
     setP50,
-    osrDelayedTimeline,
-    ocfDelayedTimeline,
+    osrDelayedFinal,
+    ocfDelayedFinal,
     setP70,
     olmTimeline,
     spTimeline,
