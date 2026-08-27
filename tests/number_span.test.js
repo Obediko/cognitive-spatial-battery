@@ -22,6 +22,8 @@ assert.ok(source.includes('digits entered'));
 assert.ok(source.includes('maxlength="'));
 assert.ok(source.includes('player: null'), 'one persistent media element must be reused across the task');
 assert.ok(source.includes('playDigit(index + 1)'), 'digits must play sequentially rather than from independent timers');
+assert.ok(source.includes("onset_source: 'playing_event'"), 'timing must be recorded from actual playback onset');
+assert.ok(source.includes('lastActualOnset + NS_ONSET_INTERVAL_MS'), 'the next digit must be scheduled from the actual previous onset');
 assert.ok(!source.includes('var el = new Audio(url)'), 'a new media element must not be created for each digit');
 assert.ok(source.includes('Technical detail:'), 'playback failures must expose the browser error');
 assert.ok(source.includes('The digit sequence was incomplete'), 'failed playback must not silently continue to scoring');
