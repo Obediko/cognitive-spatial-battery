@@ -10,7 +10,13 @@
   var OCF_STIMULUS_VERSION = 'ocf17-0.1';
   var COPY_LIMIT_MS = 4 * 60 * 1000;
   var DELAY_MIN_MS = window.PILOT_MODE ? 10000 : 10 * 60 * 1000;
+  var DELAY_TARGET_MS = window.PILOT_MODE ? 20000 : 12 * 60 * 1000;
   var DELAY_MAX_MS = window.PILOT_MODE ? 30000 : 15 * 60 * 1000;
+  window.OCFDelayPolicy = {
+    minMs: DELAY_MIN_MS,
+    targetMs: DELAY_TARGET_MS,
+    maxMs: DELAY_MAX_MS
+  };
   var OCF_IS_GERMAN = window.BatteryLanguage && window.BatteryLanguage.get() === 'de';
 
   window.OCFState = {
