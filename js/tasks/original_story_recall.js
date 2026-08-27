@@ -95,6 +95,11 @@
   var OSR_MIN_DELAY_MS = window.PILOT_MODE ? 15000 : 10 * 60 * 1000;
   var OSR_TARGET_DELAY_MS = window.PILOT_MODE ? 20000 : 12 * 60 * 1000;
   var OSR_MAX_DELAY_MS = window.PILOT_MODE ? 60000 : 15 * 60 * 1000;
+  window.OSRDelayPolicy = {
+    minMs: OSR_MIN_DELAY_MS,
+    targetMs: OSR_TARGET_DELAY_MS,
+    maxMs: OSR_MAX_DELAY_MS
+  };
 
   var OSR_VERBATIM_UNITS = [
     ['Thursday', 'Thursday'], ['morning', 'morning'], ['Elena', 'Elena'],
