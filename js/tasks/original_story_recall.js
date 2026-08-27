@@ -795,7 +795,7 @@
           osr_task_version: OSR_VERSION,
           osr_dictionary_version: OSR_DICTIONARY_VERSION,
           osr_story_form: OSR_STORY_FORM,
-          osr_audio_set_version: OSR_IS_GERMAN ? 'osr-audio-de-thorsten-2.0-reviewed' : 'osr-audio-en-kokoro-1.0-pilot'
+          osr_audio_set_version: OSR_IS_GERMAN ? 'osr-audio-de-thorsten-2.0-frozen-rereview-required' : 'osr-audio-en-kokoro-1.0-pilot'
         });
       }
     };
