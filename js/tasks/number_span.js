@@ -501,7 +501,7 @@
           ns_forward_correct_trials: rows.filter(function(r) { return r.direction === 'forward' && r.correct; }).length,
           ns_backward_correct_trials: rows.filter(function(r) { return r.direction === 'backward' && r.correct; }).length,
           ns_audio_standardized: window.NSState.audioStandardized,
-          ns_audio_set_version: NS_IS_GERMAN ? 'ons-audio-de-thorsten-2.0-reviewed' : 'ons-audio-en-kokoro-1.0-pilot',
+          ns_audio_set_version: NS_IS_GERMAN ? 'ons-audio-de-thorsten-2.0-frozen-rereview-required' : 'ons-audio-en-kokoro-1.0-pilot',
           ns_task_version: NS_VERSION,
           ns_sequence_version: NS_SEQUENCE_VERSION
         });
