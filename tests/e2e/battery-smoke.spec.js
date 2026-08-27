@@ -263,6 +263,18 @@ test('authenticated examiner checkpoint opens separately from the participant ti
   await expect(page.getByRole('heading', { name: 'Review complete' })).toBeVisible();
 });
 
+test('examiner portal can switch its shell to German before a session is loaded', async ({ page }) => {
+  await page.route('**/api/admin-sessions', async route => {
+    await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Unauthorized' }) });
+  });
+  await page.goto('/admin.html');
+  await expect(page.getByText('This is the same examiner portal for English and German sessions. Loading a session automatically switches the review interface to the language used for that session.')).toBeVisible();
+  await page.getByRole('button', { name: 'Deutsch' }).click();
+  await expect(page.getByRole('heading', { name: 'Auswertungsportal' })).toBeVisible();
+  await expect(page.getByText('Dies ist dasselbe Auswertungsportal für englische und deutsche Sitzungen. Beim Laden einer Sitzung wechselt die Auswertungsoberfläche automatisch in die Sprache, in der die Sitzung durchgeführt wurde.')).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+});
+
 test('completed German sessions reopen directly without losing verified status', async ({ page }) => {
   await page.route('**/api/admin-sessions', async route => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ sessions: [] }) });
@@ -283,8 +295,8 @@ test('completed German sessions reopen directly without losing verified status',
   });
   await page.goto('/admin.html');
   await page.locator('.local-load').click();
-  await expect(page.getByRole('heading', { name: 'Review complete' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Review and rescore session' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Auswertung abgeschlossen' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sitzung prüfen und neu bewerten' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang', 'de');
   const state = await page.evaluate(() => ({
     language: window.BatteryLanguage.get(),
