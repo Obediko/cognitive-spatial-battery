@@ -75,8 +75,14 @@ assert.ok(ocf.includes('decimateStroke(stroke, 0.0025, 1200)'));
 
 const timelineStart = main.indexOf('var timeline = welcomeTrials.concat');
 const participantTimeline = main.slice(timelineStart);
-assert.ok(participantTimeline.indexOf('asfTimeline') < participantTimeline.indexOf('ocfDelayedTimeline'));
-assert.ok(participantTimeline.indexOf('osrDelayedTimeline') < participantTimeline.indexOf('ocfDelayedTimeline'));
+assert.ok(main.includes('function delayedRecallShouldRun'));
+assert.ok(main.includes("makeDelayedRecallNode('osr', 'ovn', false)"));
+assert.ok(main.includes("makeDelayedRecallNode('ocf', 'ovn', false)"));
+assert.ok(participantTimeline.indexOf('osrBeforeOvn') < participantTimeline.indexOf('ovnTimeline'));
+assert.ok(participantTimeline.indexOf('ocfBeforeOvn') < participantTimeline.indexOf('ovnTimeline'));
+assert.ok(participantTimeline.indexOf('osrDelayedFinal') < participantTimeline.indexOf('ocfDelayedFinal'));
+assert.ok(osr.includes('window.OSRDelayPolicy'));
+assert.ok(ocf.includes('window.OCFDelayPolicy'));
 assert.ok(participantTimeline.indexOf('spTimeline') < participantTimeline.indexOf('vsTimeline'));
 assert.ok(main.includes('showRecoverableRuntimeError'));
 const participantArrayEnd = participantTimeline.indexOf(']);');
