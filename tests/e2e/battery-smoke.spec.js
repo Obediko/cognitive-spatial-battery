@@ -45,7 +45,9 @@ test('German administration reaches the German task menu and German visual namin
   await expect(page.getByRole('heading', { name: 'Benennen Sie jeden Gegenstand' })).toBeVisible();
   await expect(page.getByText('In diesem Protokoll werden während der Testung keine Hinweise gegeben.')).toBeVisible();
   await page.getByRole('button', { name: 'Beginnen' }).click();
-  await expect(page.getByText('Bitte warten Sie auf das Bild')).toBeVisible();
+  const germanNext = page.getByRole('button', { name: 'Antwort gegeben — nächstes Bild' });
+  await expect(germanNext).toBeEnabled({ timeout: 8000 });
+  await expect(page.locator('.ovn-stimulus-image')).toBeVisible();
   await expect(page.getByText('Preparing image…')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
@@ -180,13 +182,17 @@ test('visual naming starts its clock only after the image is available', async (
 
   const next = page.getByRole('button', { name: 'Answer given — next item' });
   await expect(next).toBeDisabled();
+  await expect(page.locator('.ovn-stimulus-image')).toBeHidden();
   await expect(page.locator('#ovn-time')).toHaveText('20');
   await page.waitForTimeout(500);
   await expect(page.locator('#ovn-time')).toHaveText('20');
 
   releaseImage();
   await expect(next).toBeEnabled({ timeout: 5000 });
+  await expect(page.locator('.ovn-stimulus-image')).toBeVisible();
   await expect(page.getByText('Speak one answer clearly')).toBeVisible();
+  await next.click();
+  await expect(page.getByText('Item 2 of 32')).toBeVisible({ timeout: 5000 });
 });
 
 test('animal naming requires practice and changes Start to Stop during the timed task', async ({ page }) => {
@@ -257,6 +263,18 @@ test('authenticated examiner checkpoint opens separately from the participant ti
   await expect(page.getByRole('heading', { name: 'Review complete' })).toBeVisible();
 });
 
+test('examiner portal can switch its shell to German before a session is loaded', async ({ page }) => {
+  await page.route('**/api/admin-sessions', async route => {
+    await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Unauthorized' }) });
+  });
+  await page.goto('/admin.html');
+  await expect(page.getByText('This is the same examiner portal for English and German sessions. Loading a session automatically switches the review interface to the language used for that session.')).toBeVisible();
+  await page.getByRole('button', { name: 'Deutsch' }).click();
+  await expect(page.getByRole('heading', { name: 'Auswertungsportal' })).toBeVisible();
+  await expect(page.getByText('Dies ist dasselbe Auswertungsportal für englische und deutsche Sitzungen. Beim Laden einer Sitzung wechselt die Auswertungsoberfläche automatisch in die Sprache, in der die Sitzung durchgeführt wurde.')).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+});
+
 test('completed German sessions reopen directly without losing verified status', async ({ page }) => {
   await page.route('**/api/admin-sessions', async route => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ sessions: [] }) });
@@ -277,8 +295,8 @@ test('completed German sessions reopen directly without losing verified status',
   });
   await page.goto('/admin.html');
   await page.locator('.local-load').click();
-  await expect(page.getByRole('heading', { name: 'Review complete' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Review and rescore session' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Auswertung abgeschlossen' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sitzung prüfen und neu bewerten' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang', 'de');
   const state = await page.evaluate(() => ({
     language: window.BatteryLanguage.get(),

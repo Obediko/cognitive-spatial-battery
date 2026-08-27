@@ -12,11 +12,20 @@
 </head>
 <body class="admin-page">
   <main id="admin-shell" class="osr-card" style="max-width:1000px;margin:3rem auto;">
-    <span class="osr-kicker">Authenticated examiner checkpoint</span>
-    <h1>Scoring portal</h1>
+    <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
+      <div>
+        <span class="osr-kicker" id="admin-kicker">Authenticated examiner checkpoint</span>
+        <h1 id="admin-title">Scoring portal</h1>
+      </div>
+      <div style="display:flex;gap:.4rem;" aria-label="Examiner interface language">
+        <button class="battery-btn" id="admin-language-en" type="button">English</button>
+        <button class="battery-btn" id="admin-language-de" type="button">Deutsch</button>
+      </div>
+    </div>
+    <p class="osr-fineprint" id="admin-language-note">This is the same examiner portal for English and German sessions. Loading a session automatically switches the review interface to the language used for that session.</p>
     <section id="admin-login-panel">
-      <div class="warning-box">Examiner access is restricted. Use the admin password configured privately in Netlify.</div>
-      <label for="admin-password">Admin password</label>
+      <div class="warning-box" id="admin-login-warning">Examiner access is restricted. Use the admin password configured privately in Netlify.</div>
+      <label for="admin-password" id="admin-password-label">Admin password</label>
       <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin:.6rem 0 1rem;">
         <input id="admin-password" type="password" autocomplete="current-password" style="flex:1;min-width:220px;" />
         <button class="battery-btn primary" id="admin-login">Sign in</button>
@@ -24,7 +33,7 @@
     </section>
     <section id="admin-sessions-panel" hidden>
       <div style="display:flex;justify-content:space-between;gap:1rem;align-items:center;">
-        <p>Remote sessions are synchronized through encrypted Netlify Blobs storage.</p>
+        <p id="admin-remote-note">Remote sessions are synchronized through encrypted Netlify Blobs storage.</p>
         <button class="battery-btn" id="admin-logout">Sign out</button>
       </div>
       <p id="admin-status" class="osr-status" aria-live="polite"></p>
@@ -32,12 +41,12 @@
         <button class="battery-btn download" id="admin-collective-csv">Download collective results CSV</button>
         <button class="battery-btn" id="admin-collective-print">Print collective results</button>
       </div>
-      <h2>Cross-device sessions</h2>
+      <h2 id="admin-remote-heading">Cross-device sessions</h2>
       <div id="admin-remote-session-list"></div>
-      <h2>Sessions on this browser</h2>
+      <h2 id="admin-local-heading">Sessions on this browser</h2>
       <div id="admin-local-session-list"></div>
     </section>
-    <p class="osr-fineprint"><a href="index.html">Return to participant battery</a></p>
+    <p class="osr-fineprint"><a href="index.html" id="admin-return-participant">Return to participant battery</a></p>
   </main>
   <div id="jspsych-target"></div>
   <script src="js/language.js"></script>

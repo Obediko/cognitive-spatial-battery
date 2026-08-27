@@ -56,6 +56,7 @@ def inspect(path: Path) -> dict:
         "sample_rate_hz": sample_rate,
         "bits_per_sample": sample_width * 8,
         "duration_s": round(frames / sample_rate, 3),
+        "active_duration_s": round((last - first + 1) / sample_rate, 3) if last >= first else 0.0,
         "peak_dbfs": dbfs(peak),
         "rms_dbfs": dbfs(rms),
         "dc_offset_percent": round((mean / 32767) * 100, 4),
@@ -87,6 +88,12 @@ def validate(rows: list[dict]) -> list[str]:
             failures.append(f"{path}: edge silence exceeds 300 ms")
         if "/digit_" in path and row["duration_s"] >= 0.95:
             failures.append(f"{path}: digit clip is too long for a 1-second onset schedule")
+        if "/digit_" in path and row["duration_s"] < 0.35:
+            failures.append(f"{path}: digit clip is unusually short and may be truncated")
+        if "/digit_" in path and row["trailing_silence_s"] < 0.04:
+            failures.append(f"{path}: less than 40 ms trailing silence leaves insufficient protection against an abrupt cut")
+        if "/digit_" in path and row["active_duration_s"] < 0.22:
+            failures.append(f"{path}: active speech duration is unusually short and may be truncated")
         if "osr44_" in path and row["duration_s"] < 20:
             failures.append(f"{path}: story duration below 20 seconds suggests truncation")
         if "osr_instruction" in path and row["duration_s"] < 8:
@@ -116,6 +123,22 @@ def validate(rows: list[dict]) -> list[str]:
     return failures
 
 
+
+def perceptual_warnings(rows: list[dict]) -> list[str]:
+    warnings = []
+    for row in rows:
+        path = row.get("path", "")
+        if row.get("status") != "analyzed":
+            continue
+        # Technical thresholds cannot establish intelligibility. The current
+        # German v2 pilot set contains two especially short active digit clips
+        # (5 and 8); keep them visible for mandatory human listening review.
+        if "/digit_" in path and "_de_v2.wav" in path and row.get("active_duration_s", 0) < 0.32:
+            warnings.append(
+                f"{path}: active speech is under 320 ms; mandatory native-listener re-review for perceptual truncation"
+            )
+    return warnings
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path)
@@ -125,12 +148,14 @@ def main() -> int:
     paths = sorted(path for root in AUDIO_ROOTS for path in root.glob("*.wav"))
     rows = [inspect(path) for path in paths]
     failures = validate(rows)
+    warnings = perceptual_warnings(rows)
     report = {
-        "method": "whole-file PCM peak/RMS, DC offset, exact clipping count, and -50 dBFS edge-silence scan",
-        "limitations": ["RMS is not LUFS", "file QA does not establish perceptual intelligibility or cross-device equivalence"],
+        "method": "whole-file PCM peak/RMS, DC offset, exact clipping count, active-speech duration, and -50 dBFS edge-silence scan",
+        "limitations": ["RMS is not LUFS", "technical file QA cannot establish pronunciation, naturalness, intelligibility, or cross-device equivalence"],
         "files_analyzed": len(rows),
         "check_failures": failures,
-        "status": "pass" if not failures else "fail",
+        "perceptual_review_warnings": warnings,
+        "status": "fail" if failures else ("pass_with_perceptual_warnings" if warnings else "pass"),
         "files": rows,
     }
     payload = json.dumps(report, indent=2) + "\n"

@@ -95,6 +95,11 @@
   var OSR_MIN_DELAY_MS = window.PILOT_MODE ? 15000 : 10 * 60 * 1000;
   var OSR_TARGET_DELAY_MS = window.PILOT_MODE ? 20000 : 12 * 60 * 1000;
   var OSR_MAX_DELAY_MS = window.PILOT_MODE ? 60000 : 15 * 60 * 1000;
+  window.OSRDelayPolicy = {
+    minMs: OSR_MIN_DELAY_MS,
+    targetMs: OSR_TARGET_DELAY_MS,
+    maxMs: OSR_MAX_DELAY_MS
+  };
 
   var OSR_VERBATIM_UNITS = [
     ['Thursday', 'Thursday'], ['morning', 'morning'], ['Elena', 'Elena'],
@@ -795,7 +800,7 @@
           osr_task_version: OSR_VERSION,
           osr_dictionary_version: OSR_DICTIONARY_VERSION,
           osr_story_form: OSR_STORY_FORM,
-          osr_audio_set_version: OSR_IS_GERMAN ? 'osr-audio-de-thorsten-2.0-reviewed' : 'osr-audio-en-kokoro-1.0-pilot'
+          osr_audio_set_version: OSR_IS_GERMAN ? 'osr-audio-de-thorsten-2.0-frozen-rereview-required' : 'osr-audio-en-kokoro-1.0-pilot'
         });
       }
     };
