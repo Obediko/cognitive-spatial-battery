@@ -126,7 +126,7 @@
   function ovnStimulusMarkup(item) {
     var path = ovnDeliveryPath(item.art);
     return '<div class="ovn-stimulus-frame" data-ovn-art="' + item.art + '">'
-      + '<img class="ovn-stimulus-image" src="' + path + '" alt="' + (OVN_IS_GERMAN ? 'Bild zum Benennen eines Gegenstands' : 'Object naming stimulus') + '" decoding="async" fetchpriority="high">'
+      + '<img class="ovn-stimulus-image" src="' + path + '" alt="' + (OVN_IS_GERMAN ? 'Bild zum Benennen eines Gegenstands' : 'Object naming stimulus') + '" decoding="async" fetchpriority="high" hidden>'
       + '<div class="ovn-stimulus-fallback" hidden>' + ovnSvg(item) + '</div>'
       + '<p class="ovn-stimulus-status osr-status" aria-live="polite">' + (OVN_IS_GERMAN ? 'Bild wird vorbereitet…' : 'Preparing image…') + '</p></div>';
   }
@@ -158,6 +158,7 @@
       function loaded() {
         var decoded = typeof image.decode === 'function' ? image.decode() : Promise.resolve();
         decoded.then(function() {
+          image.hidden = false;
           if (status) status.textContent = '';
           finish({ loadMs: Date.now() - requestedAt, fallback: false, reason: null });
         }).catch(function() { finish(showFallback('decode_failed')); });
@@ -330,6 +331,7 @@
         }
 
         function showItem() {
+          itemEnding = false;
           var item = items[index];
           itemStartedAt = Date.now();
           display.innerHTML = '<div class="ovn-shell"><div class="ovn-progress">' + (OVN_IS_GERMAN ? 'Bild ' : 'Item ') + (index + 1) + (OVN_IS_GERMAN ? ' von ' : ' of ') + items.length
@@ -412,6 +414,7 @@
         var finished = false;
         var captured = [];
         var stimulusLoad = null;
+        var itemEnding = false;
 
         window.OVNState.itemAudio = [];
         window.OVNState.itemAudioUrls = [];
@@ -462,10 +465,17 @@
         }
 
         function endItem() {
+          if (itemEnding || finished) return;
+          itemEnding = true;
           if (timer) clearInterval(timer);
           timer = null;
           var next = document.getElementById('ovn-deferred-next');
-          if (next) next.disabled = true;
+          if (next) {
+            next.disabled = true;
+            next.textContent = OVN_IS_GERMAN ? 'Antwort wird gespeichert…' : 'Saving response…';
+          }
+          var prompt = document.getElementById('ovn-response-prompt');
+          if (prompt) prompt.textContent = OVN_IS_GERMAN ? 'Bitte warten — die Aufnahme wird gespeichert' : 'Please wait — saving the recording';
           if (recorder && recorder.state !== 'inactive') {
             window.BatteryReliability.stopRecorder(recorder, chunks, 8000).then(function(result) {
               saveClipAndAdvance(result && result.blob ? result.blob : null);
