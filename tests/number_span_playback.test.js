@@ -23,11 +23,18 @@ class FakeAudio {
   load() {}
   play() {
     setTimeout(() => {
-      const ended = this.listeners.ended;
-      if (ended) {
-        delete this.listeners.ended;
-        ended();
+      const playing = this.listeners.playing;
+      if (playing) {
+        delete this.listeners.playing;
+        playing();
       }
+      setTimeout(() => {
+        const ended = this.listeners.ended;
+        if (ended) {
+          delete this.listeners.ended;
+          ended();
+        }
+      }, 5);
     }, 5);
     return Promise.resolve();
   }
@@ -45,6 +52,10 @@ window.NSState.digitBlobUrls = { 1: 'blob:one', 2: 'blob:two' };
   await window.NSPlaybackDiagnostics.playSequence([1, 2]);
   assert.equal(audioInstances, 1, 'the whole sequence must reuse one media element');
   assert.equal(window.NSState.playbackOnsets.length, 2);
+  assert.equal(window.NSState.playbackOnsets[0].onset_source, 'playing_event');
+  assert.equal(window.NSState.playbackOnsets[1].onset_source, 'playing_event');
+  assert.ok(window.NSState.playbackOnsets[1].observed_onset_ms - window.NSState.playbackOnsets[0].observed_onset_ms >= 900,
+    'actual digit onsets must remain approximately one second apart');
   assert.equal(window.NSPlaybackDiagnostics.lastError(), null);
   console.log('number span sequential playback checks passed.');
 })().catch(error => {
