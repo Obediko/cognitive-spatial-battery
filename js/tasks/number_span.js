@@ -221,11 +221,15 @@
   // autoplay permission per element, so creating a fresh Audio object for
   // every timer-fired digit causes intermittent NotAllowedError failures on
   // iPad. Each clip must finish before the next onset is scheduled.
+  // Reuse one persistent media element for the whole task. Schedule each
+  // subsequent digit from the actual prior playback onset, not from the time
+  // play() was requested. The HTMLMediaElement "playing" event is used as the
+  // closest browser-level marker that audible playback has actually started.
   function nsPlaySequence(sequence) {
     return new Promise(function(resolve, reject) {
       var player = window.NSState.player || (window.NSState.player = new Audio());
       var settled = false;
-      var startedAt = performance.now();
+      var lastActualOnset = null;
       var hardDeadline = setTimeout(function() {
         fail(new Error('Digit-sequence playback timed out'));
       }, sequence.length * NS_ONSET_INTERVAL_MS + NS_AUDIO_LOAD_TIMEOUT_MS);
@@ -251,37 +255,49 @@
         if (settled) return;
         if (index >= sequence.length) return finish();
         var digit = sequence[index];
-        var planned = startedAt + index * NS_ONSET_INTERVAL_MS;
+        var planned = lastActualOnset == null ? performance.now() : lastActualOnset + NS_ONSET_INTERVAL_MS;
         var delay = Math.max(0, planned - performance.now());
         setTimeout(function() {
           if (settled) return;
-          var observed = performance.now();
-          window.NSState.playbackOnsets.push({
-            sequence_digit_index: index,
-            digit: digit,
-            planned_onset_ms: planned,
-            observed_onset_ms: observed,
-            onset_error_ms: observed - planned
-          });
           var url = window.NSState.digitBlobUrls[digit];
           if (!url) return fail(new Error('Digit audio was not preloaded: ' + digit));
           player.pause();
           player.src = url;
           player.currentTime = 0;
           player.load();
+          var onsetRecorded = false;
+          var started = function() {
+            if (onsetRecorded || settled) return;
+            onsetRecorded = true;
+            var observed = performance.now();
+            lastActualOnset = observed;
+            window.NSState.playbackOnsets.push({
+              sequence_digit_index: index,
+              digit: digit,
+              planned_onset_ms: planned,
+              observed_onset_ms: observed,
+              onset_error_ms: observed - planned,
+              onset_source: 'playing_event'
+            });
+          };
           var ended = function() {
+            player.removeEventListener('playing', started);
             player.removeEventListener('error', errored);
+            if (!onsetRecorded) return fail(new Error('No playback onset event was observed for digit ' + digit));
             playDigit(index + 1);
           };
           var errored = function() {
+            player.removeEventListener('playing', started);
             player.removeEventListener('ended', ended);
             fail(new Error('Browser media error while playing digit ' + digit));
           };
+          player.addEventListener('playing', started, { once: true });
           player.addEventListener('ended', ended, { once: true });
           player.addEventListener('error', errored, { once: true });
           var promise = player.play();
           if (promise && typeof promise.catch === 'function') {
             promise.catch(function(error) {
+              player.removeEventListener('playing', started);
               player.removeEventListener('ended', ended);
               player.removeEventListener('error', errored);
               fail(error);
