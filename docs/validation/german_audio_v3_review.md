@@ -1,6 +1,6 @@
 # German Audio v3 Perceptual Review Checklist
 
-**Status:** open review before any v3 release  
+**Status:** digits 5 and 8 v3 technical QA passed; intended-device perceptual confirmation remains open
 **Trigger:** pilot listening on 2026-08-27 identified `digit_5_de_v2.wav` ("fünf") as perceptually too brief. Automated technical QA also flags digits 5 and 8 because their active speech portions are under 320 ms.
 
 ## Versioning rule
@@ -20,10 +20,10 @@ Recommended decision codes: `accept`, `regenerate`, `reprocess`, or `needs_secon
 | `digit_2_de_v2.wav` | zwei | normal |  |  |  |  |
 | `digit_3_de_v2.wav` | drei | normal |  |  |  |  |
 | `digit_4_de_v2.wav` | vier | normal |  |  |  |  |
-| `digit_5_de_v2.wav` | fünf | **high** |  |  |  | Pilot listener reported perceptually too brief. Active speech approximately 316 ms. |
+| `digit_5_de_v3.wav` | fünf | **high** |  |  |  | Pitch-preserving 0.78x reprocess deployed for confirmation. Active speech approximately 418 ms; no clipping. |
 | `digit_6_de_v2.wav` | sechs | normal |  |  |  |  |
 | `digit_7_de_v2.wav` | sieben | normal |  |  |  |  |
-| `digit_8_de_v2.wav` | acht | **high** |  |  |  | Active speech approximately 310 ms; second-shortest priority item by technical QA. |
+| `digit_8_de_v3.wav` | acht | **high** |  |  |  | Pitch-preserving 0.78x reprocess deployed for confirmation; no clipping. |
 | `digit_9_de_v2.wav` | neun | normal |  |  |  |  |
 | `ons_forward_instruction_de_v2.wav` | Number Span forward instruction | normal |  |  |  |  |
 | `ons_backward_instruction_de_v2.wav` | Number Span backward instruction | normal |  |  |  |  |
@@ -35,4 +35,4 @@ Recommended decision codes: `accept`, `regenerate`, `reprocess`, or `needs_secon
 
 ## Release gate
 
-Do not label German audio as fully perceptually cleared until all 17 files have two listener decisions, any disputed item has been resolved, and no critical pronunciation or truncation defect remains. Technical QA is necessary but not sufficient for this gate.
+Do not label German audio as fully perceptually cleared until all deployed files have two listener decisions, any disputed item has been resolved, and no critical pronunciation or truncation defect remains. Technical QA is necessary but not sufficient for this gate.

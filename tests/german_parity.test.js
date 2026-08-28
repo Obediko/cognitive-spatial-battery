@@ -7,6 +7,7 @@ const vm = require('node:vm');
 
 const root = path.join(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+const numberSpan = read('js/tasks/number_span.js');
 
 const languageContext = {
   window: {},
@@ -43,12 +44,14 @@ assert.ok(trails.includes('Während der Übung wird eine Rückmeldung angezeigt.
 assert.ok(trails.includes('Falsches Ziel – fahren Sie bei'));
 
 const manifest = JSON.parse(read('assets/audio/german_audio_manifest.json'));
-assert.equal(manifest.status, 'v2_frozen_perceptual_rereview_required');
-assert.equal(manifest.perceptual_rereview.status, 'required_before_v3_release');
+assert.equal(manifest.status, 'v2_set_with_digits_5_and_8_v3_reprocessed_perceptual_confirmation_required');
+assert.equal(manifest.perceptual_rereview.status, 'digits_5_and_8_reprocessed_confirmation_required');
 assert.deepEqual(manifest.perceptual_rereview.priority_files, [
-  'assets/audio/digits/digit_5_de_v2.wav',
-  'assets/audio/digits/digit_8_de_v2.wav'
+  'assets/audio/digits/digit_5_de_v3.wav',
+  'assets/audio/digits/digit_8_de_v3.wav'
 ]);
-assert.match(manifest.researcher_listening_review, /reopened for file-level perceptual review/);
+assert.match(manifest.researcher_listening_review, /replaced on 2026-08-28/);
+assert.match(numberSpan, /d === 5 \|\| d === 8/);
+assert.match(numberSpan, /digit_' \+ d \+ '_de_v3\.wav/);
 
 console.log('German parity checks passed.');

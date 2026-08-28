@@ -486,6 +486,10 @@
         }
 
         function showItem() {
+          // Release the per-item transition guard after the previous recording
+          // has been finalized. Without this reset, item 2 (chair) is shown but
+          // its Next button is permanently ignored.
+          itemEnding = false;
           var item = items[index];
           var itemIndex = index;
           chunks = [];

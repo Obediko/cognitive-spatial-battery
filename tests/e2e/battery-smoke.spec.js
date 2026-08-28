@@ -193,6 +193,9 @@ test('visual naming starts its clock only after the image is available', async (
   await expect(page.getByText('Speak one answer clearly')).toBeVisible();
   await next.click();
   await expect(page.getByText('Item 2 of 32')).toBeVisible({ timeout: 5000 });
+  await expect(next).toBeEnabled({ timeout: 8000 });
+  await next.click();
+  await expect(page.getByText('Item 3 of 32')).toBeVisible({ timeout: 5000 });
 });
 
 test('animal naming requires practice and changes Start to Stop during the timed task', async ({ page }) => {

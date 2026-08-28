@@ -16,6 +16,8 @@ const asrWorker = read('js/tasks/osr_transcription_worker.js');
 const osr = read('js/tasks/original_story_recall.js');
 const asf = read('js/tasks/animal_semantic_fluency.js');
 const ovn = read('js/tasks/original_visual_naming.js');
+const deferredNaming = ovn.slice(ovn.indexOf('function ovnDeferredAdministrationTrial()'));
+assert.match(deferredNaming, /function showItem\(\) \{[\s\S]{0,400}itemEnding = false;[\s\S]{0,200}var item = items\[index\];/, 'each deferred naming item must release the prior transition lock');
 const ocf = read('js/tasks/original_complex_figure.js');
 const olm = read('js/tasks/object_location_memory.js');
 const sp = read('js/tasks/spatial_pointing.js');
